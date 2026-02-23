@@ -1,0 +1,73 @@
+package com.kazemieh.shop.shop.error
+
+object ErrorCodes {
+    // ===== Users / Auth =====
+    const val USER_NOT_FOUND = "USER_NOT_FOUND"
+    const val EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS"
+    const val USER_INACTIVE = "USER_INACTIVE"
+    const val INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
+    const val ACCESS_DENIED = "ACCESS_DENIED"
+
+    // ===== Categories =====
+    const val CATEGORY_NOT_FOUND = "CATEGORY_NOT_FOUND"
+    const val CATEGORY_SLUG_EXISTS = "CATEGORY_SLUG_EXISTS"
+    const val CATEGORY_CYCLE = "CATEGORY_CYCLE"
+
+    // ===== Products =====
+    const val PRODUCT_NOT_FOUND = "PRODUCT_NOT_FOUND"
+    const val PRODUCT_SLUG_EXISTS = "PRODUCT_SLUG_EXISTS"
+    const val PRODUCT_INACTIVE = "PRODUCT_INACTIVE"
+    const val INVALID_PRODUCT_PRICE = "INVALID_PRODUCT_PRICE"
+
+    // ===== Sizes / Colors =====
+    const val SIZE_NOT_FOUND = "SIZE_NOT_FOUND"
+    const val SIZE_EXISTS = "SIZE_EXISTS"
+    const val COLOR_NOT_FOUND = "COLOR_NOT_FOUND"
+    const val COLOR_EXISTS = "COLOR_EXISTS"
+    const val INVALID_COLOR_HEX = "INVALID_COLOR_HEX"
+
+    // ===== Images =====
+    const val PRODUCT_IMAGE_NOT_FOUND = "PRODUCT_IMAGE_NOT_FOUND"
+    const val INVALID_IMAGE_URL = "INVALID_IMAGE_URL"
+
+    // ===== Variants =====
+    const val VARIANT_NOT_FOUND = "VARIANT_NOT_FOUND"
+    const val SKU_EXISTS = "SKU_EXISTS"
+    const val VARIANT_COMBO_EXISTS = "VARIANT_COMBO_EXISTS"
+    const val VARIANT_INACTIVE = "VARIANT_INACTIVE"
+    const val INVALID_VARIANT_PRICE = "INVALID_VARIANT_PRICE"
+
+    // ===== Inventory =====
+    const val INVENTORY_NOT_FOUND = "INVENTORY_NOT_FOUND"
+    const val INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
+    const val INVENTORY_CONFLICT = "INVENTORY_CONFLICT"
+    const val INVALID_INVENTORY = "INVALID_INVENTORY"
+
+    // ===== Addresses =====
+    const val ADDRESS_NOT_FOUND = "ADDRESS_NOT_FOUND"
+    const val ADDRESS_ACCESS_DENIED = "ADDRESS_ACCESS_DENIED"
+    const val DEFAULT_ADDRESS_CONFLICT = "DEFAULT_ADDRESS_CONFLICT"
+    const val INVALID_ADDRESS = "INVALID_ADDRESS"
+
+    // ===== Orders =====
+    const val ORDER_NOT_FOUND = "ORDER_NOT_FOUND"
+    const val ORDER_ACCESS_DENIED = "ORDER_ACCESS_DENIED"
+    const val EMPTY_ORDER = "EMPTY_ORDER"
+    const val INVALID_ORDER_STATUS = "INVALID_ORDER_STATUS"
+    const val ORDER_STATUS_TRANSITION = "ORDER_STATUS_TRANSITION"
+    const val ORDER_FINALIZED = "ORDER_FINALIZED"
+    const val ORDER_PRICE_MISMATCH = "ORDER_PRICE_MISMATCH"
+
+    // ===== Order Items =====
+    const val ORDER_ITEM_NOT_FOUND = "ORDER_ITEM_NOT_FOUND"
+    const val INVALID_QUANTITY = "INVALID_QUANTITY"
+    const val INVALID_ORDER_ITEM_PRICE = "INVALID_ORDER_ITEM_PRICE"
+    const val VARIANT_NOT_AVAILABLE = "VARIANT_NOT_AVAILABLE"
+
+    // ===== DB / Generic =====
+    const val DATA_INTEGRITY_VIOLATION = "DATA_INTEGRITY_VIOLATION"
+    const val FOREIGN_KEY_VIOLATION = "FOREIGN_KEY_VIOLATION"
+    const val UNIQUE_VIOLATION = "UNIQUE_VIOLATION"
+    const val CHECK_VIOLATION = "CHECK_VIOLATION"
+    const val INTERNAL_ERROR = "INTERNAL_ERROR"
+}
