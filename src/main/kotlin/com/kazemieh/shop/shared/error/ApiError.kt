@@ -1,4 +1,4 @@
-package com.kazemieh.shop.shop.error
+package com.kazemieh.shop.shared.error
 
 import org.springframework.http.HttpStatus
 import java.time.LocalDateTime

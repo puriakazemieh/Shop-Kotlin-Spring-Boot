@@ -1,4 +1,4 @@
-package com.kazemieh.shop.shop
+package com.kazemieh.shop
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

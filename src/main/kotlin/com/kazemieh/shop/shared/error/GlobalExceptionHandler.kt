@@ -1,4 +1,4 @@
-package com.kazemieh.shop.shop.error
+package com.kazemieh.shop.shared.error
 
 import jakarta.servlet.http.HttpServletRequest
 import org.postgresql.util.PSQLException

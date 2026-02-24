@@ -1,4 +1,4 @@
-package com.kazemieh.shop.shop
+package com.kazemieh.shop
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
