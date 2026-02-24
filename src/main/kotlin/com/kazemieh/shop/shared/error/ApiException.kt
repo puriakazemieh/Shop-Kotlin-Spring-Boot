@@ -17,20 +17,20 @@ open class ForbiddenException(message: String, code: String) : ApiException(mess
 open class UnprocessableException(message: String, code: String) : ApiException(message, code, HttpStatus.UNPROCESSABLE_ENTITY)
 
 // ===== Users / Auth =====
-class UserNotFoundException(message: String = "User not found")
-    : NotFoundException(message, ErrorCodes.USER_NOT_FOUND)
-
-class EmailAlreadyExistsException(email: String)
-    : ConflictException("Email already exists: $email", ErrorCodes.EMAIL_ALREADY_EXISTS)
-
-class UserInactiveException(message: String = "User is inactive")
-    : ForbiddenException(message, ErrorCodes.USER_INACTIVE)
-
-class InvalidCredentialsException(message: String = "Invalid credentials")
-    : UnauthorizedException(message, ErrorCodes.INVALID_CREDENTIALS)
-
-class ShopAccessDeniedException(message: String = "Access denied")
-    : ForbiddenException(message, ErrorCodes.ACCESS_DENIED)
+//class UserNotFoundException(message: String = "User not found")
+//    : NotFoundException(message, ErrorCodes.USER_NOT_FOUND)
+//
+//class EmailAlreadyExistsException(email: String)
+//    : ConflictException("Email already exists: $email", ErrorCodes.EMAIL_ALREADY_EXISTS)
+//
+//class UserInactiveException(message: String = "User is inactive")
+//    : ForbiddenException(message, ErrorCodes.USER_INACTIVE)
+//
+//class InvalidCredentialsException(message: String = "Invalid credentials")
+//    : UnauthorizedException(message, ErrorCodes.INVALID_CREDENTIALS)
+//
+//class ShopAccessDeniedException(message: String = "Access denied")
+//    : ForbiddenException(message, ErrorCodes.ACCESS_DENIED)
 
 // ===== Categories =====
 class CategoryNotFoundException(message: String = "Category not found")
