@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 
 interface ProductRepository : JpaRepository<ProductEntity, Long>, JpaSpecificationExecutor<ProductEntity> {
     fun findBySlugAndIsActiveTrue(slug: String): ProductEntity?
+    fun findBySlug(slug: String): ProductEntity?
+    fun existsBySlug(slug: String): Boolean
 }

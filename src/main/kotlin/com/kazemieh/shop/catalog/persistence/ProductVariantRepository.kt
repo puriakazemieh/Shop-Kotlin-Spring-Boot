@@ -41,4 +41,17 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
         nativeQuery = true
     )
     fun aggregateByProductIds(@Param("productIds") productIds: List<Long>): List<ProductAggregateRow>
+
+    fun existsBySku(sku: String): Boolean
+
+    @Query(
+        """
+        select v from ProductVariantEntity v
+        join fetch v.size
+        join fetch v.color
+        where v.product.id = :productId
+        order by v.id asc
+        """
+    )
+    fun findAllWithOptionsByProductId(@Param("productId") productId: Long): List<ProductVariantEntity>
 }
