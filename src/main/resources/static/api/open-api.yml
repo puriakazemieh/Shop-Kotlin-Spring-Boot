@@ -532,7 +532,12 @@ paths:
           schema: { type: string }
         - name: categoryId
           in: query
+          description: Filter by category (includes all descendant categories)
           schema: { type: integer, format: int64 }
+        - name: categorySlug
+          in: query
+          description: Filter by category slug (includes descendants)
+          schema: { type: string }
         - name: sizeId
           in: query
           schema: { type: integer, format: int64 }

@@ -19,6 +19,7 @@ class CatalogService(
     private val inventoryRepository: InventoryRepository,
     private val sizeRepository: SizeRepository,
     private val colorRepository: ColorRepository,
+    private val productSearchRepository: ProductSearchRepository,
 ) {
 
     // ---------- Categories (Tree) ----------
@@ -65,28 +66,55 @@ class CatalogService(
         sort: String?,
     ): PageResponse<ProductSummaryResponse> {
 
+        val needVariantFilter =
+            sizeId != null || colorId != null || minPrice != null || maxPrice != null || (inStock == true)
+
         val pageable = PageRequest.of(
             page.coerceAtLeast(0),
             size.coerceIn(1, 100),
-            when (sort?.lowercase()) {
-                "price_asc" -> Sort.by(Sort.Order.asc("id")) // قیمت را بعداً از aggregate می‌گیریم
-                "price_desc" -> Sort.by(Sort.Order.desc("id"))
-                else -> Sort.by(Sort.Order.desc("createdAt"))
-            }
+            Sort.unsorted()
         )
 
-        var spec = ProductSpecs.active()
-        q?.takeIf { it.isNotBlank() }?.let { spec = spec.and(ProductSpecs.titleContains(it.trim())) }
-        categoryId?.let { spec = spec.and(ProductSpecs.categoryId(it)) }
-        if (sizeId != null || colorId != null || minPrice != null || maxPrice != null || inStock == true) {
-            spec = spec.and(ProductSpecs.variantFilters(sizeId, colorId, minPrice, maxPrice, inStock))
+        val qNorm = q?.trim().orEmpty()
+
+        val pageData = when {
+            qNorm.isNotBlank() -> {
+                val res = productSearchRepository.searchRelevance(
+                    q = qNorm,
+                    categoryId = categoryId,
+                    sizeId = sizeId,
+                    colorId = colorId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    inStock = inStock,
+                    needVariantFilter = needVariantFilter,
+                    pageable = pageable
+                )
+
+                // fallback fuzzy (typo) اگر نتیجه صفر بود
+                if (res.isEmpty && qNorm.length >= 3 && categoryId != null) {
+                    productSearchRepository.searchFuzzyTitle(qNorm, categoryId, pageable)
+                } else if (res.isEmpty && qNorm.length >= 3) {
+                    productSearchRepository.searchFuzzyTitle(qNorm, null, pageable)
+                } else res
+            }
+
+            // بدون query: newest
+            else -> productSearchRepository.searchNewest(
+                categoryId = categoryId,
+                sizeId = sizeId,
+                colorId = colorId,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+                inStock = inStock,
+                needVariantFilter = needVariantFilter,
+                pageable = pageable
+            )
         }
 
-        val pageData = productRepository.findAll(spec, pageable)
         val products = pageData.content
         val productIds = products.map { it.id }
 
-        // thumbnail (اولین تصویر هر محصول)
         val images = if (productIds.isNotEmpty())
             productImageRepository.findAllByProductIdInOrderBySortOrderAsc(productIds)
         else emptyList()
@@ -95,7 +123,6 @@ class CatalogService(
             .groupBy { it.product?.id ?: 0L }
             .mapValues { (_, list) -> list.firstOrNull()?.url }
 
-        // aggregate min/max price + inStock
         val aggByProductId = if (productIds.isNotEmpty())
             variantRepository.aggregateByProductIds(productIds).associateBy { it.getProductId() }
         else emptyMap()

@@ -33,6 +33,7 @@ class CatalogController(
         @RequestParam(required = false) inStock: Boolean?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) categorySlug: String?,
         @RequestParam(required = false) sort: String?, // newest | price_asc | price_desc
     ): PageResponse<ProductSummaryResponse> =
         catalogService.listProducts(q, categoryId, sizeId, colorId, minPrice, maxPrice, inStock, page, size, sort)
