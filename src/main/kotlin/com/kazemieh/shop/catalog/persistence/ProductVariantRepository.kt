@@ -54,4 +54,15 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
         """
     )
     fun findAllWithOptionsByProductId(@Param("productId") productId: Long): List<ProductVariantEntity>
+
+    @Query(
+        """
+  select v from ProductVariantEntity v
+  join fetch v.product p
+  join fetch v.size s
+  join fetch v.color c
+  where v.id in :ids
+  """
+    )
+    fun findWithAllOptionsByIds(@Param("ids") ids: List<Long>): List<ProductVariantEntity>
 }

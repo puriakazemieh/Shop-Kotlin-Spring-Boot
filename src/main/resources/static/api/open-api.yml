@@ -840,6 +840,135 @@ paths:
         '204':
           description: Updated
 
+  /api/cart:
+    get:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Get my cart
+      operationId: getCart
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+    delete:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Clear my cart
+      operationId: clearCart
+      responses:
+        '204':
+          description: Cleared
+
+  /api/cart/items:
+    post:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Add item to cart (or increase qty)
+      operationId: addCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddCartItemRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
+  /api/cart/items/{itemId}:
+    patch:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Update cart item quantity (qty=0 removes)
+      operationId: updateCartItemQty
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCartItemRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
+    delete:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Remove item from cart
+      operationId: removeCartItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
+  /api/cart/items/{variantId}:
+    put:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Set cart quantity by variantId (qty=0 removes)
+      operationId: setCartVariantQty
+      parameters:
+        - name: variantId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetCartVariantQtyRequest' }
+            example:
+              qty: 2
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
+  /api/cart/items/{variantId}/adjust:
+    patch:
+      tags: [cart]
+      security: [{ BearerAuth: [] }]
+      summary: Adjust cart quantity by variantId (delta can be negative)
+      operationId: adjustCartVariantQty
+      parameters:
+        - name: variantId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdjustCartVariantQtyRequest' }
+            example:
+              delta: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1319,92 +1448,153 @@ components:
         inventory:
           $ref: '#/components/schemas/AdminInventoryResponse'
 
-  PageResponseAdminOrderSummaryResponse:
-    type: object
-    required: [items, page, size, totalElements, totalPages]
-    properties:
-    items:
-      type: array
-      items: { $ref: '#/components/schemas/AdminOrderSummaryResponse' }
-    page: { type: integer }
-    size: { type: integer }
-    totalElements: { type: integer, format: int64 }
-    totalPages: { type: integer }
-
-  AdminOrderSummaryResponse:
-    type: object
-    required: [id, userId, userEmail, status, totalPrice]
-    properties:
-      id: { type: integer, format: int64 }
-      userId: { type: integer, format: int64 }
-      userEmail: { type: string, format: email }
-      status:
-        type: string
-        enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
-      totalPrice: { type: number }
-      createdAt: { type: string, format: date-time, nullable: true }
-
-  AdminOrderDetailResponse:
-    type: object
-    required: [id, userId, userEmail, status, subtotalPrice, shippingPrice, totalPrice, addressSnapshot, items]
-    properties:
-      id: { type: integer, format: int64 }
-      userId: { type: integer, format: int64 }
-      userEmail: { type: string, format: email }
-      status:
-        type: string
-        enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
-      subtotalPrice: { type: number }
-      shippingPrice: { type: number }
-      totalPrice: { type: number }
-      createdAt: { type: string, format: date-time, nullable: true }
-      updatedAt: { type: string, format: date-time, nullable: true }
-      addressSnapshot:
-        description: Address snapshot stored at order time (JSON)
-        type: object
-        additionalProperties: true
+    PageResponseAdminOrderSummaryResponse:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
       items:
         type: array
-        items: { $ref: '#/components/schemas/AdminOrderItemResponse' }
+        items: { $ref: '#/components/schemas/AdminOrderSummaryResponse' }
+      page: { type: integer }
+      size: { type: integer }
+      totalElements: { type: integer, format: int64 }
+      totalPages: { type: integer }
 
-  AdminOrderItemResponse:
-    type: object
-    required: [id, variantId, qty, unitPriceSnapshot, titleSnapshot, sizeSnapshot, colorSnapshot]
-    properties:
-      id: { type: integer, format: int64 }
-      variantId: { type: integer, format: int64 }
-      qty: { type: integer }
-      unitPriceSnapshot: { type: number }
-      titleSnapshot: { type: string }
-      sizeSnapshot: { type: string }
-      colorSnapshot: { type: string }
-
-  AdminUpdateOrderStatusRequest:
-    type: object
-    required: [status]
-    properties:
-      status:
-        type: string
-        enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
-    ApiError:
+    AdminOrderSummaryResponse:
       type: object
+      required: [id, userId, userEmail, status, totalPrice]
       properties:
-        message:
-          type: string
-          nullable: true
+        id: { type: integer, format: int64 }
+        userId: { type: integer, format: int64 }
+        userEmail: { type: string, format: email }
         status:
           type: string
-          description: HTTP status name (e.g. UNAUTHORIZED)
-        code:
-          type: integer
-          description: HTTP status code (e.g. 401)
-        errorCode:
-          type: string
-          nullable: true
-        path:
-          type: string
-          nullable: true
-        timestamp:
-          type: string
-          format: date-time
+          enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
+        totalPrice: { type: number }
+        createdAt: { type: string, format: date-time, nullable: true }
 
+    AdminOrderDetailResponse:
+      type: object
+      required: [id, userId, userEmail, status, subtotalPrice, shippingPrice, totalPrice, addressSnapshot, items]
+      properties:
+        id: { type: integer, format: int64 }
+        userId: { type: integer, format: int64 }
+        userEmail: { type: string, format: email }
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
+        subtotalPrice: { type: number }
+        shippingPrice: { type: number }
+        totalPrice: { type: number }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+        addressSnapshot:
+          description: Address snapshot stored at order time (JSON)
+          type: object
+          additionalProperties: true
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AdminOrderItemResponse' }
+
+    AdminOrderItemResponse:
+      type: object
+      required: [id, variantId, qty, unitPriceSnapshot, titleSnapshot, sizeSnapshot, colorSnapshot]
+      properties:
+        id: { type: integer, format: int64 }
+        variantId: { type: integer, format: int64 }
+        qty: { type: integer }
+        unitPriceSnapshot: { type: number }
+        titleSnapshot: { type: string }
+        sizeSnapshot: { type: string }
+        colorSnapshot: { type: string }
+
+    AdminUpdateOrderStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED]
+      ApiError:
+        type: object
+        properties:
+          message:
+            type: string
+            nullable: true
+          status:
+            type: string
+            description: HTTP status name (e.g. UNAUTHORIZED)
+          code:
+            type: integer
+            description: HTTP status code (e.g. 401)
+          errorCode:
+            type: string
+            nullable: true
+          path:
+            type: string
+            nullable: true
+          timestamp:
+            type: string
+            format: date-time
+
+    AddCartItemRequest:
+      type: object
+      required: [variantId, qty]
+      properties:
+        variantId: { type: integer, format: int64 }
+        qty: { type: integer, minimum: 1 }
+
+    UpdateCartItemRequest:
+      type: object
+      required: [qty]
+      properties:
+        qty:
+          type: integer
+          minimum: 0
+          description: 0 means remove
+
+    CartItemResponse:
+      type: object
+      required: [id, variantId, qty, productId, productTitle, productSlug, sizeName, colorName, price, availableQty, isActive, lineTotal]
+      properties:
+        id: { type: integer, format: int64 }
+        variantId: { type: integer, format: int64 }
+        qty: { type: integer }
+        productId: { type: integer, format: int64 }
+        productTitle: { type: string }
+        productSlug: { type: string }
+        imageUrl: { type: string, nullable: true }
+        sizeName: { type: string }
+        colorName: { type: string }
+        price: { type: number }
+        compareAtPrice: { type: number, nullable: true }
+        availableQty: { type: integer }
+        isActive: { type: boolean }
+        lineTotal: { type: number }
+
+    CartResponse:
+      type: object
+      required: [items, subtotal, totalQty]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CartItemResponse' }
+        subtotal: { type: number }
+        totalQty: { type: integer }
+
+    SetCartVariantQtyRequest:
+      type: object
+      required: [qty]
+      properties:
+        qty:
+          type: integer
+          minimum: 0
+          description: 0 means remove
+
+    AdjustCartVariantQtyRequest:
+      type: object
+      required: [delta]
+      properties:
+        delta:
+          type: integer
+          description: Can be negative or positive
