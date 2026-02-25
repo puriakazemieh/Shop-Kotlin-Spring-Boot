@@ -409,6 +409,71 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AddressResponse' }
 
+  /api/orders:
+    get:
+      tags: [ order ]
+      summary: List my orders
+      operationId: listMyOrders
+      security: [ { BearerAuth: [ ] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OrderResponse' }
+
+    post:
+      tags: [ order ]
+      summary: Create order (reserves inventory)
+      operationId: createOrder
+      security: [ { BearerAuth: [ ] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderRequest' }
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderDetailResponse' }
+
+  /api/orders/{id}:
+    get:
+      tags: [ order ]
+      summary: Get my order details
+      operationId: getMyOrder
+      security: [ { BearerAuth: [ ] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderDetailResponse' }
+
+  /api/orders/{id}/cancel:
+    post:
+      tags: [ order ]
+      summary: Cancel my order (releases reserved inventory)
+      operationId: cancelMyOrder
+      security: [ { BearerAuth: [ ] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204':
+          description: Canceled
+
 components:
   securitySchemes:
     BearerAuth:
@@ -548,6 +613,73 @@ components:
         postalCode: { type: string, nullable: true }
         isDefault: { type: boolean }
         createdAt: { type: string, format: date-time, nullable: true }
+
+    CreateOrderItemRequest:
+      type: object
+      required: [ variantId, qty ]
+      properties:
+        variantId: { type: integer, format: int64 }
+        qty: { type: integer, minimum: 1 }
+
+    CreateOrderRequest:
+      type: object
+      required: [ items ]
+      properties:
+        addressId: { type: integer, format: int64, nullable: true }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/CreateOrderItemRequest' }
+
+    OrderResponse:
+      type: object
+      required: [ id, status, subtotalPrice, shippingPrice, totalPrice ]
+      properties:
+        id: { type: integer, format: int64 }
+        status: { type: string }
+        subtotalPrice: { type: number }
+        shippingPrice: { type: number }
+        totalPrice: { type: number }
+        createdAt: { type: string, format: date-time, nullable: true }
+
+    AddressSnapshotResponse:
+      type: object
+      required: [ receiverName, receiverPhone, country, province, city, addressLine1 ]
+      properties:
+        receiverName: { type: string }
+        receiverPhone: { type: string }
+        country: { type: string }
+        province: { type: string }
+        city: { type: string }
+        addressLine1: { type: string }
+        addressLine2: { type: string, nullable: true }
+        postalCode: { type: string, nullable: true }
+
+    OrderItemResponse:
+      type: object
+      required: [ variantId, qty, unitPrice, title, size, color ]
+      properties:
+        variantId: { type: integer, format: int64 }
+        qty: { type: integer }
+        unitPrice: { type: number }
+        title: { type: string }
+        size: { type: string }
+        color: { type: string }
+
+    OrderDetailResponse:
+      type: object
+      required: [ id, status, subtotalPrice, shippingPrice, totalPrice, address, items ]
+      properties:
+        id: { type: integer, format: int64 }
+        status: { type: string }
+        subtotalPrice: { type: number }
+        shippingPrice: { type: number }
+        totalPrice: { type: number }
+        createdAt: { type: string, format: date-time, nullable: true }
+        address: { $ref: '#/components/schemas/AddressSnapshotResponse' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItemResponse' }
 
     ApiError:
       type: object
