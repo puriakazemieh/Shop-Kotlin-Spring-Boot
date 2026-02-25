@@ -63,9 +63,14 @@ class CatalogService(
         inStock: Boolean?,
         page: Int,
         size: Int,
-        sort: String?,
+        categorySlug: String?,
+        sort: String?
     ): PageResponse<ProductSummaryResponse> {
-
+        val resolvedCategoryId = when {
+            categoryId != null -> categoryId
+            !categorySlug.isNullOrBlank() -> categoryRepository.findBySlug(categorySlug.trim())?.id
+            else -> null
+        }
         val needVariantFilter =
             sizeId != null || colorId != null || minPrice != null || maxPrice != null || (inStock == true)
 
@@ -77,11 +82,13 @@ class CatalogService(
 
         val qNorm = q?.trim().orEmpty()
 
+        val sortKey = sort?.trim()?.lowercase()
+
         val pageData = when {
             qNorm.isNotBlank() -> {
                 val res = productSearchRepository.searchRelevance(
                     q = qNorm,
-                    categoryId = categoryId,
+                    categoryId = resolvedCategoryId,
                     sizeId = sizeId,
                     colorId = colorId,
                     minPrice = minPrice,
@@ -90,26 +97,42 @@ class CatalogService(
                     needVariantFilter = needVariantFilter,
                     pageable = pageable
                 )
-
-                // fallback fuzzy (typo) اگر نتیجه صفر بود
-                if (res.isEmpty && qNorm.length >= 3 && categoryId != null) {
-                    productSearchRepository.searchFuzzyTitle(qNorm, categoryId, pageable)
-                } else if (res.isEmpty && qNorm.length >= 3) {
-                    productSearchRepository.searchFuzzyTitle(qNorm, null, pageable)
+                if (res.isEmpty && qNorm.length >= 3) {
+                    productSearchRepository.searchFuzzyTitle(qNorm, resolvedCategoryId, pageable)
                 } else res
             }
-
-            // بدون query: newest
-            else -> productSearchRepository.searchNewest(
-                categoryId = categoryId,
-                sizeId = sizeId,
-                colorId = colorId,
-                minPrice = minPrice,
-                maxPrice = maxPrice,
-                inStock = inStock,
-                needVariantFilter = needVariantFilter,
-                pageable = pageable
-            )
+            else -> when (sortKey) {
+                "price_asc" -> productSearchRepository.searchPriceAsc(
+                    categoryId = resolvedCategoryId,
+                    sizeId = sizeId,
+                    colorId = colorId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    inStock = inStock,
+                    needVariantFilter = needVariantFilter,
+                    pageable = pageable
+                )
+                "price_desc" -> productSearchRepository.searchPriceDesc(
+                    categoryId = resolvedCategoryId,
+                    sizeId = sizeId,
+                    colorId = colorId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    inStock = inStock,
+                    needVariantFilter = needVariantFilter,
+                    pageable = pageable
+                )
+                else -> productSearchRepository.searchNewest(
+                    categoryId = resolvedCategoryId,
+                    sizeId = sizeId,
+                    colorId = colorId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    inStock = inStock,
+                    needVariantFilter = needVariantFilter,
+                    pageable = pageable
+                )
+            }
         }
 
         val products = pageData.content

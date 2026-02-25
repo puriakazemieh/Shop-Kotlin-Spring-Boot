@@ -969,6 +969,25 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CartResponse' }
 
+  /api/admin/orders/{id}/shipping:
+    patch:
+      tags: [admin-orders]
+      security: [{ BearerAuth: [] }]
+      summary: Update shipping carrier/tracking (admin)
+      operationId: adminUpdateShipping
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUpdateShippingRequest' }
+      responses:
+        '204': { description: Updated }
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1598,3 +1617,10 @@ components:
         delta:
           type: integer
           description: Can be negative or positive
+
+    AdminUpdateShippingRequest:
+      type: object
+      properties:
+        shippingCarrier: { type: string, nullable: true, maxLength: 80 }
+        trackingCode: { type: string, nullable: true, maxLength: 120 }
+        markShipped: { type: boolean, default: false }

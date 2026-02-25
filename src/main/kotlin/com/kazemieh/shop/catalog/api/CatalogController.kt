@@ -26,6 +26,7 @@ class CatalogController(
     fun products(
         @RequestParam(required = false) q: String?,
         @RequestParam(required = false) categoryId: Long?,
+        @RequestParam(required = false) categorySlug: String?,
         @RequestParam(required = false) sizeId: Long?,
         @RequestParam(required = false) colorId: Long?,
         @RequestParam(required = false) minPrice: BigDecimal?,
@@ -33,10 +34,21 @@ class CatalogController(
         @RequestParam(required = false) inStock: Boolean?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(required = false) categorySlug: String?,
         @RequestParam(required = false) sort: String?, // newest | price_asc | price_desc
     ): PageResponse<ProductSummaryResponse> =
-        catalogService.listProducts(q, categoryId, sizeId, colorId, minPrice, maxPrice, inStock, page, size, sort)
+        catalogService.listProducts(
+            q = q,
+            categoryId = categoryId,
+            sizeId = sizeId,
+            colorId = colorId,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            inStock = inStock,
+            page = page,
+            size = size,
+            categorySlug = sort,
+            sort = categorySlug
+        )
 
     @GetMapping("/products/{slug}")
     fun productDetail(@PathVariable slug: String): ProductDetailResponse =

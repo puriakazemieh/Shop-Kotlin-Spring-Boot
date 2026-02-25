@@ -210,4 +210,143 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         @Param("categoryId") categoryId: Long?,
         pageable: Pageable
     ): Page<ProductEntity>
+
+
+    @Query(
+        value = """
+      WITH RECURSIVE cat(id) AS (
+        SELECT id FROM categories WHERE id = :categoryId
+        UNION ALL
+        SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
+      )
+      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.is_active, p.created_at, p.updated_at
+      FROM products p
+      WHERE p.is_active = true
+        AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (
+          :needVariantFilter = false
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants pv
+            LEFT JOIN inventory i ON i.variant_id = pv.id
+            WHERE pv.product_id = p.id
+              AND pv.is_active = true
+              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
+              AND (:colorId IS NULL OR pv.color_id = :colorId)
+              AND (:minPrice IS NULL OR pv.price >= :minPrice)
+              AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+              AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
+          )
+        )
+      ORDER BY
+        (SELECT min(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) ASC NULLS LAST,
+        p.created_at DESC
+      """,
+        countQuery = """
+      WITH RECURSIVE cat(id) AS (
+        SELECT id FROM categories WHERE id = :categoryId
+        UNION ALL
+        SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
+      )
+      SELECT count(*)
+      FROM products p
+      WHERE p.is_active = true
+        AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (
+          :needVariantFilter = false
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants pv
+            LEFT JOIN inventory i ON i.variant_id = pv.id
+            WHERE pv.product_id = p.id
+              AND pv.is_active = true
+              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
+              AND (:colorId IS NULL OR pv.color_id = :colorId)
+              AND (:minPrice IS NULL OR pv.price >= :minPrice)
+              AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+              AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
+          )
+        )
+      """,
+        nativeQuery = true
+    )
+    fun searchPriceAsc(
+        @Param("categoryId") categoryId: Long?,
+        @Param("sizeId") sizeId: Long?,
+        @Param("colorId") colorId: Long?,
+        @Param("minPrice") minPrice: BigDecimal?,
+        @Param("maxPrice") maxPrice: BigDecimal?,
+        @Param("inStock") inStock: Boolean?,
+        @Param("needVariantFilter") needVariantFilter: Boolean,
+        pageable: Pageable
+    ): Page<ProductEntity>
+
+    @Query(
+        value = """
+      WITH RECURSIVE cat(id) AS (
+        SELECT id FROM categories WHERE id = :categoryId
+        UNION ALL
+        SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
+      )
+      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.is_active, p.created_at, p.updated_at
+      FROM products p
+      WHERE p.is_active = true
+        AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (
+          :needVariantFilter = false
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants pv
+            LEFT JOIN inventory i ON i.variant_id = pv.id
+            WHERE pv.product_id = p.id
+              AND pv.is_active = true
+              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
+              AND (:colorId IS NULL OR pv.color_id = :colorId)
+              AND (:minPrice IS NULL OR pv.price >= :minPrice)
+              AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+              AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
+          )
+        )
+      ORDER BY
+        (SELECT min(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) DESC NULLS LAST,
+        p.created_at DESC
+      """,
+        countQuery = """
+      WITH RECURSIVE cat(id) AS (
+        SELECT id FROM categories WHERE id = :categoryId
+        UNION ALL
+        SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
+      )
+      SELECT count(*)
+      FROM products p
+      WHERE p.is_active = true
+        AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (
+          :needVariantFilter = false
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants pv
+            LEFT JOIN inventory i ON i.variant_id = pv.id
+            WHERE pv.product_id = p.id
+              AND pv.is_active = true
+              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
+              AND (:colorId IS NULL OR pv.color_id = :colorId)
+              AND (:minPrice IS NULL OR pv.price >= :minPrice)
+              AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+              AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
+          )
+        )
+      """,
+        nativeQuery = true
+    )
+    fun searchPriceDesc(
+        @Param("categoryId") categoryId: Long?,
+        @Param("sizeId") sizeId: Long?,
+        @Param("colorId") colorId: Long?,
+        @Param("minPrice") minPrice: BigDecimal?,
+        @Param("maxPrice") maxPrice: BigDecimal?,
+        @Param("inStock") inStock: Boolean?,
+        @Param("needVariantFilter") needVariantFilter: Boolean,
+        pageable: Pageable
+    ): Page<ProductEntity>
 }

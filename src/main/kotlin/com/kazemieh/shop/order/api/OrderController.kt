@@ -1,5 +1,6 @@
 package com.kazemieh.shop.order.api
 
+import com.kazemieh.shop.order.api.dto.AdminUpdateShippingRequest
 import com.kazemieh.shop.order.api.dto.CreateOrderRequest
 import com.kazemieh.shop.order.application.OrderService
 import com.kazemieh.shop.shared.security.UserPrincipal
@@ -37,5 +38,14 @@ class OrderController(
         @PathVariable id: Long
     ) {
         orderService.cancelMyOrder(principal.id, id)
+    }
+
+    @PatchMapping("/{id}/shipping")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun updateShipping(
+        @PathVariable id: Long,
+        @Valid @RequestBody req: AdminUpdateShippingRequest
+    ) {
+        orderService.updateShipping(id, req)
     }
 }

@@ -2,6 +2,7 @@ package com.kazemieh.shop.order.persistence.entity
 
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 
 @Entity
 @Table(

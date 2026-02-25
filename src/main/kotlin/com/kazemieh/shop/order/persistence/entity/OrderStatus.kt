@@ -1,14 +1,14 @@
 package com.kazemieh.shop.order.persistence.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.kazemieh.shop.identity.persistence.entity.UserEntity
 import jakarta.persistence.*
-import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-import com.fasterxml.jackson.databind.JsonNode
-import com.kazemieh.shop.identity.persistence.entity.UserEntity
 
 enum class OrderStatus { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED }
 
@@ -57,4 +57,16 @@ class OrderEntity(
 
     @OneToMany(mappedBy = "order", cascade = [CascadeType.ALL], orphanRemoval = true)
     var items: MutableList<OrderItemEntity> = mutableListOf(),
+
+    @Column(name = "shipping_carrier", length = 80)
+    var shippingCarrier: String? = null,
+
+    @Column(name = "tracking_code", length = 120)
+    var trackingCode: String? = null,
+
+    @Column(name = "shipped_at")
+    var shippedAt: OffsetDateTime? = null,
+
+    @Column(name = "delivered_at")
+    var deliveredAt: OffsetDateTime? = null,
 )

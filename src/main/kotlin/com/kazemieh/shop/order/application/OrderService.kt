@@ -1,21 +1,17 @@
 package com.kazemieh.shop.order.application
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kazemieh.shop.catalog.persistence.InventoryRepository
-import com.kazemieh.shop.catalog.persistence.VariantQueryRepository
+import com.kazemieh.shop.catalog.persistence.ProductVariantRepository
 import com.kazemieh.shop.customer.address.persistence.AddressRepository
 import com.kazemieh.shop.identity.application.exception.UserNotFoundException
 import com.kazemieh.shop.identity.persistence.UserRepository
+import com.kazemieh.shop.order.api.dto.AdminUpdateShippingRequest
 import com.kazemieh.shop.order.api.dto.CreateOrderRequest
 import com.kazemieh.shop.order.api.dto.OrderDetailResponse
 import com.kazemieh.shop.order.api.mapper.OrderMapper
-import com.kazemieh.shop.order.application.exception.AddressNotFoundForUserException
-import com.kazemieh.shop.order.application.exception.EmptyOrderException
-import com.kazemieh.shop.order.application.exception.NotEnoughStockException
-import com.kazemieh.shop.order.application.exception.OrderNotFoundException
-import com.kazemieh.shop.order.application.exception.OrderStatusNotAllowedException
-import com.kazemieh.shop.order.application.exception.VariantInactiveException
-import com.kazemieh.shop.order.application.exception.VariantNotFoundException
+import com.kazemieh.shop.order.application.exception.*
 import com.kazemieh.shop.order.persistence.OrderRepository
 import com.kazemieh.shop.order.persistence.entity.OrderEntity
 import com.kazemieh.shop.order.persistence.entity.OrderItemEntity
@@ -23,14 +19,14 @@ import com.kazemieh.shop.order.persistence.entity.OrderStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import kotlin.collections.iterator
+import java.time.OffsetDateTime
 
 @Service
 class OrderService(
     private val orderRepository: OrderRepository,
     private val userRepository: UserRepository,
     private val addressRepository: AddressRepository,
-    private val variantQueryRepository: VariantQueryRepository,
+    private val productVariantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val objectMapper: ObjectMapper,
 ) {
@@ -40,7 +36,7 @@ class OrderService(
         orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).map(OrderMapper::toOrderResponse)
 
     @Transactional(readOnly = true)
-    fun getMyOrder(userId: Long, orderId: Long) : OrderDetailResponse {
+    fun getMyOrder(userId: Long, orderId: Long): OrderDetailResponse {
         val o = orderRepository.findByIdAndUserId(orderId, userId) ?: throw OrderNotFoundException(orderId)
         return OrderMapper.toDetailResponse(o, objectMapper)
     }
@@ -55,12 +51,13 @@ class OrderService(
         val address = when (val aid = req.addressId) {
             null -> addressRepository.findFirstByUserIdAndIsDefaultTrue(userId)
                 ?: throw AddressNotFoundForUserException(-1)
+
             else -> addressRepository.findById(aid).orElse(null)?.takeIf { it.user?.id == userId }
                 ?: throw AddressNotFoundForUserException(aid)
         }
 
         val variantIds = req.items.map { it.variantId }.distinct()
-        val snapshots = variantQueryRepository.findSnapshots(variantIds).associateBy { it.getVariantId() }
+        val snapshots = productVariantRepository.findSnapshots(variantIds).associateBy { it.getVariantId() }
 
         // 2) validate variants + محاسبه subtotal
         var subtotal = BigDecimal.ZERO
@@ -89,7 +86,7 @@ class OrderService(
         }
 
         // 4) create order + items snapshots
-        val addressSnapshot = objectMapper.valueToTree<Map<String, Any?>>(
+        val addressSnapshot: JsonNode = objectMapper.valueToTree(
             mapOf(
                 "receiverName" to address.receiverName,
                 "receiverPhone" to address.receiverPhone,
@@ -194,5 +191,18 @@ class OrderService(
         }
 
         o.status = newStatus
+    }
+
+    @Transactional
+    fun updateShipping(orderId: Long, req: AdminUpdateShippingRequest) {
+        val o = orderRepository.findById(orderId).orElseThrow { OrderNotFoundException(orderId) }
+
+        if (req.shippingCarrier != null) o.shippingCarrier = req.shippingCarrier.trim().ifBlank { null }
+        if (req.trackingCode != null) o.trackingCode = req.trackingCode.trim().ifBlank { null }
+
+        if (req.markShipped && o.status == OrderStatus.CONFIRMED) {
+            o.status = OrderStatus.SHIPPED
+            o.shippedAt = OffsetDateTime.now()
+        }
     }
 }
