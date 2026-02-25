@@ -39,6 +39,10 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers(
+                    "/api/products/**",
+                    "/api/categories/**",
+                    "/api/sizes/**",
+                    "/api/colors/**",
                     "/api/auth/register",
                     "/api/auth/login",
                     "/api/auth/refresh",

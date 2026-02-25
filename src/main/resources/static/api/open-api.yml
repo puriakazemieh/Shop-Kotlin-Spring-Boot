@@ -290,6 +290,7 @@ paths:
               type: string
               minLength: 8
               maxLength: 100
+
   /api/addresses:
     get:
       tags: [ address ]
@@ -473,6 +474,117 @@ paths:
       responses:
         '204':
           description: Canceled
+
+  /api/categories:
+    get:
+      tags: [catalog]
+      summary: Category tree
+      operationId: getCategories
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CategoryResponse' }
+
+  /api/sizes:
+    get:
+      tags: [catalog]
+      summary: Sizes
+      operationId: getSizes
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SizeResponse' }
+
+  /api/colors:
+    get:
+      tags: [catalog]
+      summary: Colors
+      operationId: getColors
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ColorResponse' }
+
+  /api/products:
+    get:
+      tags: [catalog]
+      summary: Product list (search & filters)
+      operationId: listProducts
+      security: []
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: categoryId
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: sizeId
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: colorId
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: minPrice
+          in: query
+          schema: { type: number }
+        - name: maxPrice
+          in: query
+          schema: { type: number }
+        - name: inStock
+          in: query
+          schema: { type: boolean }
+        - name: page
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: size
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductPageResponse' }
+
+  /api/products/{slug}:
+    get:
+      tags: [catalog]
+      summary: Product detail by slug
+      operationId: getProductDetail
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetailResponse' }
+
+
 
 components:
   securitySchemes:
@@ -681,6 +793,101 @@ components:
           type: array
           items: { $ref: '#/components/schemas/OrderItemResponse' }
 
+    CategoryResponse:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        slug: { type: string }
+        parentId: { type: integer, format: int64, nullable: true }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/CategoryResponse' }
+
+    SizeResponse:
+      type: object
+      required: [id, name, sortOrder]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        sortOrder: { type: integer }
+
+    ColorResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        hex: { type: string, nullable: true }
+
+    ProductSummaryResponse:
+      type: object
+      required: [id, title, slug, inStock]
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        slug: { type: string }
+        thumbnailUrl: { type: string, nullable: true }
+        minPrice: { type: number, nullable: true }
+        maxPrice: { type: number, nullable: true }
+        inStock: { type: boolean }
+        categoryId: { type: integer, format: int64, nullable: true }
+        categoryName: { type: string, nullable: true }
+
+    ProductImageResponse:
+      type: object
+      required: [url, sortOrder]
+      properties:
+        url: { type: string }
+        sortOrder: { type: integer }
+
+    VariantResponse:
+      type: object
+      required: [id, sku, price, size, color, availableQty, isActive]
+      properties:
+        id: { type: integer, format: int64 }
+        sku: { type: string }
+        price: { type: number }
+        compareAtPrice: { type: number, nullable: true }
+        size: { $ref: '#/components/schemas/SizeResponse' }
+        color: { $ref: '#/components/schemas/ColorResponse' }
+        availableQty: { type: integer }
+        isActive: { type: boolean }
+
+    ProductDetailResponse:
+      type: object
+      required: [id, title, slug, images, variants]
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        categoryId: { type: integer, format: int64, nullable: true }
+        categoryName: { type: string, nullable: true }
+        images:
+          type: array
+          items: { $ref: '#/components/schemas/ProductImageResponse' }
+        variants:
+          type: array
+          items: { $ref: '#/components/schemas/VariantResponse' }
+        createdAt: { type: string, format: date-time, nullable: true }
+
+    ProductPageResponse:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ProductSummaryResponse' }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+
+
+
+
     ApiError:
       type: object
       properties:
@@ -702,3 +909,4 @@ components:
         timestamp:
           type: string
           format: date-time
+
