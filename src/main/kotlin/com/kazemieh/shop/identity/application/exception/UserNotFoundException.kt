@@ -19,3 +19,9 @@ class InvalidCredentialsException(message: String = "Invalid credentials")
 
 class ShopAccessDeniedException(message: String = "Access denied")
     : ForbiddenException(message, IdentityErrorCodes.ACCESS_DENIED)
+
+class InvalidCurrentPasswordException :
+    ApiException("Current password is invalid", "INVALID_CURRENT_PASSWORD", HttpStatus.BAD_REQUEST)
+
+class SameAsOldPasswordException :
+    ApiException("New password must be different", "SAME_AS_OLD_PASSWORD", HttpStatus.BAD_REQUEST)

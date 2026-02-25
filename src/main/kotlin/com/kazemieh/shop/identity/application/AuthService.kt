@@ -42,7 +42,7 @@ class AuthService(
         return AuthResponse(access, refresh, UserMapper.toResponse(saved))
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun login(req: LoginRequest): AuthResponse {
         try {
             authManager.authenticate(UsernamePasswordAuthenticationToken(req.email, req.password))
