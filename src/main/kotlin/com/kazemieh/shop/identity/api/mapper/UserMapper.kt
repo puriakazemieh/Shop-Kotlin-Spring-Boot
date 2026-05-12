@@ -8,8 +8,11 @@ object UserMapper {
     fun toResponse(u: UserEntity) = UserResponse(
         id = u.id,
         email = u.email,
-        fullName = u.fullName,
+        firstName = u.firstName,
+        lastName = u.lastName,
         phone = u.phone,
+        city = u.city,
+        postalCode = u.postalCode,
         role = u.role.name,
         isActive = u.isActive,
         createdAt = u.createdAt,

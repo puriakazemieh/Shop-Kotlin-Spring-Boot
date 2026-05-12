@@ -5,6 +5,7 @@ import org.postgresql.util.PSQLException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -69,10 +70,33 @@ class GlobalExceptionHandler {
 
     // Fallback
     @ExceptionHandler(Exception::class)
-    fun handleAny(ex: Exception, request: HttpServletRequest): ResponseEntity<ApiError> {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", ErrorCodes.INTERNAL_ERROR, request)
-    }
+    fun handleAny(
+        ex: Exception,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
 
+        ex.printStackTrace()
+
+        return build(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Internal server error",
+            ErrorCodes.INTERNAL_ERROR,
+            request
+        )
+    }
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleBadJson(
+        ex: HttpMessageNotReadableException,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
+
+        return build(
+            HttpStatus.BAD_REQUEST,
+            "Malformed JSON request",
+            "INVALID_JSON",
+            request
+        )
+    }
     // ===== Helpers =====
 
     private data class TranslatedDbError(

@@ -21,8 +21,17 @@ class UserEntity(
     @Column(name = "password_hash", nullable = false)
     var passwordHash: String = "",
 
-    @Column(name = "full_name")
-    var fullName: String? = null,
+    @Column(name = "first_name", length = 50)
+    var firstName: String? = null,
+
+    @Column(name = "last_name", length = 50)
+    var lastName: String? = null,
+
+    @Column(name = "city", length = 50)
+    var city: String? = null,
+
+    @Column(name = "postal_code")
+    var postalCode: Int? = null,
 
     @Column(name = "phone")
     var phone: String? = null,

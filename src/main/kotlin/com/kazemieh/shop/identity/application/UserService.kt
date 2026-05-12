@@ -28,8 +28,11 @@ class UserMeService(
     fun updateMe(userId: Long, req: UpdateMeRequest): UserResponse {
         val u = userRepository.findById(userId).orElseThrow { UserNotFoundException() }
 
-        if (req.fullName != null) u.fullName = req.fullName
+        if (req.firstName != null) u.firstName = req.firstName
+        if (req.lastName != null) u.lastName = req.lastName
         if (req.phone != null) u.phone = req.phone
+        if (req.city != null) u.city = req.city
+        if (req.postalCode != null) u.postalCode = req.postalCode
 
         val saved = userRepository.save(u)
         return UserMapper.toResponse(saved)

@@ -31,9 +31,7 @@ class AuthService(
         val saved = userRepository.save(
             UserEntity(
                 email = req.email,
-                passwordHash = hash,
-                fullName = req.fullName,
-                phone = req.phone
+                passwordHash = hash
             )
         )
 
