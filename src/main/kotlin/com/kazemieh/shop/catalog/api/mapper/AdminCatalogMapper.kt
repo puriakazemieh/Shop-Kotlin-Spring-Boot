@@ -20,7 +20,9 @@ object AdminCatalogMapper {
         categoryId = p.category?.id,
         isActive = p.isActive,
         createdAt = p.createdAt,
-        updatedAt = p.updatedAt
+        updatedAt = p.updatedAt,
+        basePrice = p.basePrice,
+        description = p.description,
     )
 
     fun image(i: ProductImageEntity) = AdminProductImageResponse(
