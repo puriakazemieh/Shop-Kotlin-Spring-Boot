@@ -5,6 +5,7 @@ import com.kazemieh.shop.catalog.api.mapper.AdminCatalogMapper
 import com.kazemieh.shop.catalog.application.exception.*
 import com.kazemieh.shop.catalog.persistence.*
 import com.kazemieh.shop.catalog.persistence.entity.*
+import com.kazemieh.shop.shared.error.NotFoundException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -308,5 +309,57 @@ class AdminCatalogService(
         inv.onHand = newOnHand
         val saved = inventoryRepository.save(inv)
         return AdminCatalogMapper.inventory(saved)
+    }
+
+    // ---------- Sizes ----------
+    @Transactional(readOnly = true)
+    fun listSizes(): List<AdminSizeResponse> {
+        return sizeRepository.findAllByOrderBySortOrderAscNameAsc().map { AdminSizeResponse(it.id, it.name, it.sortOrder) }
+    }
+
+    @Transactional
+    fun createSize(req: AdminCreateSizeRequest): AdminSizeResponse {
+        val saved = sizeRepository.save(SizeEntity(name = req.name, sortOrder = req.sortOrder))
+        return AdminSizeResponse(saved.id, saved.name, saved.sortOrder)
+    }
+
+    @Transactional
+    fun updateSize(id: Long, req: AdminUpdateSizeRequest): AdminSizeResponse {
+        val size = sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
+        req.name?.let { size.name = it }
+        req.sortOrder?.let { size.sortOrder = it }
+        return AdminSizeResponse(size.id, size.name, size.sortOrder)
+    }
+
+    @Transactional
+    fun deleteSize(id: Long) {
+        val size = sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
+        sizeRepository.delete(size)
+    }
+
+    // ---------- Colors ----------
+    @Transactional(readOnly = true)
+    fun listColors(): List<AdminColorResponse> {
+        return colorRepository.findAllByOrderByNameAsc().map { AdminColorResponse(it.id, it.name, it.hex) }
+    }
+
+    @Transactional
+    fun createColor(req: AdminCreateColorRequest): AdminColorResponse {
+        val saved = colorRepository.save(ColorEntity(name = req.name, hex = req.hex))
+        return AdminColorResponse(saved.id, saved.name, saved.hex)
+    }
+
+    @Transactional
+    fun updateColor(id: Long, req: AdminUpdateColorRequest): AdminColorResponse {
+        val color = colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
+        req.name?.let { color.name = it }
+        req.hex?.let { color.hex = it }
+        return AdminColorResponse(color.id, color.name, color.hex)
+    }
+
+    @Transactional
+    fun deleteColor(id: Long) {
+        val color = colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
+        colorRepository.delete(color)
     }
 }
