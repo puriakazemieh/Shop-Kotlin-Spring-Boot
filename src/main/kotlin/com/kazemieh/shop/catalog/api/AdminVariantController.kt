@@ -6,6 +6,7 @@ import com.kazemieh.shop.catalog.api.dto.AdminInventorySetRequest
 import com.kazemieh.shop.catalog.api.dto.AdminUpdateVariantRequest
 import com.kazemieh.shop.catalog.application.AdminCatalogService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
@@ -26,6 +27,12 @@ class AdminVariantController(
         @PathVariable variantId: Long,
         @Valid @RequestBody req: AdminUpdateVariantRequest
     ) = adminCatalogService.updateVariant(variantId, req)
+
+    @DeleteMapping("/api/admin/variants/{variantId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deleteVariant(@PathVariable variantId: Long) {
+        adminCatalogService.deleteVariant(variantId)
+    }
 
     @GetMapping("/api/admin/variants/{variantId}/inventory")
     fun getInventory(@PathVariable variantId: Long) =

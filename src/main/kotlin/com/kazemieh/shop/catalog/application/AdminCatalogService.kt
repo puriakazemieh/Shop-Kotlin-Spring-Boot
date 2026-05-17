@@ -262,6 +262,16 @@ class AdminCatalogService(
         return AdminCatalogMapper.variant(v, inv)
     }
 
+    @Transactional
+    fun deleteVariant(variantId: Long) {
+        val variant = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
+        
+        // Remove associated inventory first due to foreign key constraint
+        inventoryRepository.deleteById(variantId)
+        
+        variantRepository.delete(variant)
+    }
+
     // ---------- Inventory ----------
     @Transactional(readOnly = true)
     fun getInventory(variantId: Long): AdminInventoryResponse {
