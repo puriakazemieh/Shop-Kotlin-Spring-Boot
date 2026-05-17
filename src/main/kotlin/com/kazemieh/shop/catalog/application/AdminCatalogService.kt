@@ -66,7 +66,8 @@ class AdminCatalogService(
                 "CATEGORY_PARENT_INVALID"
             )
             val parent =
-                categoryRepository.findById(req.parentId).orElseThrow { CategoryNotFoundException(req.parentId.toString()) }
+                categoryRepository.findById(req.parentId)
+                    .orElseThrow { CategoryNotFoundException(req.parentId.toString()) }
             c.parent = parent
         }
 
@@ -124,7 +125,8 @@ class AdminCatalogService(
 
         if (req.categoryId != null) {
             p.category =
-                categoryRepository.findById(req.categoryId).orElseThrow { CategoryNotFoundException(req.categoryId.toString()) }
+                categoryRepository.findById(req.categoryId)
+                    .orElseThrow { CategoryNotFoundException(req.categoryId.toString()) }
         }
 
         req.title?.let { p.title = it.trim() }
@@ -211,7 +213,8 @@ class AdminCatalogService(
     // ---------- Variants ----------
     @Transactional
     fun createVariant(productId: Long, req: AdminCreateVariantRequest): AdminVariantResponse {
-        val product = productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
+        val product =
+            productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
         val size = sizeRepository.findById(req.sizeId)
             .orElseThrow { BadRequestException("Size not found: ${req.sizeId}", "SIZE_NOT_FOUND") }
         val color = colorRepository.findById(req.colorId)
@@ -249,26 +252,43 @@ class AdminCatalogService(
     fun updateVariant(variantId: Long, req: AdminUpdateVariantRequest): AdminVariantResponse {
         val v = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
 
+        req.sizeId?.let {
+            v.size = sizeRepository.findById(it)
+                .orElseThrow { BadRequestException("Size not found: $it", "SIZE_NOT_FOUND") }
+        }
+
+        req.colorId?.let {
+            v.color = colorRepository.findById(it)
+                .orElseThrow { BadRequestException("Color not found: $it", "COLOR_NOT_FOUND") }
+        }
+
         req.sku?.let {
             val newSku = it.trim()
             if (newSku != v.sku && variantRepository.existsBySku(newSku)) throw SkuExistsException(newSku)
             v.sku = newSku
         }
         req.price?.let { v.price = it }
-        if (req.compareAtPrice != null) v.compareAtPrice = req.compareAtPrice
+
+        req.compareAtPrice?.let { v.compareAtPrice = it }
         req.isActive?.let { v.isActive = it }
 
+        variantRepository.saveAndFlush(v)
+
         val inv = inventoryRepository.findById(variantId).orElse(null)
-        return AdminCatalogMapper.variant(v, inv)
+
+        val updatedVariantList = variantRepository.findWithAllOptionsByIds(listOf(variantId))
+        val updatedVariant = if (updatedVariantList.isNotEmpty()) updatedVariantList[0] else v
+
+        return AdminCatalogMapper.variant(updatedVariant, inv)
     }
 
     @Transactional
     fun deleteVariant(variantId: Long) {
         val variant = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
-        
+
         // Remove associated inventory first due to foreign key constraint
         inventoryRepository.deleteById(variantId)
-        
+
         variantRepository.delete(variant)
     }
 
@@ -324,7 +344,8 @@ class AdminCatalogService(
     // ---------- Sizes ----------
     @Transactional(readOnly = true)
     fun listSizes(): List<AdminSizeResponse> {
-        return sizeRepository.findAllByOrderBySortOrderAscNameAsc().map { AdminSizeResponse(it.id, it.name, it.sortOrder) }
+        return sizeRepository.findAllByOrderBySortOrderAscNameAsc()
+            .map { AdminSizeResponse(it.id, it.name, it.sortOrder) }
     }
 
     @Transactional
@@ -335,7 +356,8 @@ class AdminCatalogService(
 
     @Transactional
     fun updateSize(id: Long, req: AdminUpdateSizeRequest): AdminSizeResponse {
-        val size = sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
+        val size =
+            sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
         req.name?.let { size.name = it }
         req.sortOrder?.let { size.sortOrder = it }
         return AdminSizeResponse(size.id, size.name, size.sortOrder)
@@ -343,7 +365,8 @@ class AdminCatalogService(
 
     @Transactional
     fun deleteSize(id: Long) {
-        val size = sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
+        val size =
+            sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
         sizeRepository.delete(size)
     }
 
@@ -361,7 +384,8 @@ class AdminCatalogService(
 
     @Transactional
     fun updateColor(id: Long, req: AdminUpdateColorRequest): AdminColorResponse {
-        val color = colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
+        val color =
+            colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
         req.name?.let { color.name = it }
         req.hex?.let { color.hex = it }
         return AdminColorResponse(color.id, color.name, color.hex)
@@ -369,7 +393,8 @@ class AdminCatalogService(
 
     @Transactional
     fun deleteColor(id: Long) {
-        val color = colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
+        val color =
+            colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
         colorRepository.delete(color)
     }
 }
