@@ -34,6 +34,7 @@ class SecurityConfig(
             .cors { }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .headers { it.frameOptions { frame -> frame.disable() } }
             .exceptionHandling {
                 it.authenticationEntryPoint(entryPoint)
                 it.accessDeniedHandler(deniedHandler)
@@ -50,7 +51,8 @@ class SecurityConfig(
                     "/api/auth/logout",
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
-                    "/api/open-api.yml"
+                    "/api/open-api.yml",
+                    "/uploads/**" // اجازه دسترسی عمومی به پوشه عکس‌ها
                 ).permitAll()
 
                 it.anyRequest().authenticated()

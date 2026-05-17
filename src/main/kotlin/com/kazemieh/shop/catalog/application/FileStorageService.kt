@@ -8,7 +8,7 @@ import java.util.UUID
 
 @Service
 class FileStorageService {
-    private val uploadDir = Paths.get("uploads")
+    private val uploadDir = Paths.get("uploads").toAbsolutePath()
 
     init {
         // اگر پوشه وجود نداشت، ساخته می‌شود
@@ -19,7 +19,7 @@ class FileStorageService {
 
     fun saveFile(file: MultipartFile): String {
         // برای جلوگیری از تداخل اسمی، یک کد یکتا به اسم فایل اضافه می‌کنیم
-        val fileName = "${UUID.randomUUID()}_${file.originalFilename}"
+        val fileName = "${UUID.randomUUID()}_${file.originalFilename?.replace(" ", "_")}"
         val targetLocation = uploadDir.resolve(fileName)
         
         // ذخیره فایل در سیستم
