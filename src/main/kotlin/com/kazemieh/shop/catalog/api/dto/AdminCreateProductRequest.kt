@@ -12,4 +12,5 @@ data class AdminCreateProductRequest(
     val description: String? = null,
     val basePrice: BigDecimal? = null,
     val isActive: Boolean = true,
+    val variants: List<AdminCreateVariantRequest>? = null
 )

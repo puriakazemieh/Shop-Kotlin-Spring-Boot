@@ -116,6 +116,11 @@ class AdminCatalogService(
                 isActive = req.isActive
             )
         )
+        
+        req.variants?.forEach { variantReq ->
+            createVariant(saved.id, variantReq)
+        }
+
         return AdminCatalogMapper.product(saved)
     }
 
