@@ -29,6 +29,7 @@ object OrderMapper {
             address = addr,
             items = o.items.map {
                 OrderItemResponse(
+                    id = it.id,
                     variantId = it.variantId,
                     qty = it.qty,
                     unitPrice = it.unitPriceSnapshot,

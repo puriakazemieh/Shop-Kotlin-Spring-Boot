@@ -2,6 +2,8 @@ package com.kazemieh.shop.order.application
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.kazemieh.shop.cart.persistence.CartItemRepository
+import com.kazemieh.shop.cart.persistence.CartRepository
 import com.kazemieh.shop.catalog.persistence.InventoryRepository
 import com.kazemieh.shop.catalog.persistence.ProductVariantRepository
 import com.kazemieh.shop.customer.address.persistence.AddressRepository
@@ -28,6 +30,8 @@ class OrderService(
     private val addressRepository: AddressRepository,
     private val productVariantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
+    private val cartRepository: CartRepository,
+    private val cartItemRepository: CartItemRepository,
     private val objectMapper: ObjectMapper,
 ) {
 
@@ -101,7 +105,7 @@ class OrderService(
 
         val order = OrderEntity(
             user = user,
-            status = OrderStatus.PENDING,
+            status = OrderStatus.PLACED,
             subtotalPrice = subtotal,
             shippingPrice = shipping,
             totalPrice = total,
@@ -124,6 +128,12 @@ class OrderService(
         }
 
         val saved = orderRepository.save(order)
+        
+        // 5) Clear cart
+        cartRepository.findByUserId(userId)?.let { cart ->
+            cartItemRepository.deleteAllByCartId(cart.id)
+        }
+
         return OrderMapper.toDetailResponse(saved, objectMapper)
     }
 
@@ -131,7 +141,7 @@ class OrderService(
     fun cancelMyOrder(userId: Long, orderId: Long) {
         val o = orderRepository.findByIdAndUserId(orderId, userId) ?: throw OrderNotFoundException(orderId)
 
-        if (o.status != OrderStatus.PENDING && o.status != OrderStatus.CONFIRMED) {
+        if (o.status != OrderStatus.PLACED && o.status != OrderStatus.PROCESSING) {
             throw OrderStatusNotAllowedException()
         }
 
@@ -144,7 +154,7 @@ class OrderService(
             inv.reserved = (inv.reserved - it.qty).coerceAtLeast(0)
         }
 
-        o.status = OrderStatus.CANCELED
+        o.status = OrderStatus.CANCELLED
     }
 
     // --- Admin / system status update ---
@@ -152,26 +162,21 @@ class OrderService(
     fun updateStatus(orderId: Long, newStatus: OrderStatus) {
         val o = orderRepository.findById(orderId).orElseThrow { OrderNotFoundException(orderId) }
 
-        // قوانین ساده:
-        // PENDING -> CONFIRMED -> SHIPPED -> DELIVERED
-        // PENDING/CONFIRMED -> CANCELED
         val allowed = when (o.status) {
-            OrderStatus.PENDING -> newStatus in setOf(OrderStatus.CONFIRMED, OrderStatus.CANCELED)
-            OrderStatus.CONFIRMED -> newStatus in setOf(OrderStatus.SHIPPED, OrderStatus.CANCELED)
-            OrderStatus.SHIPPED -> newStatus == OrderStatus.DELIVERED
-            OrderStatus.DELIVERED -> false
-            OrderStatus.CANCELED -> false
+            OrderStatus.PLACED -> newStatus in setOf(OrderStatus.PROCESSING, OrderStatus.CANCELLED)
+            OrderStatus.PROCESSING -> newStatus in setOf(OrderStatus.SHIPPING, OrderStatus.CANCELLED)
+            OrderStatus.SHIPPING -> newStatus == OrderStatus.COMPLETED
+            OrderStatus.COMPLETED -> false
+            OrderStatus.CANCELLED -> false
         }
         if (!allowed) throw OrderStatusNotAllowedException()
 
-        // اگر به DELIVERED رفت: از رزرو کم کن و از موجودی کم کن
-        if (newStatus == OrderStatus.DELIVERED) {
+        if (newStatus == OrderStatus.COMPLETED) {
             val variantIds = o.items.map { it.variantId }.distinct()
             val invRows = inventoryRepository.findAllForUpdate(variantIds).associateBy { it.variantId }
 
             for (it in o.items) {
                 val inv = invRows[it.variantId] ?: throw NotEnoughStockException(it.variantId)
-                // چون قبلاً reserved شده، باید حداقل reserved >= qty باشد
                 if (inv.reserved < it.qty || inv.onHand < it.qty) throw NotEnoughStockException(it.variantId)
 
                 inv.reserved -= it.qty
@@ -179,8 +184,7 @@ class OrderService(
             }
         }
 
-        // اگر از CONFIRMED/PENDING به CANCELED رفت: رزرو آزاد شود
-        if (newStatus == OrderStatus.CANCELED) {
+        if (newStatus == OrderStatus.CANCELLED && o.status in setOf(OrderStatus.PLACED, OrderStatus.PROCESSING)) {
             val variantIds = o.items.map { it.variantId }.distinct()
             val invRows = inventoryRepository.findAllForUpdate(variantIds).associateBy { it.variantId }
             for (it in o.items) {
@@ -200,8 +204,8 @@ class OrderService(
         if (req.shippingCarrier != null) o.shippingCarrier = req.shippingCarrier.trim().ifBlank { null }
         if (req.trackingCode != null) o.trackingCode = req.trackingCode.trim().ifBlank { null }
 
-        if (req.markShipped && o.status == OrderStatus.CONFIRMED) {
-            o.status = OrderStatus.SHIPPED
+        if (req.markShipped && o.status == OrderStatus.PROCESSING) {
+            o.status = OrderStatus.SHIPPING
             o.shippedAt = OffsetDateTime.now()
         }
     }

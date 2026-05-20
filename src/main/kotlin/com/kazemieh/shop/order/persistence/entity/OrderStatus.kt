@@ -10,7 +10,7 @@ import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
-enum class OrderStatus { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELED }
+enum class OrderStatus { PLACED, PROCESSING, SHIPPING, COMPLETED, CANCELLED }
 
 @Entity
 @Table(
@@ -32,7 +32,7 @@ class OrderEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    var status: OrderStatus = OrderStatus.PENDING,
+    var status: OrderStatus = OrderStatus.PLACED,
 
     @Column(name = "subtotal_price", nullable = false, precision = 12, scale = 2)
     var subtotalPrice: BigDecimal = BigDecimal.ZERO,
