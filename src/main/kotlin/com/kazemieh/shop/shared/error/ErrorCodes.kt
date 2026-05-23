@@ -19,6 +19,10 @@ object ErrorCodes {
     const val PRODUCT_INACTIVE = "PRODUCT_INACTIVE"
     const val INVALID_PRODUCT_PRICE = "INVALID_PRODUCT_PRICE"
 
+    // ===== Options =====
+    const val OPTION_TYPE_NOT_FOUND = "OPTION_TYPE_NOT_FOUND"
+    const val OPTION_VALUE_NOT_FOUND = "OPTION_VALUE_NOT_FOUND"
+
     // ===== Sizes / Colors =====
     const val SIZE_NOT_FOUND = "SIZE_NOT_FOUND"
     const val SIZE_EXISTS = "SIZE_EXISTS"

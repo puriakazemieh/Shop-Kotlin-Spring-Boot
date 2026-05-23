@@ -9,7 +9,8 @@ import java.math.BigDecimal
 
 // ---------- Variant + Inventory ----------
 data class AdminCreateVariantRequest(
-    @field:NotNull val options: Map<String, String>,
+    @field:NotBlank val optionType: String,
+    @field:NotBlank val optionValue: String,
     @field:NotBlank @field:Size(max = 80) val sku: String,
     @field:NotNull @field:DecimalMin("0.0") val price: BigDecimal,
     @field:DecimalMin("0.0") val compareAtPrice: BigDecimal? = null,

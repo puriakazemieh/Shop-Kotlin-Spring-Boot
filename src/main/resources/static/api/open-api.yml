@@ -15,6 +15,10 @@ servers:
 tags:
   - name: auth
     description: Authentication endpoints
+  - name: admin-catalog
+    description: Catalog management for admins
+  - name: admin-options
+    description: Option management for admins
 
 security:
   - BearerAuth: [ ]
@@ -737,6 +741,138 @@ paths:
       responses:
         '200': { description: OK }
 
+  /api/admin/options:
+    get:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: List all options grouped by type
+      operationId: adminListAllOptions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminOptionGroupResponse'
+
+  /api/admin/options/types:
+    post:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Create a new option type
+      operationId: adminCreateOptionType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateOptionTypeRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOptionTypeResponse'
+
+  /api/admin/options/types/{id}:
+    put:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Update an option type
+      operationId: adminUpdateOptionType
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateOptionTypeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOptionTypeResponse'
+    delete:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Delete an option type
+      operationId: adminDeleteOptionType
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204':
+          description: Deleted
+
+  /api/admin/options/values:
+    post:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Create a new option value
+      operationId: adminCreateOptionValue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateOptionValueRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOptionValueResponse'
+
+  /api/admin/options/values/{id}:
+    put:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Update an option value
+      operationId: adminUpdateOptionValue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateOptionValueRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOptionValueResponse'
+    delete:
+      tags: [admin-options]
+      security: [{ BearerAuth: [] }]
+      summary: Delete an option value
+      operationId: adminDeleteOptionValue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204':
+          description: Deleted
+
   /api/admin/orders:
     get:
       tags: [admin-orders]
@@ -1359,12 +1495,10 @@ components:
     # ---------- Variants + Inventory ----------
     AdminCreateVariantRequest:
       type: object
-      required: [options, sku, price]
+      required: [optionType, optionValue, sku, price]
       properties:
-        options:
-          type: object
-          additionalProperties:
-            type: string
+        optionType: { type: string }
+        optionValue: { type: string }
         sku: { type: string, maxLength: 80 }
         price: { type: number, minimum: 0 }
         compareAtPrice: { type: number, nullable: true, minimum: 0 }
@@ -1374,10 +1508,8 @@ components:
     AdminUpdateVariantRequest:
       type: object
       properties:
-        options:
-          type: object
-          additionalProperties:
-            type: string
+        optionType: { type: string, nullable: true }
+        optionValue: { type: string, nullable: true }
         sku: { type: string, nullable: true, maxLength: 80 }
         price: { type: number, nullable: true, minimum: 0 }
         compareAtPrice: { type: number, nullable: true, minimum: 0 }
@@ -1424,6 +1556,57 @@ components:
         isActive: { type: boolean }
         inventory:
           $ref: '#/components/schemas/AdminInventoryResponse'
+
+    # ---------- Options ----------
+    AdminOptionGroupResponse:
+      type: object
+      required: [id, name, values]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminOptionValueResponse'
+
+    AdminOptionTypeResponse:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+
+    AdminOptionValueResponse:
+      type: object
+      required: [id, value]
+      properties:
+        id: { type: integer, format: int64 }
+        value: { type: string }
+
+    AdminCreateOptionTypeRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    AdminUpdateOptionTypeRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    AdminCreateOptionValueRequest:
+      type: object
+      required: [optionTypeId, value]
+      properties:
+        optionTypeId: { type: integer, format: int64 }
+        value: { type: string }
+
+    AdminUpdateOptionValueRequest:
+      type: object
+      required: [value]
+      properties:
+        value: { type: string }
 
     PageResponseAdminOrderSummaryResponse:
       type: object

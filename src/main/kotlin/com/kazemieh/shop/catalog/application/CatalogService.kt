@@ -78,8 +78,6 @@ class CatalogService(
                 val res = productSearchRepository.searchRelevance(
                     q = qNorm,
                     categoryId = resolvedCategoryId,
-                    sizeId = null, // options?.get("size"),
-                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -93,8 +91,6 @@ class CatalogService(
             else -> when (sortKey) {
                 "price_asc" -> productSearchRepository.searchPriceAsc(
                     categoryId = resolvedCategoryId,
-                    sizeId = null, // options?.get("size"),
-                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -103,8 +99,6 @@ class CatalogService(
                 )
                 "price_desc" -> productSearchRepository.searchPriceDesc(
                     categoryId = resolvedCategoryId,
-                    sizeId = null, // options?.get("size"),
-                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -113,8 +107,6 @@ class CatalogService(
                 )
                 else -> productSearchRepository.searchNewest(
                     categoryId = resolvedCategoryId,
-                    sizeId = null, // options?.get("size"),
-                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,

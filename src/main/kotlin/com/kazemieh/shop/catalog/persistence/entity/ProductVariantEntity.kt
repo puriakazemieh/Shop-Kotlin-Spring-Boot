@@ -21,13 +21,9 @@ class ProductVariantEntity(
     @JoinColumn(name = "product_id", nullable = false)
     var product: ProductEntity? = null,
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "product_variant_option_values",
-        joinColumns = [JoinColumn(name = "product_variant_id")],
-        inverseJoinColumns = [JoinColumn(name = "option_value_id")]
-    )
-    var optionValues: MutableSet<OptionValueEntity> = mutableSetOf(),
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "option_value_id")
+    var optionValue: OptionValueEntity? = null,
 
     @Column(nullable = false, unique = true, length = 80)
     var sku: String = "",

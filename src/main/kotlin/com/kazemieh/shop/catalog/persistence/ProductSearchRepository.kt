@@ -47,8 +47,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-                AND (:colorId IS NULL OR pv.color_id = :colorId)
                 AND (:minPrice IS NULL OR pv.price >= :minPrice)
                 AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -84,8 +82,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-                AND (:colorId IS NULL OR pv.color_id = :colorId)
                 AND (:minPrice IS NULL OR pv.price >= :minPrice)
                 AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -97,8 +93,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
     fun searchRelevance(
         @Param("q") q: String?,
         @Param("categoryId") categoryId: Long?,
-        @Param("sizeId") sizeId: Long?,
-        @Param("colorId") colorId: Long?,
         @Param("minPrice") minPrice: BigDecimal?,
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
@@ -127,8 +121,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-                AND (:colorId IS NULL OR pv.color_id = :colorId)
                 AND (:minPrice IS NULL OR pv.price >= :minPrice)
                 AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -154,8 +146,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-                AND (:colorId IS NULL OR pv.color_id = :colorId)
                 AND (:minPrice IS NULL OR pv.price >= :minPrice)
                 AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -166,8 +156,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
     )
     fun searchNewest(
         @Param("categoryId") categoryId: Long?,
-        @Param("sizeId") sizeId: Long?,
-        @Param("colorId") colorId: Long?,
         @Param("minPrice") minPrice: BigDecimal?,
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
@@ -231,8 +219,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
             LEFT JOIN inventory i ON i.variant_id = pv.id
             WHERE pv.product_id = p.id
               AND pv.is_active = true
-              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-              AND (:colorId IS NULL OR pv.color_id = :colorId)
               AND (:minPrice IS NULL OR pv.price >= :minPrice)
               AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
               AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -260,8 +246,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
             LEFT JOIN inventory i ON i.variant_id = pv.id
             WHERE pv.product_id = p.id
               AND pv.is_active = true
-              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-              AND (:colorId IS NULL OR pv.color_id = :colorId)
               AND (:minPrice IS NULL OR pv.price >= :minPrice)
               AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
               AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -272,8 +256,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
     )
     fun searchPriceAsc(
         @Param("categoryId") categoryId: Long?,
-        @Param("sizeId") sizeId: Long?,
-        @Param("colorId") colorId: Long?,
         @Param("minPrice") minPrice: BigDecimal?,
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
@@ -300,8 +282,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
             LEFT JOIN inventory i ON i.variant_id = pv.id
             WHERE pv.product_id = p.id
               AND pv.is_active = true
-              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-              AND (:colorId IS NULL OR pv.color_id = :colorId)
               AND (:minPrice IS NULL OR pv.price >= :minPrice)
               AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
               AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -329,8 +309,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
             LEFT JOIN inventory i ON i.variant_id = pv.id
             WHERE pv.product_id = p.id
               AND pv.is_active = true
-              AND (:sizeId IS NULL OR pv.size_id = :sizeId)
-              AND (:colorId IS NULL OR pv.color_id = :colorId)
               AND (:minPrice IS NULL OR pv.price >= :minPrice)
               AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
               AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
@@ -341,8 +319,6 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
     )
     fun searchPriceDesc(
         @Param("categoryId") categoryId: Long?,
-        @Param("sizeId") sizeId: Long?,
-        @Param("colorId") colorId: Long?,
         @Param("minPrice") minPrice: BigDecimal?,
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,

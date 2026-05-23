@@ -40,14 +40,17 @@ object AdminCatalogMapper {
         updatedAt = inv.updatedAt
     )
 
-    fun variant(v: ProductVariantEntity, inv: InventoryEntity?) = AdminVariantResponse(
-        id = v.id,
-        productId = v.product!!.id,
-        options = v.optionValues.associate { it.optionType.name to it.value },
-        sku = v.sku,
-        price = v.price,
-        compareAtPrice = v.compareAtPrice,
-        isActive = v.isActive,
-        inventory = inv?.let(::inventory)
-    )
+    fun variant(v: ProductVariantEntity, inv: InventoryEntity?): AdminVariantResponse {
+        val options = v.optionValue?.let { mapOf(it.optionType.name to it.value) } ?: emptyMap()
+        return AdminVariantResponse(
+            id = v.id,
+            productId = v.product!!.id,
+            options = options,
+            sku = v.sku,
+            price = v.price,
+            compareAtPrice = v.compareAtPrice,
+            isActive = v.isActive,
+            inventory = inv?.let(::inventory)
+        )
+    }
 }

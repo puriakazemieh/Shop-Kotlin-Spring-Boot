@@ -11,7 +11,7 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     @Query(
         """
         select v from ProductVariantEntity v
-        left join fetch v.optionValues ov
+        left join fetch v.optionValue ov
         left join fetch ov.optionType
         where v.product.id = :productId and v.isActive = true
         order by v.id asc
@@ -47,7 +47,7 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     @Query(
         """
         select v from ProductVariantEntity v
-        left join fetch v.optionValues ov
+        left join fetch v.optionValue ov
         left join fetch ov.optionType
         where v.product.id = :productId
         order by v.id asc
@@ -59,7 +59,7 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
         """
         select v from ProductVariantEntity v
         left join fetch v.product p
-        left join fetch v.optionValues ov
+        left join fetch v.optionValue ov
         left join fetch ov.optionType
         where v.id in :ids
         """

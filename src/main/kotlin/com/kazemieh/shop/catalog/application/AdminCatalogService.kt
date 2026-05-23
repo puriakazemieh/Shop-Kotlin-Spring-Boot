@@ -221,13 +221,11 @@ class AdminCatalogService(
         val product =
             productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
 
-        val optionValues = req.options.map { (optionTypeName, optionValueName) ->
-            val optionType = optionTypeRepository.findByName(optionTypeName)
-                .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionTypeName)) }
+        val optionType = optionTypeRepository.findByName(req.optionType)
+            .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = req.optionType)) }
 
-            optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionValueName)
-                .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionValueName)) }
-        }.toMutableSet()
+        val optionValue = optionValueRepository.findByOptionTypeIdAndValue(optionType.id, req.optionValue)
+            .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = req.optionValue)) }
 
         val sku = req.sku.trim()
         if (variantRepository.existsBySku(sku)) throw SkuExistsException(sku)
@@ -235,7 +233,7 @@ class AdminCatalogService(
         val variant = variantRepository.save(
             ProductVariantEntity(
                 product = product,
-                optionValues = optionValues,
+                optionValue = optionValue,
                 sku = sku,
                 price = req.price,
                 compareAtPrice = req.compareAtPrice,
@@ -260,16 +258,14 @@ class AdminCatalogService(
     fun updateVariant(variantId: Long, req: AdminUpdateVariantRequest): AdminVariantResponse {
         val v = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
 
-        req.options?.let { options ->
-            v.optionValues.clear()
-            val newOptionValues = options.map { (optionTypeName, optionValueName) ->
-                val optionType = optionTypeRepository.findByName(optionTypeName)
-                    .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionTypeName)) }
+        if (req.optionType != null && req.optionValue != null) {
+            val optionType = optionTypeRepository.findByName(req.optionType)
+                .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = req.optionType)) }
 
-                optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionValueName)
-                    .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionValueName)) }
-            }.toMutableSet()
-            v.optionValues.addAll(newOptionValues)
+            val optionValue = optionValueRepository.findByOptionTypeIdAndValue(optionType.id, req.optionValue)
+                .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = req.optionValue)) }
+            
+            v.optionValue = optionValue
         }
 
         req.sku?.let {
@@ -286,10 +282,7 @@ class AdminCatalogService(
 
         val inv = inventoryRepository.findById(variantId).orElse(null)
 
-        // Eagerly fetch optionValues for the response
-        val updatedVariant = variantRepository.findById(variantId).get()
-
-        return AdminCatalogMapper.variant(updatedVariant, inv)
+        return AdminCatalogMapper.variant(v, inv)
     }
 
     @Transactional
