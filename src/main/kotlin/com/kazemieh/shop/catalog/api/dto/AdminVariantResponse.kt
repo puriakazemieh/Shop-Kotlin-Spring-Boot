@@ -5,10 +5,7 @@ import java.math.BigDecimal
 data class AdminVariantResponse(
     val id: Long,
     val productId: Long,
-    val sizeId: Long,
-    val sizeName: String,
-    val colorId: Long,
-    val colorName: String,
+    val options: Map<String, String>,
     val sku: String,
     val price: BigDecimal,
     val compareAtPrice: BigDecimal?,

@@ -152,8 +152,7 @@ class CartService(
                 productSlug = v.product!!.slug,
                 imageUrl = thumbByProductId[v.product!!.id],
 
-                sizeName = v.size!!.name,
-                colorName = v.color!!.name,
+                options = v.optionValues.associate { it.optionType.name to it.value },
 
                 price = v.price,
                 compareAtPrice = v.compareAtPrice,

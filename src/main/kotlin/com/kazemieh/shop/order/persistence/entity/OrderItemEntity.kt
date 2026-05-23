@@ -1,8 +1,10 @@
 package com.kazemieh.shop.order.persistence.entity
 
+import com.fasterxml.jackson.databind.JsonNode
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
-import java.time.OffsetDateTime
 
 @Entity
 @Table(
@@ -31,9 +33,7 @@ class OrderItemEntity(
     @Column(name = "title_snapshot", nullable = false, length = 255)
     var titleSnapshot: String = "",
 
-    @Column(name = "size_snapshot", nullable = false, length = 40)
-    var sizeSnapshot: String = "",
-
-    @Column(name = "color_snapshot", nullable = false, length = 60)
-    var colorSnapshot: String = "",
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "options_snapshot", columnDefinition = "jsonb")
+    var optionsSnapshot: JsonNode? = null,
 )

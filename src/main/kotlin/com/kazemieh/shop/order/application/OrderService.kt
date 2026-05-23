@@ -61,17 +61,19 @@ class OrderService(
         }
 
         val variantIds = req.items.map { it.variantId }.distinct()
-        val snapshots = productVariantRepository.findSnapshots(variantIds).associateBy { it.getVariantId() }
+        
+        // Find variants with their options to create options snapshot
+        val variants = productVariantRepository.findWithAllOptionsByIds(variantIds).associateBy { it.id }
 
         // 2) validate variants + محاسبه subtotal
         var subtotal = BigDecimal.ZERO
         val normalizedItems = req.items.groupBy { it.variantId }.mapValues { (_, list) -> list.sumOf { it.qty } }
 
         for ((variantId, qty) in normalizedItems) {
-            val s = snapshots[variantId] ?: throw VariantNotFoundException(variantId)
-            if (!s.getIsActive()) throw VariantInactiveException(variantId)
+            val v = variants[variantId] ?: throw VariantNotFoundException(variantId)
+            if (!v.isActive) throw VariantInactiveException(variantId)
 
-            subtotal = subtotal.add(s.getPrice().multiply(qty.toBigDecimal()))
+            subtotal = subtotal.add(v.price.multiply(qty.toBigDecimal()))
         }
 
         val shipping = BigDecimal.ZERO
@@ -113,16 +115,17 @@ class OrderService(
         )
 
         for ((variantId, qty) in normalizedItems) {
-            val s = snapshots.getValue(variantId)
+            val v = variants.getValue(variantId)
+            val optionsSnapshot = objectMapper.valueToTree<JsonNode>(v.optionValues.associate { it.optionType.name to it.value })
+            
             order.items.add(
                 OrderItemEntity(
                     order = order,
                     variantId = variantId,
                     qty = qty,
-                    unitPriceSnapshot = s.getPrice(),
-                    titleSnapshot = s.getTitle(),
-                    sizeSnapshot = s.getSizeName(),
-                    colorSnapshot = s.getColorName()
+                    unitPriceSnapshot = v.price,
+                    titleSnapshot = v.product?.title ?: "",
+                    optionsSnapshot = optionsSnapshot
                 )
             )
         }

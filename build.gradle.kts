@@ -19,9 +19,9 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
 }
 
-//repositories {
-//    mavenCentral()
-//}
+repositories {
+    mavenCentral()
+}
 
 val jwtVersion = "0.12.5"
 val openApiWebMvc = "2.5.0"

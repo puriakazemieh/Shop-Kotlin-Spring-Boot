@@ -17,9 +17,9 @@ class AdminCatalogService(
     private val productRepository: ProductRepository,
     private val imageRepository: ProductImageRepository,
     private val variantRepository: ProductVariantRepository,
-    private val sizeRepository: SizeRepository,
-    private val colorRepository: ColorRepository,
     private val inventoryRepository: InventoryRepository,
+    private val optionTypeRepository: OptionTypeRepository,
+    private val optionValueRepository: OptionValueRepository
 ) {
 
     // ---------- Categories ----------
@@ -154,7 +154,7 @@ class AdminCatalogService(
         val p = productRepository.findById(id).orElseThrow { ProductNotFoundException(id.toString()) }
 
         val images = imageRepository.findAllByProductIdOrderBySortOrderAsc(id)
-        val variants = variantRepository.findAllWithOptionsByProductId(id)
+        val variants = variantRepository.findAllByProductId(id)
         val invMap = inventoryRepository.findAllById(variants.map { it.id }).associateBy { it.variantId }
 
         return AdminProductDetailResponse(
@@ -220,10 +220,14 @@ class AdminCatalogService(
     fun createVariant(productId: Long, req: AdminCreateVariantRequest): AdminVariantResponse {
         val product =
             productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
-        val size = sizeRepository.findById(req.sizeId)
-            .orElseThrow { BadRequestException("Size not found: ${req.sizeId}", "SIZE_NOT_FOUND") }
-        val color = colorRepository.findById(req.colorId)
-            .orElseThrow { BadRequestException("Color not found: ${req.colorId}", "COLOR_NOT_FOUND") }
+
+        val optionValues = req.options.map { (optionTypeName, optionValueName) ->
+            val optionType = optionTypeRepository.findByName(optionTypeName)
+                .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionTypeName)) }
+
+            optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionValueName)
+                .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionValueName)) }
+        }.toMutableSet()
 
         val sku = req.sku.trim()
         if (variantRepository.existsBySku(sku)) throw SkuExistsException(sku)
@@ -231,8 +235,7 @@ class AdminCatalogService(
         val variant = variantRepository.save(
             ProductVariantEntity(
                 product = product,
-                size = size,
-                color = color,
+                optionValues = optionValues,
                 sku = sku,
                 price = req.price,
                 compareAtPrice = req.compareAtPrice,
@@ -257,14 +260,16 @@ class AdminCatalogService(
     fun updateVariant(variantId: Long, req: AdminUpdateVariantRequest): AdminVariantResponse {
         val v = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
 
-        req.sizeId?.let {
-            v.size = sizeRepository.findById(it)
-                .orElseThrow { BadRequestException("Size not found: $it", "SIZE_NOT_FOUND") }
-        }
+        req.options?.let { options ->
+            v.optionValues.clear()
+            val newOptionValues = options.map { (optionTypeName, optionValueName) ->
+                val optionType = optionTypeRepository.findByName(optionTypeName)
+                    .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionTypeName)) }
 
-        req.colorId?.let {
-            v.color = colorRepository.findById(it)
-                .orElseThrow { BadRequestException("Color not found: $it", "COLOR_NOT_FOUND") }
+                optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionValueName)
+                    .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionValueName)) }
+            }.toMutableSet()
+            v.optionValues.addAll(newOptionValues)
         }
 
         req.sku?.let {
@@ -281,8 +286,8 @@ class AdminCatalogService(
 
         val inv = inventoryRepository.findById(variantId).orElse(null)
 
-        val updatedVariantList = variantRepository.findWithAllOptionsByIds(listOf(variantId))
-        val updatedVariant = if (updatedVariantList.isNotEmpty()) updatedVariantList[0] else v
+        // Eagerly fetch optionValues for the response
+        val updatedVariant = variantRepository.findById(variantId).get()
 
         return AdminCatalogMapper.variant(updatedVariant, inv)
     }
@@ -344,62 +349,5 @@ class AdminCatalogService(
         inv.onHand = newOnHand
         val saved = inventoryRepository.save(inv)
         return AdminCatalogMapper.inventory(saved)
-    }
-
-    // ---------- Sizes ----------
-    @Transactional(readOnly = true)
-    fun listSizes(): List<AdminSizeResponse> {
-        return sizeRepository.findAllByOrderBySortOrderAscNameAsc()
-            .map { AdminSizeResponse(it.id, it.name, it.sortOrder) }
-    }
-
-    @Transactional
-    fun createSize(req: AdminCreateSizeRequest): AdminSizeResponse {
-        val saved = sizeRepository.save(SizeEntity(name = req.name, sortOrder = req.sortOrder))
-        return AdminSizeResponse(saved.id, saved.name, saved.sortOrder)
-    }
-
-    @Transactional
-    fun updateSize(id: Long, req: AdminUpdateSizeRequest): AdminSizeResponse {
-        val size =
-            sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
-        req.name?.let { size.name = it }
-        req.sortOrder?.let { size.sortOrder = it }
-        return AdminSizeResponse(size.id, size.name, size.sortOrder)
-    }
-
-    @Transactional
-    fun deleteSize(id: Long) {
-        val size =
-            sizeRepository.findById(id).orElseThrow { NotFoundException("Size not found: $id", "SIZE_NOT_FOUND") }
-        sizeRepository.delete(size)
-    }
-
-    // ---------- Colors ----------
-    @Transactional(readOnly = true)
-    fun listColors(): List<AdminColorResponse> {
-        return colorRepository.findAllByOrderByNameAsc().map { AdminColorResponse(it.id, it.name, it.hex) }
-    }
-
-    @Transactional
-    fun createColor(req: AdminCreateColorRequest): AdminColorResponse {
-        val saved = colorRepository.save(ColorEntity(name = req.name, hex = req.hex))
-        return AdminColorResponse(saved.id, saved.name, saved.hex)
-    }
-
-    @Transactional
-    fun updateColor(id: Long, req: AdminUpdateColorRequest): AdminColorResponse {
-        val color =
-            colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
-        req.name?.let { color.name = it }
-        req.hex?.let { color.hex = it }
-        return AdminColorResponse(color.id, color.name, color.hex)
-    }
-
-    @Transactional
-    fun deleteColor(id: Long) {
-        val color =
-            colorRepository.findById(id).orElseThrow { NotFoundException("Color not found: $id", "COLOR_NOT_FOUND") }
-        colorRepository.delete(color)
     }
 }

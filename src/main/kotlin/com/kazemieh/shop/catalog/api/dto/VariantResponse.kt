@@ -7,8 +7,7 @@ data class VariantResponse(
     val sku: String,
     val price: BigDecimal,
     val compareAtPrice: BigDecimal?,
-    val size: SizeResponse,
-    val color: ColorResponse,
+    val options: Map<String, String>,
     val availableQty: Int,
     val isActive: Boolean,
 )

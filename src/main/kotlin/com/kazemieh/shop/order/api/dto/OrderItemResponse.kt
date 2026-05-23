@@ -8,6 +8,5 @@ data class OrderItemResponse(
     val qty: Int,
     val unitPrice: BigDecimal,
     val title: String,
-    val size: String,
-    val color: String,
+    val options: Map<String, String>
 )

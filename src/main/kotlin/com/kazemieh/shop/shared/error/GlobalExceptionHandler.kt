@@ -58,6 +58,7 @@ class GlobalExceptionHandler {
         ex: DataIntegrityViolationException,
         request: HttpServletRequest
     ): ResponseEntity<ApiError> {
+        ex.printStackTrace() // Temporarily add this for debugging
         val translated = translateDataIntegrity(ex)
 
         return build(
@@ -135,11 +136,11 @@ class GlobalExceptionHandler {
                         ErrorCodes.PRODUCT_SLUG_EXISTS
                     )
 
-                "sizes_name_key" ->
-                    TranslatedDbError(HttpStatus.CONFLICT, "Size already exists", ErrorCodes.SIZE_EXISTS)
+                "option_type_name_key" ->
+                    TranslatedDbError(HttpStatus.CONFLICT, "Option type already exists", ErrorCodes.SIZE_EXISTS)
 
-                "colors_name_key" ->
-                    TranslatedDbError(HttpStatus.CONFLICT, "Color already exists", ErrorCodes.COLOR_EXISTS)
+                "option_value_option_type_id_value_key" ->
+                    TranslatedDbError(HttpStatus.CONFLICT, "Option value already exists", ErrorCodes.COLOR_EXISTS)
 
                 "product_variants_sku_key" ->
                     TranslatedDbError(HttpStatus.CONFLICT, "SKU already exists", ErrorCodes.SKU_EXISTS)
@@ -196,8 +197,6 @@ class GlobalExceptionHandler {
                 "categories_parent_id_fkey",
                 "product_images_product_id_fkey",
                 "product_variants_product_id_fkey",
-                "product_variants_size_id_fkey",
-                "product_variants_color_id_fkey",
                 "addresses_user_id_fkey",
                 "orders_user_id_fkey",
                 "order_items_order_id_fkey",

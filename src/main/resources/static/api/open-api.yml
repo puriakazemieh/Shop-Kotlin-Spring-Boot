@@ -490,36 +490,6 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/CategoryResponse' }
 
-  /api/sizes:
-    get:
-      tags: [catalog]
-      summary: Sizes
-      operationId: getSizes
-      security: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/SizeResponse' }
-
-  /api/colors:
-    get:
-      tags: [catalog]
-      summary: Colors
-      operationId: getColors
-      security: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/ColorResponse' }
-
   /api/products:
     get:
       tags: [catalog]
@@ -538,12 +508,6 @@ paths:
           in: query
           description: Filter by category slug (includes descendants)
           schema: { type: string }
-        - name: sizeId
-          in: query
-          schema: { type: integer, format: int64 }
-        - name: colorId
-          in: query
-          schema: { type: integer, format: int64 }
         - name: minPrice
           in: query
           schema: { type: number }
@@ -1171,14 +1135,16 @@ components:
 
     OrderItemResponse:
       type: object
-      required: [ variantId, qty, unitPrice, title, size, color ]
+      required: [ variantId, qty, unitPrice, title, options ]
       properties:
         variantId: { type: integer, format: int64 }
         qty: { type: integer }
         unitPrice: { type: number }
         title: { type: string }
-        size: { type: string }
-        color: { type: string }
+        options:
+          type: object
+          additionalProperties:
+            type: string
 
     OrderDetailResponse:
       type: object
@@ -1207,22 +1173,6 @@ components:
           type: array
           items: { $ref: '#/components/schemas/CategoryResponse' }
 
-    SizeResponse:
-      type: object
-      required: [id, name, sortOrder]
-      properties:
-        id: { type: integer, format: int64 }
-        name: { type: string }
-        sortOrder: { type: integer }
-
-    ColorResponse:
-      type: object
-      required: [id, name]
-      properties:
-        id: { type: integer, format: int64 }
-        name: { type: string }
-        hex: { type: string, nullable: true }
-
     ProductSummaryResponse:
       type: object
       required: [id, title, slug, inStock]
@@ -1246,14 +1196,16 @@ components:
 
     VariantResponse:
       type: object
-      required: [id, sku, price, size, color, availableQty, isActive]
+      required: [id, sku, price, options, availableQty, isActive]
       properties:
         id: { type: integer, format: int64 }
         sku: { type: string }
         price: { type: number }
         compareAtPrice: { type: number, nullable: true }
-        size: { $ref: '#/components/schemas/SizeResponse' }
-        color: { $ref: '#/components/schemas/ColorResponse' }
+        options:
+          type: object
+          additionalProperties:
+            type: string
         availableQty: { type: integer }
         isActive: { type: boolean }
 
@@ -1407,10 +1359,12 @@ components:
     # ---------- Variants + Inventory ----------
     AdminCreateVariantRequest:
       type: object
-      required: [sizeId, colorId, sku, price]
+      required: [options, sku, price]
       properties:
-        sizeId: { type: integer, format: int64 }
-        colorId: { type: integer, format: int64 }
+        options:
+          type: object
+          additionalProperties:
+            type: string
         sku: { type: string, maxLength: 80 }
         price: { type: number, minimum: 0 }
         compareAtPrice: { type: number, nullable: true, minimum: 0 }
@@ -1420,6 +1374,10 @@ components:
     AdminUpdateVariantRequest:
       type: object
       properties:
+        options:
+          type: object
+          additionalProperties:
+            type: string
         sku: { type: string, nullable: true, maxLength: 80 }
         price: { type: number, nullable: true, minimum: 0 }
         compareAtPrice: { type: number, nullable: true, minimum: 0 }
@@ -1452,14 +1410,14 @@ components:
 
     AdminVariantResponse:
       type: object
-      required: [id, productId, sizeId, sizeName, colorId, colorName, sku, price, isActive]
+      required: [id, productId, options, sku, price, isActive]
       properties:
         id: { type: integer, format: int64 }
         productId: { type: integer, format: int64 }
-        sizeId: { type: integer, format: int64 }
-        sizeName: { type: string }
-        colorId: { type: integer, format: int64 }
-        colorName: { type: string }
+        options:
+          type: object
+          additionalProperties:
+            type: string
         sku: { type: string }
         price: { type: number }
         compareAtPrice: { type: number, nullable: true }
@@ -1517,15 +1475,17 @@ components:
 
     AdminOrderItemResponse:
       type: object
-      required: [id, variantId, qty, unitPriceSnapshot, titleSnapshot, sizeSnapshot, colorSnapshot]
+      required: [id, variantId, qty, unitPriceSnapshot, titleSnapshot, optionsSnapshot]
       properties:
         id: { type: integer, format: int64 }
         variantId: { type: integer, format: int64 }
         qty: { type: integer }
         unitPriceSnapshot: { type: number }
         titleSnapshot: { type: string }
-        sizeSnapshot: { type: string }
-        colorSnapshot: { type: string }
+        optionsSnapshot:
+          type: object
+          additionalProperties:
+            type: string
 
     AdminUpdateOrderStatusRequest:
       type: object
@@ -1574,7 +1534,7 @@ components:
 
     CartItemResponse:
       type: object
-      required: [id, variantId, qty, productId, productTitle, productSlug, sizeName, colorName, price, availableQty, isActive, lineTotal]
+      required: [id, variantId, qty, productId, productTitle, productSlug, options, price, availableQty, isActive, lineTotal]
       properties:
         id: { type: integer, format: int64 }
         variantId: { type: integer, format: int64 }
@@ -1583,8 +1543,10 @@ components:
         productTitle: { type: string }
         productSlug: { type: string }
         imageUrl: { type: string, nullable: true }
-        sizeName: { type: string }
-        colorName: { type: string }
+        options:
+          type: object
+          additionalProperties:
+            type: string
         price: { type: number }
         compareAtPrice: { type: number, nullable: true }
         availableQty: { type: integer }

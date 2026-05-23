@@ -17,8 +17,6 @@ class CatalogService(
     private val productImageRepository: ProductImageRepository,
     private val variantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
-    private val sizeRepository: SizeRepository,
-    private val colorRepository: ColorRepository,
     private val productSearchRepository: ProductSearchRepository,
 ) {
 
@@ -42,22 +40,12 @@ class CatalogService(
         return build(null)
     }
 
-    // ---------- Sizes / Colors ----------
-    @Transactional(readOnly = true)
-    fun sizes(): List<SizeResponse> =
-        sizeRepository.findAllByOrderBySortOrderAscNameAsc().map(CatalogMapper::toSize)
-
-    @Transactional(readOnly = true)
-    fun colors(): List<ColorResponse> =
-        colorRepository.findAllByOrderByNameAsc().map(CatalogMapper::toColor)
-
     // ---------- Products list ----------
     @Transactional(readOnly = true)
     fun listProducts(
         q: String?,
         categoryId: Long?,
-        sizeId: Long?,
-        colorId: Long?,
+        options: Map<String, String>?,
         minPrice: BigDecimal?,
         maxPrice: BigDecimal?,
         inStock: Boolean?,
@@ -72,7 +60,7 @@ class CatalogService(
             else -> null
         }
         val needVariantFilter =
-            sizeId != null || colorId != null || minPrice != null || maxPrice != null || (inStock == true)
+            !options.isNullOrEmpty() || minPrice != null || maxPrice != null || (inStock == true)
 
         val pageable = PageRequest.of(
             page.coerceAtLeast(0),
@@ -86,11 +74,12 @@ class CatalogService(
 
         val pageData = when {
             qNorm.isNotBlank() -> {
+                // TODO: Update search to support dynamic options
                 val res = productSearchRepository.searchRelevance(
                     q = qNorm,
                     categoryId = resolvedCategoryId,
-                    sizeId = sizeId,
-                    colorId = colorId,
+                    sizeId = null, // options?.get("size"),
+                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -104,8 +93,8 @@ class CatalogService(
             else -> when (sortKey) {
                 "price_asc" -> productSearchRepository.searchPriceAsc(
                     categoryId = resolvedCategoryId,
-                    sizeId = sizeId,
-                    colorId = colorId,
+                    sizeId = null, // options?.get("size"),
+                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -114,8 +103,8 @@ class CatalogService(
                 )
                 "price_desc" -> productSearchRepository.searchPriceDesc(
                     categoryId = resolvedCategoryId,
-                    sizeId = sizeId,
-                    colorId = colorId,
+                    sizeId = null, // options?.get("size"),
+                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,
@@ -124,8 +113,8 @@ class CatalogService(
                 )
                 else -> productSearchRepository.searchNewest(
                     categoryId = resolvedCategoryId,
-                    sizeId = sizeId,
-                    colorId = colorId,
+                    sizeId = null, // options?.get("size"),
+                    colorId = null, // options?.get("color"),
                     minPrice = minPrice,
                     maxPrice = maxPrice,
                     inStock = inStock,

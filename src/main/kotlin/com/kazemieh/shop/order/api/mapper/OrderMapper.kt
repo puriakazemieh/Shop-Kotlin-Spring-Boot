@@ -2,7 +2,10 @@ package com.kazemieh.shop.order.api.mapper
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.kazemieh.shop.order.api.dto.*
+import com.kazemieh.shop.order.api.dto.AddressSnapshotResponse
+import com.kazemieh.shop.order.api.dto.OrderDetailResponse
+import com.kazemieh.shop.order.api.dto.OrderItemResponse
+import com.kazemieh.shop.order.api.dto.OrderResponse
 import com.kazemieh.shop.order.persistence.entity.OrderEntity
 
 object OrderMapper {
@@ -28,14 +31,14 @@ object OrderMapper {
             createdAt = o.createdAt,
             address = addr,
             items = o.items.map {
+                val options: Map<String, String> = om.convertValue(it.optionsSnapshot, Map::class.java) as Map<String, String>
                 OrderItemResponse(
                     id = it.id,
                     variantId = it.variantId,
                     qty = it.qty,
                     unitPrice = it.unitPriceSnapshot,
                     title = it.titleSnapshot,
-                    size = it.sizeSnapshot,
-                    color = it.colorSnapshot
+                    options = options
                 )
             }
         )

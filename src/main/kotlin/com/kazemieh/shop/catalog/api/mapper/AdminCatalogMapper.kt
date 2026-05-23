@@ -43,10 +43,7 @@ object AdminCatalogMapper {
     fun variant(v: ProductVariantEntity, inv: InventoryEntity?) = AdminVariantResponse(
         id = v.id,
         productId = v.product!!.id,
-        sizeId = v.size!!.id,
-        sizeName = v.size!!.name,
-        colorId = v.color!!.id,
-        colorName = v.color!!.name,
+        options = v.optionValues.associate { it.optionType.name to it.value },
         sku = v.sku,
         price = v.price,
         compareAtPrice = v.compareAtPrice,

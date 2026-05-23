@@ -5,9 +5,6 @@ import com.kazemieh.shop.catalog.persistence.entity.*
 
 object CatalogMapper {
 
-    fun toSize(s: SizeEntity) = SizeResponse(s.id, s.name, s.sortOrder)
-    fun toColor(c: ColorEntity) = ColorResponse(c.id, c.name, c.hex)
-
     fun toImage(i: ProductImageEntity) = ProductImageResponse(i.url, i.sortOrder)
 
     fun toVariant(v: ProductVariantEntity, availableQty: Int) = VariantResponse(
@@ -15,8 +12,7 @@ object CatalogMapper {
         sku = v.sku,
         price = v.price,
         compareAtPrice = v.compareAtPrice,
-        size = toSize(v.size!!),
-        color = toColor(v.color!!),
+        options = v.optionValues.associate { it.optionType.name to it.value },
         availableQty = availableQty,
         isActive = v.isActive
     )

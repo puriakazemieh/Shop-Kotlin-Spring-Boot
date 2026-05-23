@@ -55,22 +55,6 @@ class ProductInactiveException(productId: Long)
 class InvalidProductPriceException(message: String = "Invalid product price")
     : UnprocessableException(message, ErrorCodes.INVALID_PRODUCT_PRICE)
 
-// ===== Sizes / Colors =====
-class SizeNotFoundException(message: String = "Size not found")
-    : NotFoundException(message, ErrorCodes.SIZE_NOT_FOUND)
-
-class SizeAlreadyExistsException(name: String)
-    : ConflictException("Size already exists: $name", ErrorCodes.SIZE_EXISTS)
-
-class ColorNotFoundException(message: String = "Color not found")
-    : NotFoundException(message, ErrorCodes.COLOR_NOT_FOUND)
-
-class ColorAlreadyExistsException(name: String)
-    : ConflictException("Color already exists: $name", ErrorCodes.COLOR_EXISTS)
-
-class InvalidColorHexException(hex: String)
-    : BadRequestException("Invalid color hex: $hex", ErrorCodes.INVALID_COLOR_HEX)
-
 // ===== Images =====
 class ProductImageNotFoundException(message: String = "Product image not found")
     : NotFoundException(message, ErrorCodes.PRODUCT_IMAGE_NOT_FOUND)
@@ -85,9 +69,9 @@ class VariantNotFoundException(message: String = "Variant not found")
 class SkuAlreadyExistsException(sku: String)
     : ConflictException("SKU already exists: $sku", ErrorCodes.SKU_EXISTS)
 
-class VariantCombinationAlreadyExistsException(productId: Long, sizeId: Long, colorId: Long)
+class VariantCombinationAlreadyExistsException(productId: Long, options: Map<String, String>)
     : ConflictException(
-        "Variant already exists for product=$productId size=$sizeId color=$colorId",
+        "Variant already exists for product=$productId options=$options",
         ErrorCodes.VARIANT_COMBO_EXISTS
     )
 

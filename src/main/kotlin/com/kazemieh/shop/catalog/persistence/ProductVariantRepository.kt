@@ -11,8 +11,8 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     @Query(
         """
         select v from ProductVariantEntity v
-        join fetch v.size
-        join fetch v.color
+        left join fetch v.optionValues ov
+        left join fetch ov.optionType
         where v.product.id = :productId and v.isActive = true
         order by v.id asc
         """
@@ -47,22 +47,22 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     @Query(
         """
         select v from ProductVariantEntity v
-        join fetch v.size
-        join fetch v.color
+        left join fetch v.optionValues ov
+        left join fetch ov.optionType
         where v.product.id = :productId
         order by v.id asc
         """
     )
-    fun findAllWithOptionsByProductId(@Param("productId") productId: Long): List<ProductVariantEntity>
+    fun findAllByProductId(@Param("productId") productId: Long): List<ProductVariantEntity>
 
     @Query(
         """
-  select v from ProductVariantEntity v
-  join fetch v.product p
-  join fetch v.size s
-  join fetch v.color c
-  where v.id in :ids
-  """
+        select v from ProductVariantEntity v
+        left join fetch v.product p
+        left join fetch v.optionValues ov
+        left join fetch ov.optionType
+        where v.id in :ids
+        """
     )
     fun findWithAllOptionsByIds(@Param("ids") ids: List<Long>): List<ProductVariantEntity>
 
@@ -72,13 +72,9 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
           pv.id as variantId,
           pv.price as price,
           p.title as title,
-          s.name as sizeName,
-          c.name as colorName,
           pv.is_active as isActive
         from product_variants pv
         join products p on p.id = pv.product_id
-        join sizes s on s.id = pv.size_id
-        join colors c on c.id = pv.color_id
         where pv.id in (:ids)
         """,
         nativeQuery = true

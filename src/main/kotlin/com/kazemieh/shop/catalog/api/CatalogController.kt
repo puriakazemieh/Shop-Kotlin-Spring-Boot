@@ -16,19 +16,12 @@ class CatalogController(
     @GetMapping("/categories")
     fun categories() = catalogService.categoriesTree()
 
-    @GetMapping("/sizes")
-    fun sizes() = catalogService.sizes()
-
-    @GetMapping("/colors")
-    fun colors() = catalogService.colors()
-
     @GetMapping("/products")
     fun products(
         @RequestParam(required = false) q: String?,
         @RequestParam(required = false) categoryId: Long?,
         @RequestParam(required = false) categorySlug: String?,
-        @RequestParam(required = false) sizeId: Long?,
-        @RequestParam(required = false) colorId: Long?,
+        @RequestParam(required = false) options: Map<String, String>?,
         @RequestParam(required = false) minPrice: BigDecimal?,
         @RequestParam(required = false) maxPrice: BigDecimal?,
         @RequestParam(required = false) inStock: Boolean?,
@@ -39,8 +32,7 @@ class CatalogController(
         catalogService.listProducts(
             q = q,
             categoryId = categoryId,
-            sizeId = sizeId,
-            colorId = colorId,
+            options = options,
             minPrice = minPrice,
             maxPrice = maxPrice,
             inStock = inStock,

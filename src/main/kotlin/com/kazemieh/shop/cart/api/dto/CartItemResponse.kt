@@ -12,8 +12,7 @@ data class CartItemResponse(
     val productSlug: String,
     val imageUrl: String?,
 
-    val sizeName: String,
-    val colorName: String,
+    val options: Map<String, String>,
 
     val price: BigDecimal,
     val compareAtPrice: BigDecimal?,

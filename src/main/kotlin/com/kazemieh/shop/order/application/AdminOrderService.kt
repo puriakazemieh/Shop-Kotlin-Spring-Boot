@@ -1,5 +1,6 @@
 package com.kazemieh.shop.order.application
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kazemieh.shop.catalog.api.dto.PageResponse
 import com.kazemieh.shop.order.api.dto.AdminOrderDetailResponse
@@ -77,14 +78,16 @@ class AdminOrderService(
             updatedAt = o.updatedAt,
             addressSnapshot = addrAny,
             items = o.items.map { it2 ->
+                val options: Map<String, String>? = it2.optionsSnapshot?.let {
+                    objectMapper.convertValue(it, object : TypeReference<Map<String, String>>() {})
+                }
                 AdminOrderItemResponse(
                     id = it2.id,
                     variantId = it2.variantId,
                     qty = it2.qty,
                     unitPriceSnapshot = it2.unitPriceSnapshot,
                     titleSnapshot = it2.titleSnapshot,
-                    sizeSnapshot = it2.sizeSnapshot,
-                    colorSnapshot = it2.colorSnapshot
+                    optionsSnapshot = options
                 )
             }
         )

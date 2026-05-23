@@ -9,11 +9,8 @@ import java.time.OffsetDateTime
 @Entity
 @Table(
     name = "product_variants",
-    uniqueConstraints = [UniqueConstraint(name = "uq_variant_unique_combo", columnNames = ["product_id", "size_id", "color_id"])],
     indexes = [
         Index(name = "idx_variants_product", columnList = "product_id"),
-        Index(name = "idx_variants_size", columnList = "size_id"),
-        Index(name = "idx_variants_color", columnList = "color_id"),
     ]
 )
 class ProductVariantEntity(
@@ -24,13 +21,13 @@ class ProductVariantEntity(
     @JoinColumn(name = "product_id", nullable = false)
     var product: ProductEntity? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "size_id", nullable = false)
-    var size: SizeEntity? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "color_id", nullable = false)
-    var color: ColorEntity? = null,
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "product_variant_option_values",
+        joinColumns = [JoinColumn(name = "product_variant_id")],
+        inverseJoinColumns = [JoinColumn(name = "option_value_id")]
+    )
+    var optionValues: MutableSet<OptionValueEntity> = mutableSetOf(),
 
     @Column(nullable = false, unique = true, length = 80)
     var sku: String = "",
