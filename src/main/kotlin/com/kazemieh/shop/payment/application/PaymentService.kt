@@ -40,12 +40,19 @@ class PaymentService(
     @Transactional
     fun verifyPayment(authority: String, status: String): Boolean {
         val payment = paymentRepository.findByAuthority(authority)
-            ?: return false
+            ?: return false // پرداخت پیدا نشد
 
+        // 4. جلوگیری از پردازش تکراری (Idempotency)
+        if (payment.status != PaymentStatus.PENDING) {
+            // این تراکنش قبلاً پردازش شده است. فقط نتیجه قبلی را برمی‌گردانیم.
+            return payment.status == PaymentStatus.SUCCESS
+        }
+
+        // 2. عدم کنسل کردن سفارش در صورت انصراف کاربر
         if (status != "OK") {
             payment.status = PaymentStatus.FAILED
             paymentRepository.save(payment)
-            orderService.updateStatus(payment.orderId, OrderStatus.CANCELLED)
+            // دیگر سفارش را کنسل نمی‌کنیم. کاربر می‌تواند دوباره تلاش کند.
             return false
         }
 
@@ -55,12 +62,13 @@ class PaymentService(
             payment.status = PaymentStatus.SUCCESS
             payment.refId = verificationResponse.refId
             paymentRepository.save(payment)
+            // فقط در صورت موفقیت، وضعیت سفارش را تغییر می‌دهیم
             orderService.updateStatus(payment.orderId, OrderStatus.PROCESSING)
             return true
         } else {
             payment.status = PaymentStatus.FAILED
             paymentRepository.save(payment)
-            orderService.updateStatus(payment.orderId, OrderStatus.CANCELLED)
+            // در صورت شکست در وریفای هم سفارش را کنسل نمی‌کنیم.
             return false
         }
     }
