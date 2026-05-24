@@ -44,6 +44,11 @@ class OrderService(
         val o = orderRepository.findByIdAndUserId(orderId, userId) ?: throw OrderNotFoundException(orderId)
         return OrderMapper.toDetailResponse(o, objectMapper)
     }
+    
+    @Transactional(readOnly = true)
+    fun getOrderByIdForPayment(orderId: Long): OrderEntity {
+        return orderRepository.findById(orderId).orElseThrow { OrderNotFoundException(orderId) }
+    }
 
     @Transactional
     fun create(userId: Long, req: CreateOrderRequest): OrderDetailResponse {
