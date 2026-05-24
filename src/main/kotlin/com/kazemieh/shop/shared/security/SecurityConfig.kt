@@ -49,6 +49,8 @@ class SecurityConfig(
                     "/api/auth/login",
                     "/api/auth/refresh",
                     "/api/auth/logout",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
                     "/api/open-api.yml",

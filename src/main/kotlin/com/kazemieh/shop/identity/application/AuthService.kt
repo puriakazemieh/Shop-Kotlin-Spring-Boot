@@ -2,11 +2,10 @@ package com.kazemieh.shop.identity.application
 
 import com.kazemieh.shop.identity.api.dto.*
 import com.kazemieh.shop.identity.api.mapper.UserMapper
-import com.kazemieh.shop.identity.application.exception.EmailAlreadyExistsException
-import com.kazemieh.shop.identity.application.exception.InvalidCredentialsException
-import com.kazemieh.shop.identity.application.exception.UserInactiveException
+import com.kazemieh.shop.identity.application.exception.*
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.identity.persistence.entity.UserEntity
+import com.kazemieh.shop.shared.EmailService
 import com.kazemieh.shop.shared.security.jwt.JwtService
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
@@ -14,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.OffsetDateTime
+import java.util.*
 
 @Service
 class AuthService(
@@ -22,6 +23,7 @@ class AuthService(
     private val authManager: AuthenticationManager,
     private val jwtService: JwtService,
     private val refreshTokenService: RefreshTokenService,
+    private val emailService: EmailService
 ) {
 
     @Transactional
@@ -77,5 +79,34 @@ class AuthService(
     @Transactional
     fun logoutAll(userId: Long) {
         refreshTokenService.revokeAllForUser(userId)
+    }
+
+    @Transactional
+    fun forgotPassword(email: String) {
+        val user = userRepository.findByEmail(email) ?: throw UserNotFoundException(email)
+
+        val token = UUID.randomUUID().toString()
+        user.resetPasswordToken = token
+        user.resetPasswordTokenExpiry = OffsetDateTime.now().plusHours(1) // Token valid for 1 hour
+        userRepository.save(user)
+
+        val resetLink = "http://your-frontend-url/reset-password?token=$token"
+        val message = "To reset your password, click the link: $resetLink"
+        emailService.sendSimpleMessage(user.email, "Password Reset Request", message)
+    }
+
+    @Transactional
+    fun resetPassword(req: ResetPasswordRequest) {
+        val user = userRepository.findByResetPasswordToken(req.token)
+            .orElseThrow { InvalidTokenException("Invalid token") }
+
+        if (user.resetPasswordTokenExpiry?.isBefore(OffsetDateTime.now()) == true) {
+            throw InvalidTokenException("Token has expired")
+        }
+
+        user.passwordHash = passwordEncoder.encode(req.newPassword)?:""
+        user.resetPasswordToken = null
+        user.resetPasswordTokenExpiry = null
+        userRepository.save(user)
     }
 }

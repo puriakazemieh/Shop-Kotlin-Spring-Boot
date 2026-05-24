@@ -1,9 +1,6 @@
 package com.kazemieh.shop.identity.api
 
-import com.kazemieh.shop.identity.api.dto.LoginRequest
-import com.kazemieh.shop.identity.api.dto.LogoutRequest
-import com.kazemieh.shop.identity.api.dto.RefreshRequest
-import com.kazemieh.shop.identity.api.dto.RegisterRequest
+import com.kazemieh.shop.identity.api.dto.*
 import com.kazemieh.shop.identity.application.AuthService
 import com.kazemieh.shop.shared.security.UserPrincipal
 import jakarta.validation.Valid
@@ -33,4 +30,14 @@ class AuthController(
     @PostMapping("/logout-all")
     fun logoutAll(@AuthenticationPrincipal principal: UserPrincipal) =
         authService.logoutAll(principal.id)
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@Valid @RequestBody req: ForgotPasswordRequest) {
+        authService.forgotPassword(req.email)
+    }
+
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody req: ResetPasswordRequest) {
+        authService.resetPassword(req)
+    }
 }

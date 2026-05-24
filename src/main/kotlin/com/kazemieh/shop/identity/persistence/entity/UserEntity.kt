@@ -43,6 +43,12 @@ class UserEntity(
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
 
+    @Column(name = "reset_password_token")
+    var resetPasswordToken: String? = null,
+
+    @Column(name = "reset_password_token_expiry")
+    var resetPasswordTokenExpiry: OffsetDateTime? = null,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime? = null,
