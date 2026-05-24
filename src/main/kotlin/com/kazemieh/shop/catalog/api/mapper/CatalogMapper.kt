@@ -8,7 +8,7 @@ object CatalogMapper {
     fun toImage(i: ProductImageEntity) = ProductImageResponse(i.url, i.sortOrder)
 
     fun toVariant(v: ProductVariantEntity, availableQty: Int): VariantResponse {
-        val options = v.optionValue?.let { mapOf(it.optionType.name to it.value) } ?: emptyMap()
+        val options = v.optionValues.associate { it.optionType.name to it.value }
         return VariantResponse(
             id = v.id,
             sku = v.sku,

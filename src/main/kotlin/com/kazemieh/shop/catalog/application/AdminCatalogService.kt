@@ -221,51 +221,71 @@ class AdminCatalogService(
         val product =
             productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
 
-        val optionType = optionTypeRepository.findByName(req.optionType)
-            .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = req.optionType)) }
+        val optionValues = req.options.map { optionPair ->
+            val optionType = optionTypeRepository.findByName(optionPair.type)
+                .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionPair.type)) }
 
-        val optionValue = optionValueRepository.findByOptionTypeIdAndValue(optionType.id, req.optionValue)
-            .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = req.optionValue)) }
+            optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionPair.value)
+                .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionPair.value)) }
+        }.toMutableSet()
+
+        // Check if a variant with the exact same options already exists for this product
+        val existingVariant = variantRepository.findAllByProductId(productId).find { it.optionValues == optionValues }
+        if (existingVariant != null) {
+            throw VariantAlreadyExistsException(productId, optionValues.map { "${it.optionType.name}:${it.value}" })
+        }
 
         val sku = req.sku.trim()
         if (variantRepository.existsBySku(sku)) throw SkuExistsException(sku)
 
-        val variant = variantRepository.save(
-            ProductVariantEntity(
-                product = product,
-                optionValue = optionValue,
-                sku = sku,
-                price = req.price,
-                compareAtPrice = req.compareAtPrice,
-                isActive = req.isActive
-            )
+        val variant = ProductVariantEntity(
+            product = product,
+            sku = sku,
+            price = req.price,
+            compareAtPrice = req.compareAtPrice,
+            isActive = req.isActive
         )
+        
+        optionValues.forEach { variant.addOptionValue(it) }
+
+        val savedVariant = variantRepository.save(variant)
 
         // create inventory row
         val inv = inventoryRepository.save(
             InventoryEntity(
-                variantId = variant.id,
+                variantId = savedVariant.id,
                 onHand = req.initialOnHand,
                 reserved = 0,
                 version = 0
             )
         )
 
-        return AdminCatalogMapper.variant(variant, inv)
+        return AdminCatalogMapper.variant(savedVariant, inv)
     }
 
     @Transactional
     fun updateVariant(variantId: Long, req: AdminUpdateVariantRequest): AdminVariantResponse {
-        val v = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
+        val v = variantRepository.findWithAllOptionsById(variantId).orElseThrow { VariantNotFoundException(variantId) }
 
-        if (req.optionType != null && req.optionValue != null) {
-            val optionType = optionTypeRepository.findByName(req.optionType)
-                .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = req.optionType)) }
+        req.options?.let { optionPairs ->
+            val newOptionValues = optionPairs.map { optionPair ->
+                val optionType = optionTypeRepository.findByName(optionPair.type)
+                    .orElseGet { optionTypeRepository.save(OptionTypeEntity(name = optionPair.type)) }
 
-            val optionValue = optionValueRepository.findByOptionTypeIdAndValue(optionType.id, req.optionValue)
-                .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = req.optionValue)) }
-            
-            v.optionValue = optionValue
+                optionValueRepository.findByOptionTypeIdAndValue(optionType.id, optionPair.value)
+                    .orElseGet { optionValueRepository.save(OptionValueEntity(optionType = optionType, value = optionPair.value)) }
+            }.toMutableSet()
+
+            // Check if a variant with the exact same options already exists for this product
+            val existingVariant = variantRepository.findAllByProductId(v.product!!.id).find { it.id != variantId && it.optionValues == newOptionValues }
+            if (existingVariant != null) {
+                throw VariantAlreadyExistsException(v.product!!.id, newOptionValues.map { "${it.optionType.name}:${it.value}" })
+            }
+
+            // Remove old ones
+            v.optionValues.toList().forEach { v.removeOptionValue(it) }
+            // Add new ones
+            newOptionValues.forEach { v.addOptionValue(it) }
         }
 
         req.sku?.let {
@@ -277,8 +297,6 @@ class AdminCatalogService(
 
         req.compareAtPrice?.let { v.compareAtPrice = it }
         req.isActive?.let { v.isActive = it }
-
-        variantRepository.saveAndFlush(v)
 
         val inv = inventoryRepository.findById(variantId).orElse(null)
 

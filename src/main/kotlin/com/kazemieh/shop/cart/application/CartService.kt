@@ -142,7 +142,7 @@ class CartService(
             subtotal = subtotal.add(lineTotal)
             totalQty += ci.qty
 
-            val options = v.optionValue?.let { mapOf(it.optionType.name to it.value) } ?: emptyMap()
+            val options = v.optionValues.associate { it.optionType.name to it.value }
 
             CartItemResponse(
                 id = ci.id,

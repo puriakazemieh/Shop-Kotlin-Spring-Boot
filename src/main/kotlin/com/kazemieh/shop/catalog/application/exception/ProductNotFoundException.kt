@@ -21,6 +21,9 @@ class ImageNotFoundException(id: Long) :
 class VariantNotFoundException(id: Long) :
     ApiException("Variant not found: $id", "VARIANT_NOT_FOUND", HttpStatus.NOT_FOUND)
 
+class VariantAlreadyExistsException(productId: Long, options: List<String>) :
+    ApiException("Variant with options [${options.joinToString()}] already exists for product $productId", "VARIANT_ALREADY_EXISTS", HttpStatus.CONFLICT)
+
 class SkuExistsException(sku: String) :
     ApiException("SKU already exists: $sku", "SKU_EXISTS", HttpStatus.CONFLICT)
 

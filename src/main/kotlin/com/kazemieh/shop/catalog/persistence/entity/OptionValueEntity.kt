@@ -1,5 +1,6 @@
 package com.kazemieh.shop.catalog.persistence.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 
 @Entity
@@ -14,5 +15,9 @@ class OptionValueEntity(
     var optionType: OptionTypeEntity,
 
     @Column(nullable = false, length = 100)
-    var value: String
+    var value: String,
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "optionValues")
+    var variants: MutableSet<ProductVariantEntity> = mutableSetOf()
 )

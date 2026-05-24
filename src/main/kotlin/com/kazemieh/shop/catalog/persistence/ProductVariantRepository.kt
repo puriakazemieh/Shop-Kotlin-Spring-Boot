@@ -5,13 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.math.BigDecimal
+import java.util.Optional
 
 interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
 
     @Query(
         """
         select v from ProductVariantEntity v
-        left join fetch v.optionValue ov
+        left join fetch v.optionValues ov
         left join fetch ov.optionType
         where v.product.id = :productId and v.isActive = true
         order by v.id asc
@@ -47,7 +48,7 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     @Query(
         """
         select v from ProductVariantEntity v
-        left join fetch v.optionValue ov
+        left join fetch v.optionValues ov
         left join fetch ov.optionType
         where v.product.id = :productId
         order by v.id asc
@@ -59,12 +60,23 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
         """
         select v from ProductVariantEntity v
         left join fetch v.product p
-        left join fetch v.optionValue ov
+        left join fetch v.optionValues ov
         left join fetch ov.optionType
         where v.id in :ids
         """
     )
     fun findWithAllOptionsByIds(@Param("ids") ids: List<Long>): List<ProductVariantEntity>
+
+    @Query(
+        """
+        select v from ProductVariantEntity v
+        left join fetch v.product p
+        left join fetch v.optionValues ov
+        left join fetch ov.optionType
+        where v.id = :id
+        """
+    )
+    fun findWithAllOptionsById(@Param("id") id: Long): Optional<ProductVariantEntity>
 
     @Query(
         value = """

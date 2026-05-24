@@ -21,9 +21,13 @@ class ProductVariantEntity(
     @JoinColumn(name = "product_id", nullable = false)
     var product: ProductEntity? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "option_value_id")
-    var optionValue: OptionValueEntity? = null,
+    @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @JoinTable(
+        name = "product_variant_option_values",
+        joinColumns = [JoinColumn(name = "product_variant_id")],
+        inverseJoinColumns = [JoinColumn(name = "option_value_id")]
+    )
+    var optionValues: MutableSet<OptionValueEntity> = mutableSetOf(),
 
     @Column(nullable = false, unique = true, length = 80)
     var sku: String = "",
@@ -44,4 +48,14 @@ class ProductVariantEntity(
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime? = null,
-)
+) {
+    fun addOptionValue(optionValue: OptionValueEntity) {
+        optionValues.add(optionValue)
+        optionValue.variants.add(this)
+    }
+
+    fun removeOptionValue(optionValue: OptionValueEntity) {
+        optionValues.remove(optionValue)
+        optionValue.variants.remove(this)
+    }
+}

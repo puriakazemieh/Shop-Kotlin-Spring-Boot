@@ -116,7 +116,7 @@ class OrderService(
 
         for ((variantId, qty) in normalizedItems) {
             val v = variants.getValue(variantId)
-            val optionsSnapshotMap = v.optionValue?.let { mapOf(it.optionType.name to it.value) } ?: emptyMap()
+            val optionsSnapshotMap = v.optionValues.associate { it.optionType.name to it.value }
             val optionsSnapshot = objectMapper.valueToTree<JsonNode>(optionsSnapshotMap)
             
             order.items.add(

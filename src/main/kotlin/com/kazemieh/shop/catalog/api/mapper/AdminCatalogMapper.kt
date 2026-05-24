@@ -41,7 +41,7 @@ object AdminCatalogMapper {
     )
 
     fun variant(v: ProductVariantEntity, inv: InventoryEntity?): AdminVariantResponse {
-        val options = v.optionValue?.let { mapOf(it.optionType.name to it.value) } ?: emptyMap()
+        val options = v.optionValues.associate { it.optionType.name to it.value }
         return AdminVariantResponse(
             id = v.id,
             productId = v.product!!.id,

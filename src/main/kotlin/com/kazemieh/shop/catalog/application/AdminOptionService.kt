@@ -1,7 +1,9 @@
 package com.kazemieh.shop.catalog.application
 
 import com.kazemieh.shop.catalog.api.dto.*
+import com.kazemieh.shop.catalog.application.exception.OptionTypeInUseException
 import com.kazemieh.shop.catalog.application.exception.OptionTypeNotFoundException
+import com.kazemieh.shop.catalog.application.exception.OptionValueInUseException
 import com.kazemieh.shop.catalog.application.exception.OptionValueNotFoundException
 import com.kazemieh.shop.catalog.persistence.OptionTypeRepository
 import com.kazemieh.shop.catalog.persistence.OptionValueRepository
@@ -49,10 +51,15 @@ class AdminOptionService(
 
     @Transactional
     fun deleteOptionType(id: Long) {
-        if (!optionTypeRepository.existsById(id)) {
-            throw OptionTypeNotFoundException(id)
+        val type = optionTypeRepository.findById(id).orElseThrow { OptionTypeNotFoundException(id) }
+        
+        // Check if there are any values associated with this type
+        val values = optionValueRepository.findAll().filter { it.optionType.id == id }
+        if (values.isNotEmpty()) {
+            throw OptionTypeInUseException(id)
         }
-        optionTypeRepository.deleteById(id)
+
+        optionTypeRepository.delete(type)
     }
 
     @Transactional
@@ -72,9 +79,12 @@ class AdminOptionService(
 
     @Transactional
     fun deleteOptionValue(id: Long) {
-        if (!optionValueRepository.existsById(id)) {
-            throw OptionValueNotFoundException(id)
+        val optionValue = optionValueRepository.findById(id).orElseThrow { OptionValueNotFoundException(id) }
+
+        if (optionValue.variants.isNotEmpty()) {
+            throw OptionValueInUseException(id)
         }
-        optionValueRepository.deleteById(id)
+
+        optionValueRepository.delete(optionValue)
     }
 }
