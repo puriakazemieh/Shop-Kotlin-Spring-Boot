@@ -62,8 +62,11 @@ class PaymentService(
             payment.status = PaymentStatus.SUCCESS
             payment.refId = verificationResponse.refId
             paymentRepository.save(payment)
-            // فقط در صورت موفقیت، وضعیت سفارش را تغییر می‌دهیم
+
             orderService.updateStatus(payment.orderId, OrderStatus.PROCESSING)
+
+            orderService.clearCartAfterSuccessfulPayment(payment.orderId)
+
             return true
         } else {
             payment.status = PaymentStatus.FAILED

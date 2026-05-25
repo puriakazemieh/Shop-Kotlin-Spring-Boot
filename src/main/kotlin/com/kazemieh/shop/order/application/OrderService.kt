@@ -137,13 +137,19 @@ class OrderService(
         }
 
         val saved = orderRepository.save(order)
-        
-        // 5) Clear cart
-        cartRepository.findByUserId(userId)?.let { cart ->
-            cartItemRepository.deleteAllByCartId(cart.id)
-        }
 
         return OrderMapper.toDetailResponse(saved, objectMapper)
+    }
+
+    @Transactional
+    fun clearCartAfterSuccessfulPayment(orderId: Long) {
+        val order = orderRepository.findById(orderId).orElse(null)
+        val userId = order?.user?.id
+        if (userId != null) {
+            cartRepository.findByUserId(userId)?.let { cart ->
+                cartItemRepository.deleteAllByCartId(cart.id)
+            }
+        }
     }
 
     @Transactional

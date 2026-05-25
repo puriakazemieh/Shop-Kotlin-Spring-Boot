@@ -4,7 +4,6 @@ import com.kazemieh.shop.order.application.OrderService
 import com.kazemieh.shop.order.persistence.OrderRepository
 import com.kazemieh.shop.order.persistence.entity.OrderStatus
 import com.kazemieh.shop.payment.persistence.PaymentRepository
-import com.kazemieh.shop.payment.persistence.entity.PaymentStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -16,27 +15,23 @@ class TransactionCleanupService(
     private val orderRepository: OrderRepository,
     private val orderService: OrderService,
     private val paymentRepository: PaymentRepository,
-    private val paymentService: PaymentService
+    private val paymentService: PaymentService,
+    private val zarinPalService: ZarinPalService
 ) {
     private val logger = LoggerFactory.getLogger(TransactionCleanupService::class.java)
 
-    /**
-     * 1. جلوگیری از حبس شدن موجودی کالا (کنسل کردن سفارش‌های پرداخت نشده)
-     * این متد هر 5 دقیقه اجرا می‌شود.
-     */
-    @Scheduled(fixedRate = 300000) // 5 minutes in milliseconds
+
+    @Scheduled(fixedRate = 300000)
     @Transactional
     fun cancelExpiredOrders() {
         logger.info("Starting job: Canceling expired PLACED orders")
         
-        // پیدا کردن سفارش‌هایی که 30 دقیقه از ایجادشان گذشته و هنوز PLACED هستند
         val expirationTime = OffsetDateTime.now().minusMinutes(30)
         val expiredOrders = orderRepository.findExpiredOrders(OrderStatus.PLACED, expirationTime)
 
         var count = 0
         for (order in expiredOrders) {
             try {
-                // استفاده از متد updateStatus موجود در OrderService که منطق آزادسازی موجودی (inventory.reserved -= qty) را دارد
                 orderService.updateStatus(order.id, OrderStatus.CANCELLED)
                 count++
             } catch (e: Exception) {
@@ -49,45 +44,38 @@ class TransactionCleanupService(
         }
     }
 
-    /**
-     * 3. مدیریت قطع شدن اینترنت (بررسی تراکنش‌های معلق با بانک)
-     * این متد هر 15 دقیقه اجرا می‌شود.
-     */
-    @Scheduled(fixedRate = 900000) // 15 minutes in milliseconds
+
+    @Scheduled(fixedRate = 900000)
     @Transactional
-    fun verifyPendingPayments() {
-        logger.info("Starting job: Verifying pending payments with Bank")
+    fun verifyPendingPaymentsInZarinpal() {
+        logger.info("Starting job: Checking unverified payments from ZarinPal")
         
-        // پیدا کردن پرداخت‌هایی که بیشتر از 15 دقیقه از ایجادشان گذشته و هنوز PENDING هستند
-        // به بانک‌های ایرانی نباید پشت سر هم و بلافاصله درخواست داد، باید به کاربر فرصت پرداخت در درگاه را داد
-        val expirationTime = OffsetDateTime.now().minusMinutes(15)
-        val unverifiedPayments = paymentRepository.findUnverifiedPayments(PaymentStatus.PENDING, expirationTime)
+        val unverifiedAuthorities = zarinPalService.getUnverifiedTransactions()
+
+        if (unverifiedAuthorities.isEmpty()) {
+            logger.info("No unverified successful payments found in ZarinPal.")
+            return
+        }
+
+        logger.info("Found ${unverifiedAuthorities.size} unverified payments in ZarinPal. Attempting to verify...")
 
         var verifiedCount = 0
-        var failedCount = 0
 
-        for (payment in unverifiedPayments) {
+        for (authority in unverifiedAuthorities) {
             try {
-                // تلاش برای وریفای با بانک (در اینجا فرض می‌کنیم دکمه انصراف زده نشده و باید چک کنیم آیا پول کسر شده یا نه)
-                // از آنجایی که ما Status کاربر را نداریم، "OK" را پاس می‌دهیم تا سرویس سعی کند با بانک حرف بزند
-                // این بستگی به نحوه پیاده سازی زرین پال دارد. در صورتیکه تراکنش ناموفق در سمت بانک باشد، خروجی false خواهد بود.
-                val result = paymentService.verifyPayment(payment.authority, "OK")
+                val result = paymentService.verifyPayment(authority, "OK")
                 
                 if (result) {
-                    logger.info("Automatically verified payment ${payment.id} for order ${payment.orderId}")
                     verifiedCount++
+                    logger.info("Successfully recovered and verified payment with authority: $authority")
                 } else {
-                     // اگر بانک خطا داد، پرداخت ناموفق ثبت می‌شود
-                    logger.info("Automatically failed pending payment ${payment.id} for order ${payment.orderId}")
-                    failedCount++
+                    logger.error("Failed to recover payment with authority $authority despite ZarinPal reporting it as unverified.")
                 }
             } catch (e: Exception) {
-                logger.error("Error verifying payment ${payment.id} during background job", e)
+                logger.error("Error during background verification for authority $authority", e)
             }
         }
         
-        if (verifiedCount > 0 || failedCount > 0) {
-            logger.info("Background verification job finished. Verified: $verifiedCount, Failed: $failedCount")
-        }
+        logger.info("Background verification job finished. Successfully recovered $verifiedCount out of ${unverifiedAuthorities.size} payments.")
     }
 }
