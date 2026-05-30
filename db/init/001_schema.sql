@@ -6,7 +6,7 @@ CREATE TABLE users (
     password_hash   VARCHAR(255) NOT NULL,
     full_name       VARCHAR(255),
     phone           VARCHAR(30),
-    role            VARCHAR(20) NOT NULL DEFAULT 'CUSTOMER', -- CUSTOMER / ADMIN
+    role            VARCHAR(20) NOT NULL DEFAULT 'ADMIN', -- CUSTOMER / ADMIN
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()

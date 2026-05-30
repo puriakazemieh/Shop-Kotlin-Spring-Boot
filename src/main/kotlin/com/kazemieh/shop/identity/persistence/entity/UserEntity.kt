@@ -38,7 +38,7 @@ class UserEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: UserRole = UserRole.CUSTOMER,
+    var role: UserRole = UserRole.ADMIN,
 
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
