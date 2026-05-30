@@ -13,6 +13,7 @@ class ZarinPalService(
     @Value("\${zarinpal.merchant-id}") private val merchantId: String,
     @Value("\${zarinpal.sandbox:false}") private val isSandbox: Boolean,
     @Value("\${zarinpal.access-token:}") private val accessToken: String,
+    @Value("\${app.ngrok-url:}") private val ngrokUrl: String,
     private val restTemplate: RestTemplate
 ) {
     private val logger = LoggerFactory.getLogger(ZarinPalService::class.java)
@@ -22,8 +23,6 @@ class ZarinPalService(
     private val startPayUrl =
         if (isSandbox) "https://sandbox.zarinpal.com/pg/StartPay/" else "https://www.zarinpal.com/pg/StartPay/"
 
-    // آدرس Ngrok خود را اینجا قرار دهید. توجه کنید که در انتهای آن علامت / نباشد.
-    private val ngrokUrl = "https://womb-nearly-justify.ngrok-free.dev"
 
     private fun createHeaders(includeAuth: Boolean = false): HttpHeaders {
         val headers = HttpHeaders()
@@ -39,8 +38,7 @@ class ZarinPalService(
     fun createPaymentRequest(amountInToman: Long, orderId: String): String? {
         val url = "$baseUrl/request.json"
 
-        val baseUrlForCallback =
-            if (ngrokUrl != "YOUR_NGROK_URL_HERE" && ngrokUrl.isNotBlank()) ngrokUrl else "http://localhost:8080"
+        val baseUrlForCallback = if (ngrokUrl.isNotBlank()) ngrokUrl else "http://localhost:8080"
         val callbackUrl = "$baseUrlForCallback/api/payment/callback?order_id=$orderId"
 
         val requestBody = mapOf(
