@@ -1,6 +1,7 @@
 package com.kazemieh.shop.shared.config
 
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.nio.file.Paths
@@ -12,5 +13,12 @@ class WebConfig : WebMvcConfigurer {
         // هر درخواستی که با uploads/ شروع شود رو به پوشه لوکال هدایت می‌کند
         registry.addResourceHandler("/uploads/**")
             .addResourceLocations(uploadPath)
+    }
+
+    override fun addCorsMappings(registry: CorsRegistry) {
+        registry.addMapping("/**")
+            .allowedOrigins("*")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
     }
 }
