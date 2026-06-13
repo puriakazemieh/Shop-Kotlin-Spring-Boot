@@ -22,6 +22,7 @@ object AdminCatalogMapper {
         createdAt = p.createdAt,
         updatedAt = p.updatedAt,
         basePrice = p.basePrice,
+        discountedPrice = p.discountedPrice,
         description = p.description,
     )
 

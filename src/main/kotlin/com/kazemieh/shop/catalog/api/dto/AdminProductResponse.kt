@@ -12,5 +12,6 @@ data class AdminProductResponse(
     val createdAt: OffsetDateTime?,
     val updatedAt: OffsetDateTime?,
     var basePrice: BigDecimal? = null,
+    var discountedPrice: BigDecimal? = null,
     var description: String? = null,
 )

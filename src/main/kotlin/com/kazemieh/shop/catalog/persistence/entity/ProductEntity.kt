@@ -36,6 +36,9 @@ class ProductEntity(
     @Column(name = "base_price", precision = 12, scale = 2)
     var basePrice: BigDecimal? = null,
 
+    @Column(name = "discounted_price", precision = 12, scale = 2)
+    var discountedPrice: BigDecimal? = null,
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
 

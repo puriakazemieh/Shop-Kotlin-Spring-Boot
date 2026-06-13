@@ -140,6 +140,8 @@ class CatalogService(
                 thumbnailUrl = thumbnailByProductId[p.id],
                 minPrice = agg?.getMinPrice(),
                 maxPrice = agg?.getMaxPrice(),
+                minDiscountedPrice = agg?.getMinDiscountedPrice(),
+                maxDiscountedPrice = agg?.getMaxDiscountedPrice(),
                 inStock = agg?.getInStock() ?: false,
                 categoryId = p.category?.id,
                 categoryName = p.category?.name
@@ -178,6 +180,8 @@ class CatalogService(
             title = p.title,
             slug = p.slug,
             description = p.description,
+            basePrice = p.basePrice,
+            discountedPrice = p.discountedPrice,
             categoryId = p.category?.id,
             categoryName = p.category?.name,
             images = images.map(CatalogMapper::toImage),

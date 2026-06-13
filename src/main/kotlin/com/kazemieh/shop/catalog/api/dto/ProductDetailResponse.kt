@@ -1,5 +1,6 @@
 package com.kazemieh.shop.catalog.api.dto
 
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 
 data class ProductDetailResponse(
@@ -7,6 +8,8 @@ data class ProductDetailResponse(
     val title: String,
     val slug: String,
     val description: String?,
+    val basePrice: BigDecimal? = null,
+    val discountedPrice: BigDecimal? = null,
     val categoryId: Long?,
     val categoryName: String?,
     val images: List<ProductImageResponse>,

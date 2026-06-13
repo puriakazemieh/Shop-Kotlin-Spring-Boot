@@ -11,6 +11,7 @@ data class AdminCreateProductRequest(
     @field:NotBlank @field:Size(max = 280) val slug: String,
     val description: String? = null,
     val basePrice: BigDecimal? = null,
+    val discountedPrice: BigDecimal? = null,
     val isActive: Boolean = true,
     val variants: List<AdminCreateVariantRequest>? = null
 )

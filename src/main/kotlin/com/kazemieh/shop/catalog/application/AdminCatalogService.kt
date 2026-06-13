@@ -113,6 +113,7 @@ class AdminCatalogService(
                 slug = slug,
                 description = req.description,
                 basePrice = req.basePrice,
+                discountedPrice = req.discountedPrice,
                 isActive = req.isActive
             )
         )
@@ -144,6 +145,7 @@ class AdminCatalogService(
 
         if (req.description != null) p.description = req.description
         if (req.basePrice != null) p.basePrice = req.basePrice
+        if (req.discountedPrice != null) p.discountedPrice = req.discountedPrice
         req.isActive?.let { p.isActive = it }
 
         return AdminCatalogMapper.product(p)
