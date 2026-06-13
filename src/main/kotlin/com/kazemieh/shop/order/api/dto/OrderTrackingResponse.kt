@@ -1,9 +1,9 @@
 package com.kazemieh.shop.order.api.dto
 
-import com.kazemieh.shop.order.persistence.OrderStatus
+import com.kazemieh.shop.order.persistence.entity.OrderStatus
 import java.time.Instant
 
-data class OrderTrackingView(
+data class OrderTrackingResponse(
     val id: Int,
     val status: OrderStatus,
     val trackingCode: String?,

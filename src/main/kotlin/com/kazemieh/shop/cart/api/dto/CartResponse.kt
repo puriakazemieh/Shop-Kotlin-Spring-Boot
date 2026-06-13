@@ -6,5 +6,8 @@ data class CartResponse(
     val items: List<CartItemResponse>,
     val savedForLater: List<CartItemResponse>,
     val subtotal: BigDecimal,
-    val totalQty: Int
+    val discountAmount: BigDecimal,
+    val total: BigDecimal,
+    val totalQty: Int,
+    val appliedDiscountCode: String? = null
 )

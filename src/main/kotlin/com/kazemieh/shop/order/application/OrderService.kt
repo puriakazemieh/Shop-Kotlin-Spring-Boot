@@ -12,7 +12,7 @@ import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.order.api.dto.AdminUpdateShippingRequest
 import com.kazemieh.shop.order.api.dto.CreateOrderRequest
 import com.kazemieh.shop.order.api.dto.OrderDetailResponse
-import com.kazemieh.shop.order.api.dto.OrderTrackingView
+import com.kazemieh.shop.order.api.dto.OrderTrackingResponse
 import com.kazemieh.shop.order.api.mapper.OrderMapper
 import com.kazemieh.shop.order.application.exception.*
 import com.kazemieh.shop.order.persistence.OrderRepository
@@ -52,9 +52,9 @@ class OrderService(
     }
 
     @Transactional(readOnly = true)
-    fun trackOrder(orderId: Long): OrderTrackingView {
+    fun trackOrder(orderId: Long): OrderTrackingResponse {
         val order = orderRepository.findById(orderId).orElseThrow { OrderNotFoundException(orderId) }
-        return OrderMapper.toOrderTrackingView(order)
+        return OrderMapper.toOrderTrackingResponse(order)
     }
 
     @Transactional

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kazemieh.shop.order.api.dto.*
 import com.kazemieh.shop.order.persistence.entity.OrderEntity
+import java.time.Instant
 
 object OrderMapper {
 
@@ -28,7 +29,8 @@ object OrderMapper {
             createdAt = o.createdAt,
             address = addr,
             items = o.items.map {
-                val options: Map<String, String> = om.convertValue(it.optionsSnapshot, Map::class.java) as Map<String, String>
+                val options: Map<String, String> =
+                    om.convertValue(it.optionsSnapshot, Map::class.java) as Map<String, String>
                 OrderItemResponse(
                     id = it.id,
                     variantId = it.variantId,
@@ -41,11 +43,11 @@ object OrderMapper {
         )
     }
 
-    fun toOrderTrackingView(o: OrderEntity) = OrderTrackingView(
+    fun toOrderTrackingResponse(o: OrderEntity) = OrderTrackingResponse(
         id = o.id.toInt(),
         status = o.status,
         trackingCode = o.trackingCode,
-        orderedAt = o.createdAt.toInstant(),
+        orderedAt = o.createdAt?.toInstant() ?: Instant.now(),
         shippedAt = o.shippedAt?.toInstant()
     )
 

@@ -1,9 +1,6 @@
 package com.kazemieh.shop.cart.api
 
-import com.kazemieh.shop.cart.api.dto.AddCartItemRequest
-import com.kazemieh.shop.cart.api.dto.AdjustCartVariantQtyRequest
-import com.kazemieh.shop.cart.api.dto.SetCartVariantQtyRequest
-import com.kazemieh.shop.cart.api.dto.UpdateCartItemRequest
+import com.kazemieh.shop.cart.api.dto.*
 import com.kazemieh.shop.cart.application.CartService
 import com.kazemieh.shop.shared.security.UserPrincipal
 import jakarta.validation.Valid
@@ -72,4 +69,14 @@ class CartController(
         @PathVariable variantId: Long,
         @Valid @RequestBody req: AdjustCartVariantQtyRequest
     ) = cartService.adjustVariantQty(principal.id, variantId, req)
+
+    @PostMapping("/discount")
+    fun applyDiscount(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @Valid @RequestBody req: ApplyDiscountRequest
+    ) = cartService.applyDiscount(principal.id, req)
+
+    @DeleteMapping("/discount")
+    fun removeDiscount(@AuthenticationPrincipal principal: UserPrincipal) =
+        cartService.removeDiscount(principal.id)
 }

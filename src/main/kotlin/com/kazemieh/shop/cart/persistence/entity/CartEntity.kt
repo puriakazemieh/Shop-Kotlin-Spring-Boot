@@ -1,5 +1,6 @@
 package com.kazemieh.shop.cart.persistence.entity
 
+import com.kazemieh.shop.discount.persistence.entity.DiscountEntity
 import com.kazemieh.shop.identity.persistence.entity.UserEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.UpdateTimestamp
@@ -21,6 +22,10 @@ class CartEntity(
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     var user: UserEntity? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discount_id")
+    var discount: DiscountEntity? = null,
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
