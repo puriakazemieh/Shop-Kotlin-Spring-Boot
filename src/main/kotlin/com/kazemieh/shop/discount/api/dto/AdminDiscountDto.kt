@@ -16,6 +16,18 @@ data class CreateDiscountRequest(
     val isActive: Boolean = true
 )
 
+data class UpdateDiscountRequest(
+    val code: String? = null,
+    val type: DiscountType? = null,
+    val value: BigDecimal? = null,
+    val maxDiscountAmount: BigDecimal? = null,
+    val minOrderAmount: BigDecimal? = null,
+    val startDate: OffsetDateTime? = null,
+    val endDate: OffsetDateTime? = null,
+    val usageLimit: Int? = null,
+    val isActive: Boolean? = null
+)
+
 data class DiscountResponse(
     val id: Long,
     val code: String,
