@@ -21,6 +21,14 @@ class AuthController(
     @PostMapping("/login")
     fun login(@Valid @RequestBody req: LoginRequest) = authService.login(req)
 
+    @PostMapping("/send-login-otp")
+    fun sendLoginOtp(@Valid @RequestBody req: SendLoginOtpRequest) {
+        authService.sendLoginOtp(req)
+    }
+
+    @PostMapping("/login-with-otp")
+    fun loginWithOtp(@Valid @RequestBody req: LoginWithOtpRequest) = authService.loginWithOtp(req)
+
     @PostMapping("/refresh")
     fun refresh(@Valid @RequestBody req: RefreshRequest) = authService.refresh(req)
 
@@ -33,11 +41,16 @@ class AuthController(
 
     @PostMapping("/forgot-password")
     fun forgotPassword(@Valid @RequestBody req: ForgotPasswordRequest) {
-        authService.forgotPassword(req.email)
+        authService.forgotPassword(req)
     }
 
     @PostMapping("/reset-password")
     fun resetPassword(@Valid @RequestBody req: ResetPasswordRequest) {
         authService.resetPassword(req)
+    }
+
+    @PostMapping("/reset-password-with-otp")
+    fun resetPasswordWithOtp(@Valid @RequestBody req: ResetPasswordWithOtpRequest) {
+        authService.resetPasswordWithOtp(req)
     }
 }

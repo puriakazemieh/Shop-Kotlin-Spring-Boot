@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails
 
 class UserPrincipal(
     val id: Long,
-    private val email: String,
+    private val username: String,
     private val passwordHash: String,
     private val roleName: String,
     private val active: Boolean
@@ -16,7 +16,7 @@ class UserPrincipal(
         listOf(SimpleGrantedAuthority("ROLE_$roleName"))
 
     override fun getPassword(): String = passwordHash
-    override fun getUsername(): String = email
+    override fun getUsername(): String = username
 
     override fun isAccountNonExpired() = true
     override fun isAccountNonLocked() = true

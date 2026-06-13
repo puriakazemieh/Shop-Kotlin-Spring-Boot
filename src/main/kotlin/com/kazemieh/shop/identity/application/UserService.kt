@@ -43,7 +43,7 @@ class UserMeService(
         val u = userRepository.findById(userId).orElseThrow { UserNotFoundException() }
 
         val newEmail = req.email.trim().lowercase()
-        if (newEmail != u.email.lowercase()) {
+        if (newEmail != u.email?.lowercase() && u.email != null) {
             if (userRepository.existsByEmail(newEmail)) {
                 throw EmailAlreadyExistsException(newEmail)
             }

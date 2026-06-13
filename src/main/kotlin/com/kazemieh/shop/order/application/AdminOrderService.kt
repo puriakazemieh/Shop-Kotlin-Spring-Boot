@@ -44,7 +44,7 @@ class AdminOrderService(
             AdminOrderSummaryResponse(
                 id = o.id,
                 userId = o.user!!.id,
-                userEmail = o.user!!.email,
+                identity = o.user!!.email ?: o.user!!.phone ?: "",
                 status = o.status.name,
                 totalPrice = o.totalPrice,
                 createdAt = o.createdAt
@@ -69,7 +69,7 @@ class AdminOrderService(
         return AdminOrderDetailResponse(
             id = o.id,
             userId = o.user!!.id,
-            userEmail = o.user!!.email,
+            identity = o.user!!.email ?: o.user!!.phone ?: "",
             status = o.status.name,
             subtotalPrice = o.subtotalPrice,
             shippingPrice = o.shippingPrice,

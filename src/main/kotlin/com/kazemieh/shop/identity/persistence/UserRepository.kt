@@ -6,6 +6,9 @@ import java.util.*
 
 interface UserRepository : JpaRepository<UserEntity, Long> {
     fun findByEmail(email: String): UserEntity?
+    fun findByPhone(phone: String): UserEntity?
+    fun findByEmailOrPhone(email: String, phone: String): UserEntity?
     fun existsByEmail(email: String): Boolean
+    fun existsByPhone(phone: String): Boolean
     fun findByResetPasswordToken(token: String): Optional<UserEntity>
 }

@@ -6,7 +6,7 @@ import java.time.OffsetDateTime
 data class AdminOrderSummaryResponse(
     val id: Long,
     val userId: Long,
-    val userEmail: String,
+    val identity: String,
     val status: String,
     val totalPrice: BigDecimal,
     val createdAt: OffsetDateTime?

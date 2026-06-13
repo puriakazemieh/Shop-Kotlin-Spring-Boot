@@ -12,10 +12,10 @@ class ShopUserDetailsService(
 ) : UserDetailsService {
 
     override fun loadUserByUsername(username: String) =
-        userRepository.findByEmail(username)?.let { u ->
+        userRepository.findByEmailOrPhone(username, username)?.let { u ->
             UserPrincipal(
                 id = u.id,
-                email = u.email,
+                username = u.email ?: u.phone ?: "",
                 passwordHash = u.passwordHash,
                 roleName = u.role.name,
                 active = u.isActive

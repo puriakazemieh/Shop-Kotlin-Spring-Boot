@@ -14,8 +14,8 @@ class UserEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(nullable = false, unique = true)
-    var email: String = "",
+    @Column(unique = true)
+    var email: String? = null,
 
 //    @JsonIgnore
     @Column(name = "password_hash", nullable = false)
@@ -33,7 +33,7 @@ class UserEntity(
     @Column(name = "postal_code")
     var postalCode: Int? = null,
 
-    @Column(name = "phone")
+    @Column(name = "phone", unique = true)
     var phone: String? = null,
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +49,12 @@ class UserEntity(
     @Column(name = "reset_password_token_expiry")
     var resetPasswordTokenExpiry: OffsetDateTime? = null,
 
+    @Column(name = "otp_code")
+    var otpCode: String? = null,
+
+    @Column(name = "otp_expiry")
+    var otpExpiry: OffsetDateTime? = null,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime? = null,
@@ -57,21 +63,4 @@ class UserEntity(
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime? = null,
 
-//    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-//    var addresses: MutableList<Address> = mutableListOf(),
-//
-//    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-//    var orders: MutableList<Order> = mutableListOf()
-
-) /*: UserDetails {
-
-    override fun getAuthorities(): Collection<GrantedAuthority> =
-        listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
-
-    override fun getPassword(): String = passwordHash
-    override fun getUsername(): String = email
-    override fun isAccountNonExpired(): Boolean = true
-    override fun isAccountNonLocked(): Boolean = true
-    override fun isCredentialsNonExpired(): Boolean = true
-    override fun isEnabled(): Boolean = isActive
-}*/
+)

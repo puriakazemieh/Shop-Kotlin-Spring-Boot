@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 data class UserResponse(
     val id: Long,
-    val email: String,
+    val email: String?,
     val firstName: String?,
     val lastName: String?,
     val city: String?,
