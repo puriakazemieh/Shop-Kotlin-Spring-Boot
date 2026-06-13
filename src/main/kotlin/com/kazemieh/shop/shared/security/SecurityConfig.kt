@@ -12,13 +12,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtAuthFilter: JwtAuthFilter,
     private val entryPoint: RestAuthEntryPoint,
-    private val deniedHandler: RestAccessDeniedHandler,
+    private val deniedHandler: RestAccessDeniedHandler
 ) {
 
     @Bean
@@ -29,9 +32,34 @@ class SecurityConfig(
         cfg.authenticationManager
 
     @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val source = UrlBasedCorsConfigurationSource()
+        val config = CorsConfiguration()
+
+        config.allowCredentials = true
+
+        // دامنه‌های مجاز شما
+        config.allowedOrigins = listOf(
+            "http://miaad.puriademo.ir",
+            "https://miaad.puriademo.ir",
+            "http://milad.puriademo.ir",
+            "https://milad.puriademo.ir",
+            "http://localhost:8081"
+        )
+
+        config.allowedHeaders = listOf("*")
+        config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+        config.exposedHeaders = listOf("Authorization")
+
+        source.registerCorsConfiguration("/**", config)
+        return source
+    }
+
+    @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .cors { }
+            .cors { it.configurationSource(corsConfigurationSource()) }
+
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .headers { it.frameOptions { frame -> frame.disable() } }
@@ -54,7 +82,7 @@ class SecurityConfig(
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
                     "/api/open-api.yml",
-                    "/uploads/**" // اجازه دسترسی عمومی به پوشه عکس‌ها
+                    "/uploads/**"
                 ).permitAll()
 
                 it.anyRequest().authenticated()

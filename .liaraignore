@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# But not these files...
+!/build/libs/*SNAPSHOT.jar
+!/Dockerfile
+!/liara.json

@@ -1,4 +1,7 @@
 {
-  "image": "dockerfile",
-  "port": 8080
+  "platform": "docker",
+  "port": 8080,
+  "build": {
+    "location": "germany"
+  }
 }
