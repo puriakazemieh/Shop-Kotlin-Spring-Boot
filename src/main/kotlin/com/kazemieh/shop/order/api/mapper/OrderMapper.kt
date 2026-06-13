@@ -2,10 +2,7 @@ package com.kazemieh.shop.order.api.mapper
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.kazemieh.shop.order.api.dto.AddressSnapshotResponse
-import com.kazemieh.shop.order.api.dto.OrderDetailResponse
-import com.kazemieh.shop.order.api.dto.OrderItemResponse
-import com.kazemieh.shop.order.api.dto.OrderResponse
+import com.kazemieh.shop.order.api.dto.*
 import com.kazemieh.shop.order.persistence.entity.OrderEntity
 
 object OrderMapper {
@@ -43,6 +40,14 @@ object OrderMapper {
             }
         )
     }
+
+    fun toOrderTrackingView(o: OrderEntity) = OrderTrackingView(
+        id = o.id.toInt(),
+        status = o.status,
+        trackingCode = o.trackingCode,
+        orderedAt = o.createdAt.toInstant(),
+        shippedAt = o.shippedAt?.toInstant()
+    )
 
     private fun parseAddressSnapshot(node: JsonNode, om: ObjectMapper): AddressSnapshotResponse =
         om.treeToValue(node, AddressSnapshotResponse::class.java)

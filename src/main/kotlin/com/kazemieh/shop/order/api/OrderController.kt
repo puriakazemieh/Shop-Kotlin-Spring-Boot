@@ -48,4 +48,7 @@ class OrderController(
     ) {
         orderService.updateShipping(id, req)
     }
+
+    @GetMapping("/{id}/track")
+    fun track(@PathVariable id: Long) = orderService.trackOrder(id)
 }
