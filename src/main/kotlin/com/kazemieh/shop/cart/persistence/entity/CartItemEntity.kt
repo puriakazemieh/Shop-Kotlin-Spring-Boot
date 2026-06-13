@@ -30,6 +30,9 @@ class CartItemEntity(
     @Column(name = "qty", nullable = false)
     var qty: Int = 1,
 
+    @Column(name = "saved_for_later", nullable = false)
+    var savedForLater: Boolean = false,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime? = null,

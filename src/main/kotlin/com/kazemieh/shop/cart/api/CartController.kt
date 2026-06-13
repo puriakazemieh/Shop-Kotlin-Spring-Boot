@@ -46,6 +46,18 @@ class CartController(
         cartService.clear(principal.id)
     }
 
+    @PostMapping("/items/{itemId}/save-for-later")
+    fun saveForLater(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable itemId: Long
+    ) = cartService.saveForLater(principal.id, itemId)
+
+    @PostMapping("/items/{itemId}/move-to-cart")
+    fun moveToCart(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable itemId: Long
+    ) = cartService.moveToCart(principal.id, itemId)
+
 
     @PutMapping("/items/{variantId}")
     fun setVariantQty(

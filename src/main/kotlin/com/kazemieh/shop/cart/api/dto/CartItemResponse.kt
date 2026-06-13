@@ -6,6 +6,7 @@ data class CartItemResponse(
     val id: Long,
     val variantId: Long,
     val qty: Int,
+    val savedForLater: Boolean,
 
     val productId: Long,
     val productTitle: String,

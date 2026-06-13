@@ -49,6 +49,7 @@ class CartService(
 
         if (current != null) {
             current.qty = newQty
+            current.savedForLater = false
         } else {
             cart.items.add(
                 CartItemEntity(
@@ -97,7 +98,23 @@ class CartService(
         val cart = cartRepository.findWithItemsByUserId(userId) ?: ensureCart(userId)
         cart.items.clear()
         cartItemRepository.deleteAllByCartId(cart.id)
-        return CartResponse(items = emptyList(), subtotal = BigDecimal.ZERO, totalQty = 0)
+        return CartResponse(items = emptyList(), savedForLater = emptyList(), subtotal = BigDecimal.ZERO, totalQty = 0)
+    }
+
+    @Transactional
+    fun saveForLater(userId: Long, itemId: Long): CartResponse {
+        val cart = cartRepository.findWithItemsByUserId(userId) ?: ensureCart(userId)
+        val item = cartItemRepository.findByIdAndCartId(itemId, cart.id) ?: throw CartItemNotFoundException(itemId)
+        item.savedForLater = true
+        return buildCartResponse(cart)
+    }
+
+    @Transactional
+    fun moveToCart(userId: Long, itemId: Long): CartResponse {
+        val cart = cartRepository.findWithItemsByUserId(userId) ?: ensureCart(userId)
+        val item = cartItemRepository.findByIdAndCartId(itemId, cart.id) ?: throw CartItemNotFoundException(itemId)
+        item.savedForLater = false
+        return buildCartResponse(cart)
     }
 
     // ---------------- Helpers ----------------
@@ -114,7 +131,7 @@ class CartService(
     }
 
     private fun buildCartResponse(cart: CartEntity): CartResponse {
-        if (cart.items.isEmpty()) return CartResponse(emptyList(), BigDecimal.ZERO, 0)
+        if (cart.items.isEmpty()) return CartResponse(emptyList(), emptyList(), BigDecimal.ZERO, 0)
 
         val variantIds = cart.items.map { it.variantId }.distinct()
         val variants = variantRepository.findWithAllOptionsByIds(variantIds).associateBy { it.id }
@@ -131,7 +148,7 @@ class CartService(
         var subtotal = BigDecimal.ZERO
         var totalQty = 0
 
-        val items = cart.items.map { ci ->
+        val allItems = cart.items.map { ci ->
             val v = variants[ci.variantId] ?: throw VariantNotFoundException(ci.variantId)
             if (!v.isActive) throw VariantInactiveException(ci.variantId)
 
@@ -139,8 +156,10 @@ class CartService(
             val available = ((inv?.onHand ?: 0) - (inv?.reserved ?: 0)).coerceAtLeast(0)
 
             val lineTotal = v.price.multiply(ci.qty.toBigDecimal())
-            subtotal = subtotal.add(lineTotal)
-            totalQty += ci.qty
+            if (!ci.savedForLater) {
+                subtotal = subtotal.add(lineTotal)
+                totalQty += ci.qty
+            }
 
             val options = v.optionValues.associate { it.optionType.name to it.value }
 
@@ -148,6 +167,7 @@ class CartService(
                 id = ci.id,
                 variantId = ci.variantId,
                 qty = ci.qty,
+                savedForLater = ci.savedForLater,
 
                 productId = v.product!!.id,
                 productTitle = v.product!!.title,
@@ -165,7 +185,9 @@ class CartService(
             )
         }
 
-        return CartResponse(items = items, subtotal = subtotal, totalQty = totalQty)
+        val (items, saved) = allItems.partition { !it.savedForLater }
+
+        return CartResponse(items = items, savedForLater = saved, subtotal = subtotal, totalQty = totalQty)
     }
 
     @Transactional
@@ -189,6 +211,7 @@ class CartService(
         val existing = cartItemRepository.findByCartIdAndVariantId(cart.id, variantId)
         if (existing != null) {
             existing.qty = req.qty
+            existing.savedForLater = false
         } else {
             cart.items.add(
                 CartItemEntity(
@@ -225,6 +248,7 @@ class CartService(
 
         if (existing != null) {
             existing.qty = newQty
+            existing.savedForLater = false
         } else {
             cart.items.add(
                 CartItemEntity(
