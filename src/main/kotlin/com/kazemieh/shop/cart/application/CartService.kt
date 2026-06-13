@@ -193,6 +193,9 @@ class CartService(
 
     @Transactional
     fun applyDiscount(userId: Long, req: ApplyDiscountRequest): CartResponse {
+        if (req.code.isBlank()) {
+            throw DiscountCodeRequiredException()
+        }
         val cart = cartRepository.findWithItemsByUserId(userId) ?: ensureCart(userId)
         val discount = discountRepository.findByCode(req.code)
             .orElseThrow { DiscountNotFoundException(req.code) }

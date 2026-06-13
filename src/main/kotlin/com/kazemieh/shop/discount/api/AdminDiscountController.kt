@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/admin/discounts")
+@RequestMapping("/api/admin/discounts")
 @PreAuthorize("hasRole('ADMIN')")
 class AdminDiscountController(
     private val adminDiscountService: AdminDiscountService
