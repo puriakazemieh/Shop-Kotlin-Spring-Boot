@@ -18,6 +18,8 @@ object ErrorCodes {
     const val PRODUCT_SLUG_EXISTS = "PRODUCT_SLUG_EXISTS"
     const val PRODUCT_INACTIVE = "PRODUCT_INACTIVE"
     const val INVALID_PRODUCT_PRICE = "INVALID_PRODUCT_PRICE"
+    const val REVIEW_NOT_FOUND = "REVIEW_NOT_FOUND"
+    const val QUESTION_NOT_FOUND = "QUESTION_NOT_FOUND"
 
     // ===== Options =====
     const val OPTION_TYPE_NOT_FOUND = "OPTION_TYPE_NOT_FOUND"
