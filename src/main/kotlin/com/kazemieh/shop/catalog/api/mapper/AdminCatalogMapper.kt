@@ -32,6 +32,12 @@ object AdminCatalogMapper {
         sortOrder = i.sortOrder
     )
 
+    fun video(v: ProductVideoEntity) = AdminProductVideoResponse(
+        id = v.id,
+        url = v.url,
+        sortOrder = v.sortOrder
+    )
+
     fun inventory(inv: InventoryEntity) = AdminInventoryResponse(
         variantId = inv.variantId,
         onHand = inv.onHand,

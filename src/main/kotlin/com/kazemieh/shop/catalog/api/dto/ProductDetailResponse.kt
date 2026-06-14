@@ -13,6 +13,7 @@ data class ProductDetailResponse(
     val categoryId: Long?,
     val categoryName: String?,
     val images: List<ProductImageResponse>,
+    val videos: List<ProductVideoResponse>,
     val variants: List<VariantResponse>,
     val createdAt: OffsetDateTime?,
     val isFavorite: Boolean = false,

@@ -18,6 +18,9 @@ class ProductSlugExistsException(slug: String) :
 class ImageNotFoundException(id: Long) :
     ApiException("Image not found: $id", "IMAGE_NOT_FOUND", HttpStatus.NOT_FOUND)
 
+class VideoNotFoundException(id: Long) :
+    ApiException("Video not found: $id", "VIDEO_NOT_FOUND", HttpStatus.NOT_FOUND)
+
 class VariantNotFoundException(id: Long) :
     ApiException("Variant not found: $id", "VARIANT_NOT_FOUND", HttpStatus.NOT_FOUND)
 

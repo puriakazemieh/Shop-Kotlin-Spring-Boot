@@ -15,6 +15,7 @@ class CatalogService(
     private val categoryRepository: CategoryRepository,
     private val productRepository: ProductRepository,
     private val productImageRepository: ProductImageRepository,
+    private val productVideoRepository: ProductVideoRepository,
     private val variantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val productSearchRepository: ProductSearchRepository,
@@ -170,6 +171,7 @@ class CatalogService(
         val p = productRepository.findBySlugAndIsActiveTrue(slug) ?: throw ProductNotFoundException(slug)
 
         val images = productImageRepository.findAllByProductIdOrderBySortOrderAsc(p.id)
+        val videos = productVideoRepository.findAllByProductIdOrderBySortOrderAsc(p.id)
         val variants = variantRepository.findActiveWithOptions(p.id)
 
         val variantIds = variants.map { it.id }
@@ -194,6 +196,7 @@ class CatalogService(
             categoryId = p.category?.id,
             categoryName = p.category?.name,
             images = images.map(CatalogMapper::toImage),
+            videos = videos.map(CatalogMapper::toVideo),
             variants = variantResponses,
             createdAt = p.createdAt,
             isFavorite = isFavorite

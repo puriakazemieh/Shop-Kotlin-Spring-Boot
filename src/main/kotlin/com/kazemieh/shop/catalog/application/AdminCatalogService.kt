@@ -17,6 +17,7 @@ class AdminCatalogService(
     private val categoryRepository: CategoryRepository,
     private val productRepository: ProductRepository,
     private val imageRepository: ProductImageRepository,
+    private val videoRepository: ProductVideoRepository,
     private val variantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val optionTypeRepository: OptionTypeRepository,
@@ -188,12 +189,14 @@ class AdminCatalogService(
         val p = productRepository.findById(id).orElseThrow { ProductNotFoundException(id.toString()) }
 
         val images = imageRepository.findAllByProductIdOrderBySortOrderAsc(id)
+        val videos = videoRepository.findAllByProductIdOrderBySortOrderAsc(id)
         val variants = variantRepository.findAllByProductId(id)
         val invMap = inventoryRepository.findAllById(variants.map { it.id }).associateBy { it.variantId }
 
         return AdminProductDetailResponse(
             product = AdminCatalogMapper.product(p),
             images = images.map(AdminCatalogMapper::image),
+            videos = videos.map(AdminCatalogMapper::video),
             variants = variants.map { v -> AdminCatalogMapper.variant(v, invMap[v.id]) }
         )
     }
@@ -247,6 +250,49 @@ class AdminCatalogService(
             "IMAGE_PRODUCT_MISMATCH"
         )
         imageRepository.delete(img)
+    }
+
+    // ---------- Videos ----------
+    @Transactional
+    fun addVideo(productId: Long, req: AdminAddVideoRequest): AdminProductVideoResponse {
+        val p = productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
+
+        val sortOrder =
+            req.sortOrder ?: ((videoRepository.findTopByProductIdOrderBySortOrderDesc(productId)?.sortOrder ?: -1) + 1)
+        val saved = videoRepository.save(
+            ProductVideoEntity(
+                product = p,
+                url = req.url.trim(),
+                sortOrder = sortOrder
+            )
+        )
+        return AdminCatalogMapper.video(saved)
+    }
+
+    @Transactional
+    fun reorderVideos(productId: Long, req: AdminReorderVideosRequest): List<AdminProductVideoResponse> {
+        val p = productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
+
+        val current = videoRepository.findAllByProductIdOrderBySortOrderAsc(productId).associateBy { it.id }
+        for (item in req.items) {
+            val vid = current[item.id] ?: throw VideoNotFoundException(item.id)
+            if (vid.product?.id != p.id) throw BadRequestException(
+                "Video not belongs to product",
+                "VIDEO_PRODUCT_MISMATCH"
+            )
+            vid.sortOrder = item.sortOrder
+        }
+        return videoRepository.findAllByProductIdOrderBySortOrderAsc(productId).map(AdminCatalogMapper::video)
+    }
+
+    @Transactional
+    fun deleteVideo(productId: Long, videoId: Long) {
+        val vid = videoRepository.findById(videoId).orElseThrow { VideoNotFoundException(videoId) }
+        if (vid.product?.id != productId) throw BadRequestException(
+            "Video not belongs to product",
+            "VIDEO_PRODUCT_MISMATCH"
+        )
+        videoRepository.delete(vid)
     }
 
     // ---------- Variants ----------
