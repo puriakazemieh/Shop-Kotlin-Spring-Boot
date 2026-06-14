@@ -40,13 +40,24 @@ class CartService(
     fun addItem(userId: Long, req: AddCartItemRequest): CartResponse {
         val cart = cartRepository.findWithItemsByUserId(userId) ?: ensureCart(userId)
 
-        val variant = variantRepository.findById(req.variantId).orElseThrow { VariantNotFoundException(req.variantId) }
-        if (!variant.isActive) throw VariantInactiveException(req.variantId)
+        val variantId = if (req.variantId != null) {
+            req.variantId
+        } else if (req.productId != null) {
+            val variants = variantRepository.findActiveWithOptions(req.productId)
+            if (variants.isEmpty()) throw ProductNoActiveVariantException(req.productId)
+            if (variants.size > 1) throw ProductMultipleVariantsException(req.productId)
+            variants[0].id
+        } else {
+            throw MissingVariantOrProductException()
+        }
 
-        val current = cartItemRepository.findByCartIdAndVariantId(cart.id, req.variantId)
+        val variant = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
+        if (!variant.isActive) throw VariantInactiveException(variantId)
+
+        val current = cartItemRepository.findByCartIdAndVariantId(cart.id, variantId)
         val newQty = (current?.qty ?: 0) + req.qty
 
-        ensureStock(req.variantId, newQty)
+        ensureStock(variantId, newQty)
 
         if (current != null) {
             current.qty = newQty
@@ -55,7 +66,7 @@ class CartService(
             cart.items.add(
                 CartItemEntity(
                     cart = cart,
-                    variantId = req.variantId,
+                    variantId = variantId,
                     qty = req.qty
                 )
             )

@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
 class AdminCatalogService(
@@ -117,12 +118,31 @@ class AdminCatalogService(
                 isActive = req.isActive
             )
         )
-        
-        req.variants?.forEach { variantReq ->
-            createVariant(saved.id, variantReq)
+
+        if (req.variants.isNullOrEmpty()) {
+            // Create a default variant if none provided
+            createDefaultVariant(saved, req.sku, req.initialOnHand)
+        } else {
+            req.variants.forEach { variantReq ->
+                createVariant(saved.id, variantReq)
+            }
         }
 
         return AdminCatalogMapper.product(saved)
+    }
+
+    private fun createDefaultVariant(product: ProductEntity, sku: String?, initialOnHand: Int) {
+        createVariant(
+            product.id, AdminCreateVariantRequest(
+                options = emptyList(),
+                sku = sku ?: "SKU-${product.id}",
+                price = product.basePrice ?: BigDecimal.ZERO,
+                discountedPrice = product.discountedPrice,
+                isActive = product.isActive,
+                initialOnHand = initialOnHand
+            ),
+            isSystem = true
+        )
     }
 
     @Transactional
@@ -148,7 +168,19 @@ class AdminCatalogService(
         if (req.discountedPrice != null) p.discountedPrice = req.discountedPrice
         req.isActive?.let { p.isActive = it }
 
-        return AdminCatalogMapper.product(p)
+        val saved = productRepository.save(p)
+
+        // If it's a simple product (only one variant with no options), sync its variant
+        val variants = variantRepository.findAllByProductId(id)
+        if (variants.size == 1 && variants[0].optionValues.isEmpty()) {
+            val v = variants[0]
+            req.basePrice?.let { v.price = it }
+            req.discountedPrice?.let { v.discountedPrice = it }
+            req.isActive?.let { v.isActive = it }
+            variantRepository.save(v)
+        }
+
+        return AdminCatalogMapper.product(saved)
     }
 
     @Transactional(readOnly = true)
@@ -219,9 +251,24 @@ class AdminCatalogService(
 
     // ---------- Variants ----------
     @Transactional
-    fun createVariant(productId: Long, req: AdminCreateVariantRequest): AdminVariantResponse {
+    fun createVariant(productId: Long, req: AdminCreateVariantRequest, isSystem: Boolean = false): AdminVariantResponse {
         val product =
             productRepository.findById(productId).orElseThrow { ProductNotFoundException(productId.toString()) }
+
+        if (!isSystem && req.options.isEmpty()) {
+            throw BadRequestException("Variant must have at least one option", "VARIANT_OPTIONS_REQUIRED")
+        }
+
+        val variants = variantRepository.findAllByProductId(productId)
+
+        // If we are adding a "real" variant (with options), and there's currently only a default variant, delete the default one
+        if (req.options.isNotEmpty()) {
+            val defaultVariant = variants.find { it.optionValues.isEmpty() }
+            if (defaultVariant != null && variants.size == 1) {
+                inventoryRepository.deleteById(defaultVariant.id)
+                variantRepository.delete(defaultVariant)
+            }
+        }
 
         val optionValues = req.options.map { optionPair ->
             val optionType = optionTypeRepository.findByName(optionPair.type)
@@ -309,11 +356,18 @@ class AdminCatalogService(
     @Transactional
     fun deleteVariant(variantId: Long) {
         val variant = variantRepository.findById(variantId).orElseThrow { VariantNotFoundException(variantId) }
+        val productId = variant.product!!.id
 
         // Remove associated inventory first due to foreign key constraint
         inventoryRepository.deleteById(variantId)
-
         variantRepository.delete(variant)
+
+        // If it was the last variant, create a default one
+        val remainingVariants = variantRepository.findAllByProductId(productId)
+        if (remainingVariants.isEmpty()) {
+            val product = productRepository.findById(productId).get()
+            createDefaultVariant(product, null, 0)
+        }
     }
 
     // ---------- Inventory ----------

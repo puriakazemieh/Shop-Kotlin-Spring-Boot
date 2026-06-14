@@ -18,3 +18,16 @@ class NotEnoughStockForCartException(variantId: Long, requested: Int, available:
         "NOT_ENOUGH_STOCK",
         HttpStatus.CONFLICT
     )
+
+class ProductNoActiveVariantException(productId: Long) :
+    ApiException("Product $productId has no active variants", "PRODUCT_NO_ACTIVE_VARIANT", HttpStatus.BAD_REQUEST)
+
+class ProductMultipleVariantsException(productId: Long) :
+    ApiException(
+        "Product $productId has multiple variants, please specify variantId",
+        "PRODUCT_MULTIPLE_VARIANTS",
+        HttpStatus.BAD_REQUEST
+    )
+
+class MissingVariantOrProductException :
+    ApiException("Either variantId or productId must be provided", "MISSING_VARIANT_OR_PRODUCT", HttpStatus.BAD_REQUEST)

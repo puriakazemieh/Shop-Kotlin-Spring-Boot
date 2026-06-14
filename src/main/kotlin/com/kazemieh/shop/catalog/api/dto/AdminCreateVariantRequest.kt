@@ -15,7 +15,7 @@ data class OptionPair(
 
 // ---------- Variant + Inventory ----------
 data class AdminCreateVariantRequest(
-    @field:Valid @field:Size(min = 1) val options: List<OptionPair>,
+    @field:Valid @field:Size(min = 1) val options: List<OptionPair> = emptyList(),
     @field:NotBlank @field:Size(max = 80) val sku: String,
     @field:NotNull @field:DecimalMin("0.0") val price: BigDecimal,
     @field:DecimalMin("0.0") val discountedPrice: BigDecimal? = null,

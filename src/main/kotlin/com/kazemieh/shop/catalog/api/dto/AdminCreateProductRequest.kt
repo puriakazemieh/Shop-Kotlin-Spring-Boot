@@ -13,5 +13,7 @@ data class AdminCreateProductRequest(
     val basePrice: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
     val isActive: Boolean = true,
-    val variants: List<AdminCreateVariantRequest>? = null
+    val variants: List<AdminCreateVariantRequest>? = null,
+    val sku: String? = null,
+    val initialOnHand: Int = 0
 )
