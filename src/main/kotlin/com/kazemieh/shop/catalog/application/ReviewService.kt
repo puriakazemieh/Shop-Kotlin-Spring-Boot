@@ -1,17 +1,18 @@
 package com.kazemieh.shop.catalog.application
 
-import com.kazemieh.shop.catalog.api.dto.CreateReviewRequest
-import com.kazemieh.shop.catalog.api.dto.ReviewResponse
-import com.kazemieh.shop.catalog.api.dto.UpdateReviewRequest
+import com.kazemieh.shop.catalog.api.dto.*
 import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.catalog.persistence.ProductReviewRepository
 import com.kazemieh.shop.catalog.persistence.entity.ProductReviewEntity
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.ApiException
 import com.kazemieh.shop.shared.error.ErrorCodes
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.OffsetDateTime
 
 @Service
 class ReviewService(
@@ -19,6 +20,25 @@ class ReviewService(
     private val productRepository: ProductRepository,
     private val userRepository: UserRepository
 ) {
+
+    @Transactional(readOnly = true)
+    fun listReviewsAdmin(
+        productId: Long?,
+        isNew: Boolean?,
+        page: Int,
+        size: Int
+    ): PageResponse<AdminInteractionResponse> {
+        val pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
+        val result = reviewRepository.findAllByFilters(productId, isNew, pageable)
+
+        return PageResponse(
+            items = result.content.map { it.toAdminResponse() },
+            page = result.number,
+            size = result.size,
+            totalElements = result.totalElements,
+            totalPages = result.totalPages
+        )
+    }
 
     @Transactional(readOnly = true)
     fun getReviewsByProduct(productId: Long): List<ReviewResponse> {
@@ -30,6 +50,7 @@ class ReviewService(
     fun createReview(userId: Long, request: CreateReviewRequest): ReviewResponse {
         val product = productRepository.findById(request.productId)
             .orElseThrow { ApiException(ErrorCodes.PRODUCT_NOT_FOUND, "Product not found", HttpStatus.NOT_FOUND) }
+
         val user = userRepository.findById(userId)
             .orElseThrow { ApiException(ErrorCodes.USER_NOT_FOUND, "User not found", HttpStatus.NOT_FOUND) }
 
@@ -43,7 +64,8 @@ class ReviewService(
             user = user,
             rating = if (parent == null) request.rating else null, // Rating only for top-level reviews
             comment = request.comment,
-            parent = parent
+            parent = parent,
+            isNew = true
         )
 
         return reviewRepository.save(review).toResponse()
@@ -84,7 +106,21 @@ class ReviewService(
             rating = this.rating,
             comment = this.comment,
             replies = this.replies.map { it.toResponse() },
-            createdAt = this.createdAt ?: java.time.OffsetDateTime.now()
+            createdAt = this.createdAt ?: OffsetDateTime.now()
+        )
+    }
+
+    private fun ProductReviewEntity.toAdminResponse(): AdminInteractionResponse {
+        return AdminInteractionResponse(
+            id = this.id,
+            productId = this.product.id,
+            productTitle = this.product.title,
+            userId = this.user.id,
+            userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
+            content = this.comment,
+            rating = this.rating,
+            isNew = this.isNew,
+            createdAt = this.createdAt ?: OffsetDateTime.now()
         )
     }
 }

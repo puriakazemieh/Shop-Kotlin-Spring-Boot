@@ -34,6 +34,9 @@ class ProductReviewEntity(
     @OneToMany(mappedBy = "parent", cascade = [CascadeType.ALL], orphanRemoval = true)
     var replies: MutableList<ProductReviewEntity> = mutableListOf(),
 
+    @Column(nullable = false)
+    var isNew: Boolean = true,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime? = null,

@@ -1,17 +1,18 @@
 package com.kazemieh.shop.catalog.application
 
-import com.kazemieh.shop.catalog.api.dto.CreateQuestionRequest
-import com.kazemieh.shop.catalog.api.dto.QuestionResponse
-import com.kazemieh.shop.catalog.api.dto.UpdateQuestionRequest
+import com.kazemieh.shop.catalog.api.dto.*
 import com.kazemieh.shop.catalog.persistence.ProductQuestionRepository
 import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.catalog.persistence.entity.ProductQuestionEntity
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.ApiException
 import com.kazemieh.shop.shared.error.ErrorCodes
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.OffsetDateTime
 
 @Service
 class QuestionService(
@@ -19,6 +20,25 @@ class QuestionService(
     private val productRepository: ProductRepository,
     private val userRepository: UserRepository
 ) {
+
+    @Transactional(readOnly = true)
+    fun listQuestionsAdmin(
+        productId: Long?,
+        isNew: Boolean?,
+        page: Int,
+        size: Int
+    ): PageResponse<AdminInteractionResponse> {
+        val pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
+        val result = questionRepository.findAllByFilters(productId, isNew, pageable)
+
+        return PageResponse(
+            items = result.content.map { it.toAdminResponse() },
+            page = result.number,
+            size = result.size,
+            totalElements = result.totalElements,
+            totalPages = result.totalPages
+        )
+    }
 
     @Transactional(readOnly = true)
     fun getQuestionsByProduct(productId: Long): List<QuestionResponse> {
@@ -42,7 +62,8 @@ class QuestionService(
             product = product,
             user = user,
             content = request.content,
-            parent = parent
+            parent = parent,
+            isNew = true
         )
 
         return questionRepository.save(question).toResponse()
@@ -81,7 +102,21 @@ class QuestionService(
             userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
             content = this.content,
             replies = this.replies.map { it.toResponse() },
-            createdAt = this.createdAt ?: java.time.OffsetDateTime.now()
+            createdAt = this.createdAt ?: OffsetDateTime.now()
+        )
+    }
+
+    private fun ProductQuestionEntity.toAdminResponse(): AdminInteractionResponse {
+        return AdminInteractionResponse(
+            id = this.id,
+            productId = this.product.id,
+            productTitle = this.product.title,
+            userId = this.user.id,
+            userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
+            content = this.content,
+            rating = null,
+            isNew = this.isNew,
+            createdAt = this.createdAt ?: OffsetDateTime.now()
         )
     }
 }
