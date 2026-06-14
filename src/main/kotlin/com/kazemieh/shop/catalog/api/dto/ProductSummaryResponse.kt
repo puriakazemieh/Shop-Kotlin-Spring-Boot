@@ -14,4 +14,5 @@ data class ProductSummaryResponse(
     val inStock: Boolean,
     val categoryId: Long?,
     val categoryName: String?,
+    val isFavorite: Boolean = false,
 )

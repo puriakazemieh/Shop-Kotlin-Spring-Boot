@@ -4,6 +4,8 @@ import com.kazemieh.shop.catalog.api.dto.PageResponse
 import com.kazemieh.shop.catalog.api.dto.ProductDetailResponse
 import com.kazemieh.shop.catalog.api.dto.ProductSummaryResponse
 import com.kazemieh.shop.catalog.application.CatalogService
+import com.kazemieh.shop.shared.security.UserPrincipal
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -28,6 +30,7 @@ class CatalogController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(required = false) sort: String?, // newest | price_asc | price_desc
+        @AuthenticationPrincipal principal: UserPrincipal?,
     ): PageResponse<ProductSummaryResponse> =
         catalogService.listProducts(
             q = q,
@@ -39,10 +42,14 @@ class CatalogController(
             page = page,
             size = size,
             categorySlug = sort,
-            sort = categorySlug
+            sort = categorySlug,
+            currentUserId = principal?.id
         )
 
     @GetMapping("/products/{slug}")
-    fun productDetail(@PathVariable slug: String): ProductDetailResponse =
-        catalogService.productDetail(slug)
+    fun productDetail(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: UserPrincipal?,
+    ): ProductDetailResponse =
+        catalogService.productDetail(slug, principal?.id)
 }

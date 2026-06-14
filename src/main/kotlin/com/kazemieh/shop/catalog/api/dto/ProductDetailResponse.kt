@@ -15,4 +15,5 @@ data class ProductDetailResponse(
     val images: List<ProductImageResponse>,
     val variants: List<VariantResponse>,
     val createdAt: OffsetDateTime?,
+    val isFavorite: Boolean = false,
 )

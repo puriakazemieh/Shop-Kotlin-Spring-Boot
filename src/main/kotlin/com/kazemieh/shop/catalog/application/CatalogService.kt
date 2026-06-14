@@ -18,6 +18,7 @@ class CatalogService(
     private val variantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val productSearchRepository: ProductSearchRepository,
+    private val favoriteRepository: FavoriteRepository,
 ) {
 
     // ---------- Categories (Tree) ----------
@@ -52,7 +53,8 @@ class CatalogService(
         page: Int,
         size: Int,
         categorySlug: String?,
-        sort: String?
+        sort: String?,
+        currentUserId: Long? = null
     ): PageResponse<ProductSummaryResponse> {
         val resolvedCategoryId = when {
             categoryId != null -> categoryId
@@ -131,6 +133,10 @@ class CatalogService(
             variantRepository.aggregateByProductIds(productIds).associateBy { it.getProductId() }
         else emptyMap()
 
+        val favoriteProductIds = if (currentUserId != null && productIds.isNotEmpty()) {
+            favoriteRepository.findAllByUserId(currentUserId).map { it.product.id }.toSet()
+        } else emptySet()
+
         val items = products.map { p ->
             val agg = aggByProductId[p.id]
             ProductSummaryResponse(
@@ -144,7 +150,8 @@ class CatalogService(
                 maxDiscountedPrice = agg?.getMaxDiscountedPrice(),
                 inStock = agg?.getInStock() ?: false,
                 categoryId = p.category?.id,
-                categoryName = p.category?.name
+                categoryName = p.category?.name,
+                isFavorite = favoriteProductIds.contains(p.id)
             )
         }
 
@@ -159,7 +166,7 @@ class CatalogService(
 
     // ---------- Product detail ----------
     @Transactional(readOnly = true)
-    fun productDetail(slug: String): ProductDetailResponse {
+    fun productDetail(slug: String, currentUserId: Long? = null): ProductDetailResponse {
         val p = productRepository.findBySlugAndIsActiveTrue(slug) ?: throw ProductNotFoundException(slug)
 
         val images = productImageRepository.findAllByProductIdOrderBySortOrderAsc(p.id)
@@ -175,6 +182,8 @@ class CatalogService(
             CatalogMapper.toVariant(v, available)
         }
 
+        val isFavorite = currentUserId?.let { favoriteRepository.existsByUserIdAndProductId(it, p.id) } ?: false
+
         return ProductDetailResponse(
             id = p.id,
             title = p.title,
@@ -186,7 +195,8 @@ class CatalogService(
             categoryName = p.category?.name,
             images = images.map(CatalogMapper::toImage),
             variants = variantResponses,
-            createdAt = p.createdAt
+            createdAt = p.createdAt,
+            isFavorite = isFavorite
         )
     }
 }
