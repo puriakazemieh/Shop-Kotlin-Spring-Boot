@@ -13,8 +13,11 @@ class PaymentEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "order_id", nullable = false)
-    var orderId: Long = 0,
+    @Column(name = "order_id")
+    var orderId: Long? = null,
+
+    @Column(name = "wallet_transaction_id")
+    var walletTransactionId: Long? = null,
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     var amount: BigDecimal = BigDecimal.ZERO,

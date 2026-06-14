@@ -9,4 +9,6 @@ data class CreateOrderRequest(
     @field:NotEmpty
     @field:Valid
     val items: List<CreateOrderItemRequest>,
+
+    val useWallet: Boolean = false
 )

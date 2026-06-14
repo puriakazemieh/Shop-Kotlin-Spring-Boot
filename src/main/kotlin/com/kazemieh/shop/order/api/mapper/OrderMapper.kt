@@ -26,6 +26,8 @@ object OrderMapper {
             subtotalPrice = o.subtotalPrice,
             shippingPrice = o.shippingPrice,
             totalPrice = o.totalPrice,
+            walletPaidAmount = o.walletPaidAmount,
+            gatewayPaidAmount = o.gatewayPaidAmount,
             createdAt = o.createdAt,
             address = addr,
             items = o.items.map {

@@ -34,6 +34,7 @@ class OrderService(
     private val cartRepository: CartRepository,
     private val cartItemRepository: CartItemRepository,
     private val objectMapper: ObjectMapper,
+    private val walletService: com.kazemieh.shop.wallet.application.WalletService,
 ) {
 
     @Transactional(readOnly = true)
@@ -92,6 +93,23 @@ class OrderService(
         val shipping = BigDecimal.ZERO
         val total = subtotal.add(shipping)
 
+        // Wallet Logic
+        var walletPaid = BigDecimal.ZERO
+        if (req.useWallet) {
+            val wallet = walletService.getOrCreateWallet(userId)
+            walletPaid = total.min(wallet.balance)
+            if (walletPaid > BigDecimal.ZERO) {
+                walletService.addTransaction(
+                    userId = userId,
+                    amount = walletPaid.negate(),
+                    type = com.kazemieh.shop.wallet.persistence.entity.TransactionType.PURCHASE,
+                    description = "خرید محصول - کسر از کیف پول",
+                    referenceId = null // Will update after order save
+                )
+            }
+        }
+        val gatewayPaid = total.subtract(walletPaid)
+
         // 3) lock inventory rows + reserve
         val invRows = inventoryRepository.findAllForUpdate(variantIds).associateBy { it.variantId }
         for ((variantId, qty) in normalizedItems) {
@@ -120,10 +138,12 @@ class OrderService(
 
         val order = OrderEntity(
             user = user,
-            status = OrderStatus.PLACED,
+            status = if (gatewayPaid > BigDecimal.ZERO) OrderStatus.PLACED else OrderStatus.PROCESSING,
             subtotalPrice = subtotal,
             shippingPrice = shipping,
             totalPrice = total,
+            walletPaidAmount = walletPaid,
+            gatewayPaidAmount = gatewayPaid,
             addressSnapshot = addressSnapshot
         )
 

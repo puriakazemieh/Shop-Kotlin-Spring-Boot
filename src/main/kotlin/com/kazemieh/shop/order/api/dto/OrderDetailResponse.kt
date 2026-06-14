@@ -9,6 +9,8 @@ data class OrderDetailResponse(
     val subtotalPrice: BigDecimal,
     val shippingPrice: BigDecimal,
     val totalPrice: BigDecimal,
+    val walletPaidAmount: BigDecimal,
+    val gatewayPaidAmount: BigDecimal,
     val createdAt: OffsetDateTime?,
     val address: AddressSnapshotResponse,
     val items: List<OrderItemResponse>,

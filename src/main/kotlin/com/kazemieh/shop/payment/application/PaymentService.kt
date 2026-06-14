@@ -13,20 +13,23 @@ import java.math.BigDecimal
 class PaymentService(
     private val zarinPalService: ZarinPalService,
     private val paymentRepository: PaymentRepository,
-    private val orderService: OrderService
+    private val orderService: OrderService,
+    private val walletService: com.kazemieh.shop.wallet.application.WalletService,
+    private val transactionRepository: com.kazemieh.shop.wallet.persistence.WalletTransactionRepository
 ) {
 
     @Transactional
-    fun startPayment(orderId: Long, amount: BigDecimal, userId: Long): String? {
+    fun startPayment(orderId: Long?, amount: BigDecimal, userId: Long, walletTransactionId: Long? = null): String? {
         val payment = PaymentEntity(
             orderId = orderId,
+            walletTransactionId = walletTransactionId,
             amount = amount,
             status = PaymentStatus.PENDING,
             authority = ""
         )
         val savedPayment = paymentRepository.save(payment)
 
-        val paymentUrl = zarinPalService.createPaymentRequest(amount.toLong(), orderId.toString())
+        val paymentUrl = zarinPalService.createPaymentRequest(amount.toLong(), (orderId ?: "wallet_$walletTransactionId").toString())
 
         if (paymentUrl != null) {
             val authority = paymentUrl.substringAfterLast("/")
@@ -63,9 +66,12 @@ class PaymentService(
             payment.refId = verificationResponse.refId
             paymentRepository.save(payment)
 
-            orderService.updateStatus(payment.orderId, OrderStatus.PROCESSING)
-
-            orderService.clearCartAfterSuccessfulPayment(payment.orderId)
+            if (payment.orderId != null) {
+                orderService.updateStatus(payment.orderId!!, OrderStatus.PROCESSING)
+                orderService.clearCartAfterSuccessfulPayment(payment.orderId!!)
+            } else if (payment.walletTransactionId != null) {
+                walletService.confirmTransaction(payment.walletTransactionId!!, payment.refId ?: "")
+            }
 
             return true
         } else {

@@ -43,6 +43,12 @@ class OrderEntity(
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     var totalPrice: BigDecimal = BigDecimal.ZERO,
 
+    @Column(name = "wallet_paid_amount", nullable = false, precision = 12, scale = 2)
+    var walletPaidAmount: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "gateway_paid_amount", nullable = false, precision = 12, scale = 2)
+    var gatewayPaidAmount: BigDecimal = BigDecimal.ZERO,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "address_snapshot", nullable = false, columnDefinition = "jsonb")
     var addressSnapshot: JsonNode? = null,
