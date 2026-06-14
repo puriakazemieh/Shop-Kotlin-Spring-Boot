@@ -6,6 +6,7 @@ data class VariantResponse(
     val id: Long,
     val sku: String,
     val price: BigDecimal,
+    val discountedPrice: BigDecimal?,
     val compareAtPrice: BigDecimal?,
     val options: Map<String, String>,
     val availableQty: Int,

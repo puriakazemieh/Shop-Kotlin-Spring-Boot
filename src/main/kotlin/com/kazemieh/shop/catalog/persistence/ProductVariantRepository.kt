@@ -35,8 +35,8 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
           pv.product_id as productId,
           min(pv.price) as minPrice,
           max(pv.price) as maxPrice,
-          min(p.discounted_price) as minDiscountedPrice,
-          max(p.discounted_price) as maxDiscountedPrice,
+          min(coalesce(pv.discounted_price, p.discounted_price)) as minDiscountedPrice,
+          max(coalesce(pv.discounted_price, p.discounted_price)) as maxDiscountedPrice,
           bool_or((coalesce(i.on_hand,0) - coalesce(i.reserved,0)) > 0) as inStock
         from product_variants pv
         left join inventory i on i.variant_id = pv.id

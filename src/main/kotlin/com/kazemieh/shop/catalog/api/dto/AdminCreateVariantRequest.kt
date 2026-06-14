@@ -18,6 +18,7 @@ data class AdminCreateVariantRequest(
     @field:Valid @field:Size(min = 1) val options: List<OptionPair>,
     @field:NotBlank @field:Size(max = 80) val sku: String,
     @field:NotNull @field:DecimalMin("0.0") val price: BigDecimal,
+    @field:DecimalMin("0.0") val discountedPrice: BigDecimal? = null,
     @field:DecimalMin("0.0") val compareAtPrice: BigDecimal? = null,
     val isActive: Boolean = true,
 

@@ -48,8 +48,8 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:minPrice IS NULL OR pv.price >= :minPrice)
-                AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+                AND (:minPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) >= :minPrice)
+                AND (:maxPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
             )
           )
@@ -83,8 +83,8 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:minPrice IS NULL OR pv.price >= :minPrice)
-                AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+                AND (:minPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) >= :minPrice)
+                AND (:maxPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
             )
           )
@@ -122,8 +122,8 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:minPrice IS NULL OR pv.price >= :minPrice)
-                AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+                AND (:minPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) >= :minPrice)
+                AND (:maxPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
             )
           )
@@ -147,8 +147,8 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
               LEFT JOIN inventory i ON i.variant_id = pv.id
               WHERE pv.product_id = p.id
                 AND pv.is_active = true
-                AND (:minPrice IS NULL OR pv.price >= :minPrice)
-                AND (:maxPrice IS NULL OR pv.price <= :maxPrice)
+                AND (:minPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) >= :minPrice)
+                AND (:maxPrice IS NULL OR COALESCE(pv.discounted_price, pv.price) <= :maxPrice)
                 AND (:inStock IS NULL OR :inStock = false OR (COALESCE(i.on_hand,0) - COALESCE(i.reserved,0)) > 0)
             )
           )
@@ -226,7 +226,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
           )
         )
       ORDER BY
-        (SELECT min(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) ASC NULLS LAST,
+        (SELECT min(COALESCE(pv.discounted_price, pv.price)) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) ASC NULLS LAST,
         p.created_at DESC
       """,
         countQuery = """
@@ -289,7 +289,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
           )
         )
       ORDER BY
-        (SELECT min(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) DESC NULLS LAST,
+        (SELECT min(COALESCE(pv.discounted_price, pv.price)) FROM product_variants pv WHERE pv.product_id = p.id AND pv.is_active = true) DESC NULLS LAST,
         p.created_at DESC
       """,
         countQuery = """

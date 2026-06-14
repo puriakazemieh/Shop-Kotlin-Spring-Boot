@@ -35,6 +35,9 @@ class ProductVariantEntity(
     @Column(nullable = false, precision = 12, scale = 2)
     var price: BigDecimal = BigDecimal.ZERO,
 
+    @Column(name = "discounted_price", precision = 12, scale = 2)
+    var discountedPrice: BigDecimal? = null,
+
     @Column(name = "compare_at_price", precision = 12, scale = 2)
     var compareAtPrice: BigDecimal? = null,
 

@@ -85,7 +85,8 @@ class OrderService(
             val v = variants[variantId] ?: throw VariantNotFoundException(variantId)
             if (!v.isActive) throw VariantInactiveException(variantId)
 
-            subtotal = subtotal.add(v.price.multiply(qty.toBigDecimal()))
+            val effectivePrice = v.discountedPrice ?: v.price
+            subtotal = subtotal.add(effectivePrice.multiply(qty.toBigDecimal()))
         }
 
         val shipping = BigDecimal.ZERO
@@ -128,6 +129,7 @@ class OrderService(
 
         for ((variantId, qty) in normalizedItems) {
             val v = variants.getValue(variantId)
+            val effectivePrice = v.discountedPrice ?: v.price
             val optionsSnapshotMap = v.optionValues.associate { it.optionType.name to it.value }
             val optionsSnapshot = objectMapper.valueToTree<JsonNode>(optionsSnapshotMap)
             
@@ -136,7 +138,7 @@ class OrderService(
                     order = order,
                     variantId = variantId,
                     qty = qty,
-                    unitPriceSnapshot = v.price,
+                    unitPriceSnapshot = effectivePrice,
                     titleSnapshot = v.product?.title ?: "",
                     optionsSnapshot = optionsSnapshot
                 )

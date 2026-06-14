@@ -13,6 +13,7 @@ object CatalogMapper {
             id = v.id,
             sku = v.sku,
             price = v.price,
+            discountedPrice = v.discountedPrice,
             compareAtPrice = v.compareAtPrice,
             options = options,
             availableQty = availableQty,

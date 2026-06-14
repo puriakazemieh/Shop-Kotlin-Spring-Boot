@@ -244,6 +244,7 @@ class AdminCatalogService(
             product = product,
             sku = sku,
             price = req.price,
+            discountedPrice = req.discountedPrice,
             compareAtPrice = req.compareAtPrice,
             isActive = req.isActive
         )
@@ -296,7 +297,7 @@ class AdminCatalogService(
             v.sku = newSku
         }
         req.price?.let { v.price = it }
-
+        req.discountedPrice?.let { v.discountedPrice = it }
         req.compareAtPrice?.let { v.compareAtPrice = it }
         req.isActive?.let { v.isActive = it }
 

@@ -246,7 +246,8 @@ class CartService(
         for (item in cart.items) {
             if (!item.savedForLater) {
                 val variant = variants[item.variantId] ?: continue
-                subtotal = subtotal.add(variant.price.multiply(item.qty.toBigDecimal()))
+                val effectivePrice = variant.discountedPrice ?: variant.price
+                subtotal = subtotal.add(effectivePrice.multiply(item.qty.toBigDecimal()))
             }
         }
         return subtotal
@@ -270,7 +271,8 @@ class CartService(
             if (!v.isActive) throw VariantInactiveException(ci.variantId)
             val inv = invMap[ci.variantId]
             val available = ((inv?.onHand ?: 0) - (inv?.reserved ?: 0)).coerceAtLeast(0)
-            val lineTotal = v.price.multiply(ci.qty.toBigDecimal())
+            val effectivePrice = v.discountedPrice ?: v.price
+            val lineTotal = effectivePrice.multiply(ci.qty.toBigDecimal())
             if (!ci.savedForLater) {
                 subtotal = subtotal.add(lineTotal)
                 totalQty += ci.qty
@@ -279,7 +281,7 @@ class CartService(
             CartItemResponse(
                 id = ci.id, variantId = ci.variantId, qty = ci.qty, savedForLater = ci.savedForLater,
                 productId = v.product!!.id, productTitle = v.product!!.title, productSlug = v.product!!.slug, imageUrl = thumbByProductId[v.product!!.id],
-                options = options, price = v.price, compareAtPrice = v.compareAtPrice, availableQty = available, isActive = v.isActive, lineTotal = lineTotal
+                options = options, price = v.price, compareAtPrice = v.discountedPrice ?: v.compareAtPrice, availableQty = available, isActive = v.isActive, lineTotal = lineTotal
             )
         }
 

@@ -49,6 +49,7 @@ object AdminCatalogMapper {
             options = options,
             sku = v.sku,
             price = v.price,
+            discountedPrice = v.discountedPrice,
             compareAtPrice = v.compareAtPrice,
             isActive = v.isActive,
             inventory = inv?.let(::inventory)
