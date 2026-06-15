@@ -153,3 +153,10 @@ class InvalidOrderItemPriceException(message: String = "Invalid order item price
 
 class VariantNotAvailableForOrderException(variantId: Long)
     : UnprocessableException("Variant not available for order: $variantId", ErrorCodes.VARIANT_NOT_AVAILABLE)
+
+// ===== Blogs =====
+class BlogNotFoundException(message: String = "Blog not found")
+    : NotFoundException(message, ErrorCodes.BLOG_NOT_FOUND)
+
+class BlogSlugAlreadyExistsException(slug: String)
+    : ConflictException("Blog slug already exists: $slug", ErrorCodes.BLOG_SLUG_EXISTS)

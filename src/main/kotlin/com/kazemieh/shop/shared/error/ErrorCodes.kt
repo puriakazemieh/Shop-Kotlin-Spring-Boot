@@ -70,6 +70,10 @@ object ErrorCodes {
     const val INVALID_ORDER_ITEM_PRICE = "INVALID_ORDER_ITEM_PRICE"
     const val VARIANT_NOT_AVAILABLE = "VARIANT_NOT_AVAILABLE"
 
+    // ===== Blogs =====
+    const val BLOG_NOT_FOUND = "BLOG_NOT_FOUND"
+    const val BLOG_SLUG_EXISTS = "BLOG_SLUG_EXISTS"
+
     // ===== Discounts =====
     const val DISCOUNT_NOT_FOUND = "DISCOUNT_NOT_FOUND"
     const val DISCOUNT_EXPIRED = "DISCOUNT_EXPIRED"
