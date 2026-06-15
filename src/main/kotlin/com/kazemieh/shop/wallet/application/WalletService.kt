@@ -28,13 +28,13 @@ class WalletService(
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun getBalance(userId: Long): WalletResponse {
         val wallet = getOrCreateWallet(userId)
         return WalletResponse(balance = wallet.balance, userId = userId)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun getTransactions(userId: Long, pageable: Pageable): Page<WalletTransactionResponse> {
         val wallet = getOrCreateWallet(userId)
         return transactionRepository.findAllByWalletIdOrderByCreatedAtDesc(wallet.id, pageable).map {

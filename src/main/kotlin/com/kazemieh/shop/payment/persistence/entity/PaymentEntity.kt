@@ -13,7 +13,7 @@ class PaymentEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
-    @Column(name = "order_id")
+    @Column(name = "order_id", nullable = true)
     var orderId: Long? = null,
 
     @Column(name = "wallet_transaction_id")
