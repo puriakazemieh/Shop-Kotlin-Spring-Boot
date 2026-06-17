@@ -11,17 +11,36 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/blogs")
 class BlogController(
-    private val blogService: BlogService
+    private val blogService: BlogService,
 ) {
 
     @GetMapping
-    fun getPublishedBlogs(pageable: Pageable): Page<BlogSummaryResponse> {
-        return blogService.getPublishedBlogs(pageable)
+    fun getPublishedBlogs(
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) categoryId: Long?,
+        pageable: Pageable
+    ): Page<BlogSummaryResponse> {
+        return blogService.getPublishedBlogs(search, categoryId, pageable)
+    }
+
+    @GetMapping("/featured")
+    fun getFeaturedBlogs(pageable: Pageable): Page<BlogSummaryResponse> {
+        return blogService.getFeaturedBlogs(pageable)
+    }
+
+    @GetMapping("/categories")
+    fun getAllCategories(): List<BlogCategoryResponse> {
+        return blogService.getAllCategories()
     }
 
     @GetMapping("/{slug}")
     fun getBlogBySlug(@PathVariable slug: String): BlogResponse {
-        return blogService.getBlogBySlug(slug)
+        return blogService.getBlogBySlug(slug, isAdmin = false)
+    }
+
+    @GetMapping("/{slug}/related")
+    fun getRelatedBlogs(@PathVariable slug: String): List<BlogSummaryResponse> {
+        return blogService.getRelatedBlogs(slug)
     }
 }
 
@@ -29,8 +48,13 @@ class BlogController(
 @RequestMapping("/api/admin/blogs")
 @PreAuthorize("hasRole('ADMIN')")
 class AdminBlogController(
-    private val blogService: BlogService
+    private val blogService: BlogService,
 ) {
+
+    @GetMapping
+    fun getAllBlogs(pageable: Pageable): Page<BlogAdminSummaryResponse> {
+        return blogService.getAllBlogsForAdmin(pageable)
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -47,5 +71,35 @@ class AdminBlogController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteBlog(@PathVariable id: Long) {
         blogService.deleteBlog(id)
+    }
+
+    @GetMapping("/categories")
+    fun getAllCategories(): List<BlogCategoryResponse> {
+        return blogService.getAllCategories()
+    }
+
+    @PostMapping("/categories")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun createCategory(@RequestBody request: BlogCategoryCreateRequest): BlogCategoryResponse {
+        return blogService.createCategory(request)
+    }
+
+    @PutMapping("/categories/{id}")
+    fun updateCategory(
+        @PathVariable id: Long,
+        @RequestBody request: BlogCategoryUpdateRequest
+    ): BlogCategoryResponse {
+        return blogService.updateCategory(id, request)
+    }
+
+    @DeleteMapping("/categories/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deleteCategory(@PathVariable id: Long) {
+        blogService.deleteCategory(id)
+    }
+
+    @GetMapping("/{slug}")
+    fun getBlogBySlugForAdmin(@PathVariable slug: String): BlogResponse {
+        return blogService.getBlogBySlug(slug, isAdmin = true)
     }
 }

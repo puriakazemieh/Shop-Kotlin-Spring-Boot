@@ -1,5 +1,9 @@
 package com.kazemieh.shop.blog.persistence.entity
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.kazemieh.shop.blog.api.dto.BlogBlock
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -17,8 +21,9 @@ class BlogEntity(
     @Column(nullable = false, unique = true)
     var slug: String = "",
 
+    @Convert(converter = BlogContentConverter::class)
     @Column(nullable = false, columnDefinition = "TEXT")
-    var content: String = "", // JSON structure for block-based editor
+    var content: List<BlogBlock> = emptyList(),
 
     @Column(columnDefinition = "TEXT")
     var summary: String? = null,
@@ -39,6 +44,18 @@ class BlogEntity(
     @Column(name = "author_id")
     var authorId: Long? = null,
 
+    @Column(name = "category_id")
+    var categoryId: Long? = null,
+
+    @Column(name = "is_featured")
+    var isFeatured: Boolean = false,
+
+    @Column(name = "meta_title")
+    var metaTitle: String? = null,
+
+    @Column(name = "meta_description", columnDefinition = "TEXT")
+    var metaDescription: String? = null,
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     var createdAt: LocalDateTime? = null,
@@ -50,4 +67,18 @@ class BlogEntity(
 
 enum class BlogStatus {
     DRAFT, PUBLISHED
+}
+
+@Converter
+class BlogContentConverter : AttributeConverter<List<BlogBlock>, String> {
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
+
+    override fun convertToDatabaseColumn(attribute: List<BlogBlock>?): String {
+        return objectMapper.writeValueAsString(attribute ?: emptyList<BlogBlock>())
+    }
+
+    override fun convertToEntityAttribute(dbData: String?): List<BlogBlock> {
+        if (dbData.isNullOrBlank()) return emptyList()
+        return objectMapper.readValue(dbData, object : TypeReference<List<BlogBlock>>() {})
+    }
 }
