@@ -26,6 +26,13 @@ class AdminProductVideoController(
         @RequestParam("file") file: MultipartFile,
         @RequestParam(value = "sortOrder", required = false) sortOrder: Int?
     ): AdminProductVideoResponse {
+        val contentType = file.contentType
+        if (contentType == null || !contentType.startsWith("video/")) {
+            throw com.kazemieh.shop.catalog.application.exception.BadRequestException(
+                "فایل ارسالی باید ویدیو باشد",
+                "INVALID_VIDEO_TYPE"
+            )
+        }
         val videoUrl = fileStorageService.saveFile(file)
         val req = AdminAddVideoRequest(url = videoUrl, sortOrder = sortOrder)
         return adminCatalogService.addVideo(productId, req)

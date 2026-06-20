@@ -28,6 +28,13 @@ class AdminProductImageController(
         @RequestParam("file") file: MultipartFile,
         @RequestParam(value = "sortOrder", required = false) sortOrder: Int?
     ): AdminProductImageResponse {
+        val contentType = file.contentType
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw com.kazemieh.shop.catalog.application.exception.BadRequestException(
+                "فایل ارسالی باید تصویر باشد",
+                "INVALID_IMAGE_TYPE"
+            )
+        }
         val imageUrl = fileStorageService.saveFile(file)
         val req = AdminAddImageRequest(url = imageUrl, sortOrder = sortOrder)
         return adminCatalogService.addImage(productId, req)

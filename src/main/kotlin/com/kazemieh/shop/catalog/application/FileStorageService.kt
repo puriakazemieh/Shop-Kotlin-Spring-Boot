@@ -25,7 +25,7 @@ class FileStorageService {
         // ذخیره فایل در سیستم
         Files.copy(file.inputStream, targetLocation)
         
-        // برگرداندن مسیر فایل تا در دیتابیس به عنوان url تصویر ذخیره شود
+        // برگرداندن مسیر فایل تا در دیتابیس به عنوان url فایل ذخیره شود
         return "/uploads/$fileName" 
     }
 }
