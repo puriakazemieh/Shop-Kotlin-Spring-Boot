@@ -5,6 +5,7 @@ import com.kazemieh.shop.wallet.api.dto.*
 import com.kazemieh.shop.wallet.persistence.WalletRepository
 import com.kazemieh.shop.wallet.persistence.WalletTransactionRepository
 import com.kazemieh.shop.wallet.persistence.WithdrawalRequestRepository
+import com.kazemieh.shop.wallet.application.exception.InsufficientBalanceException
 import com.kazemieh.shop.wallet.persistence.entity.*
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -53,7 +54,7 @@ class WalletService(
     fun requestWithdrawal(userId: Long, req: WithdrawalRequest): WithdrawalRequestResponse {
         val wallet = getOrCreateWallet(userId)
         if (wallet.balance < req.amount) {
-            throw RuntimeException("Insufficient wallet balance")
+            throw InsufficientBalanceException()
         }
 
         // کسر موجودی بلافاصله هنگام درخواست برای جلوگیری از خرج کردن چندباره

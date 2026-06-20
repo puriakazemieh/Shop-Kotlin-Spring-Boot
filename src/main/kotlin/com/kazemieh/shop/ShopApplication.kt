@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.data.web.config.EnableSpringDataWebSupport
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.http.client.SimpleClientHttpRequestFactory
@@ -16,6 +17,7 @@ import javax.net.ssl.*
 @EnableScheduling
 @EnableAsync
 @EnableConfigurationProperties(JwtProperties::class)
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 class ShopApplication {
     @Bean
     fun restTemplate(): RestTemplate {

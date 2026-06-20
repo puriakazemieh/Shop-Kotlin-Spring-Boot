@@ -64,6 +64,9 @@ object ErrorCodes {
     const val ORDER_FINALIZED = "ORDER_FINALIZED"
     const val ORDER_PRICE_MISMATCH = "ORDER_PRICE_MISMATCH"
 
+    // ===== Wallet =====
+    const val INSUFFICIENT_WALLET_BALANCE = "INSUFFICIENT_WALLET_BALANCE"
+
     // ===== Order Items =====
     const val ORDER_ITEM_NOT_FOUND = "ORDER_ITEM_NOT_FOUND"
     const val INVALID_QUANTITY = "INVALID_QUANTITY"
