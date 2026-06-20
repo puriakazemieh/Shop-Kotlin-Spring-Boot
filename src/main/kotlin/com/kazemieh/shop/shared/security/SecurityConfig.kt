@@ -83,6 +83,7 @@ class SecurityConfig(
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
                     "/api/open-api.yml",
+                    "/api/auth/*",
                     "/uploads/**"
                 ).permitAll()
 

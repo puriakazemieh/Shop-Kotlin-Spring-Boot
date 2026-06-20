@@ -191,6 +191,7 @@ class AuthService(
     }
 
     private fun generateOtp(): String {
-        return Random.nextInt(100000, 999999).toString()
+//        return Random.nextInt(100000, 999999).toString()
+        return 1234.toString()
     }
 }

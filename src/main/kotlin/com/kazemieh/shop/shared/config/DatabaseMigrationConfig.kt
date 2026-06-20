@@ -11,11 +11,13 @@ class DatabaseMigrationConfig {
     @Bean
     fun migrateDatabase(jdbcTemplate: JdbcTemplate) = CommandLineRunner {
         try {
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN email DROP NOT NULL;")
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;")
             jdbcTemplate.execute("ALTER TABLE payments ALTER COLUMN order_id DROP NOT NULL;")
-            println("Successfully dropped NOT NULL constraint on payments.order_id")
+            println("Successfully updated database constraints for users and payments")
         } catch (e: Exception) {
             // Ignore if it fails (e.g. column already nullable or table doesn't exist yet)
-            println("Note: Database migration for payments.order_id skipped or failed: ${e.message}")
+            println("Note: Database migration skipped or failed: ${e.message}")
         }
     }
 }
