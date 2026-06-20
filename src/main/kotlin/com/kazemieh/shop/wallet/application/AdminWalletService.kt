@@ -60,6 +60,9 @@ class AdminWalletService(
         return requests.map {
             WithdrawalRequestResponse(
                 id = it.id,
+                userId = it.user!!.id,
+                userFullName = "${it.user!!.firstName ?: ""} ${it.user!!.lastName ?: ""}".trim().ifBlank { null },
+                userEmail = it.user!!.email,
                 amount = it.amount,
                 iban = it.iban,
                 status = it.status,

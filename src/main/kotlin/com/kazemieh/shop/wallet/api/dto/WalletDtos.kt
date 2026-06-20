@@ -30,6 +30,9 @@ data class WithdrawalRequest(
 
 data class WithdrawalRequestResponse(
     val id: Long,
+    val userId: Long,
+    val userFullName: String?,
+    val userEmail: String?,
     val amount: BigDecimal,
     val iban: String,
     val status: WithdrawalStatus,

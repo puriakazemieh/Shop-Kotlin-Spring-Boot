@@ -82,6 +82,9 @@ class WalletService(
 
         return WithdrawalRequestResponse(
             id = saved.id,
+            userId = saved.user!!.id,
+            userFullName = "${saved.user!!.firstName ?: ""} ${saved.user!!.lastName ?: ""}".trim().ifBlank { null },
+            userEmail = saved.user!!.email,
             amount = saved.amount,
             iban = saved.iban,
             status = saved.status,
