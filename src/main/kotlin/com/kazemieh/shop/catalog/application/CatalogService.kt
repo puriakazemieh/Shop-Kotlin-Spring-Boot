@@ -135,7 +135,7 @@ class CatalogService(
         else emptyMap()
 
         val favoriteProductIds = if (currentUserId != null && productIds.isNotEmpty()) {
-            favoriteRepository.findAllByUserId(currentUserId).map { it.product.id }.toSet()
+            favoriteRepository.findAllByUserIdAndProductIdIn(currentUserId, productIds).map { it.product.id }.toSet()
         } else emptySet()
 
         val items = products.map { p ->

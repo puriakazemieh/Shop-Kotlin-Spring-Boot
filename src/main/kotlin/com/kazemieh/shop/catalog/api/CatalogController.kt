@@ -41,8 +41,8 @@ class CatalogController(
             inStock = inStock,
             page = page,
             size = size,
-            categorySlug = sort,
-            sort = categorySlug,
+            categorySlug = categorySlug,
+            sort = sort,
             currentUserId = principal?.id
         )
 
