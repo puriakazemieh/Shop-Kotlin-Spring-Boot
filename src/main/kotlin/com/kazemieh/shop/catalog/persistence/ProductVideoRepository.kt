@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 interface ProductVideoRepository : JpaRepository<ProductVideoEntity, Long> {
     fun findAllByProductIdOrderBySortOrderAsc(productId: Long): List<ProductVideoEntity>
     fun findTopByProductIdOrderBySortOrderDesc(productId: Long): ProductVideoEntity?
+    fun deleteAllByProductId(productId: Long)
 }

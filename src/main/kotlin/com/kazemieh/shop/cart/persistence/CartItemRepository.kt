@@ -7,4 +7,5 @@ interface CartItemRepository : JpaRepository<CartItemEntity, Long> {
     fun findByCartIdAndVariantId(cartId: Long, variantId: Long): CartItemEntity?
     fun findByIdAndCartId(id: Long, cartId: Long): CartItemEntity?
     fun deleteAllByCartId(cartId: Long): Long
+    fun deleteAllByVariantId(variantId: Long)
 }

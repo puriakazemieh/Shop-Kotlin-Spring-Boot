@@ -7,4 +7,5 @@ interface ProductImageRepository : JpaRepository<ProductImageEntity, Long> {
     fun findAllByProductIdInOrderBySortOrderAsc(productIds: List<Long>): List<ProductImageEntity>
     fun findAllByProductIdOrderBySortOrderAsc(productId: Long): List<ProductImageEntity>
     fun findTopByProductIdOrderBySortOrderDesc(productId: Long): ProductImageEntity?
+    fun deleteAllByProductId(productId: Long)
 }

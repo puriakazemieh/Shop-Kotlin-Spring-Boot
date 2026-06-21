@@ -13,4 +13,6 @@ interface ProductQuestionRepository : JpaRepository<ProductQuestionEntity, Long>
     fun findAllByFilters(productId: Long?, isNew: Boolean?, pageable: Pageable): Page<ProductQuestionEntity>
 
     fun findAllByProductIdAndParentIsNullOrderByCreatedAtDesc(productId: Long): List<ProductQuestionEntity>
+
+    fun deleteAllByProductId(productId: Long)
 }

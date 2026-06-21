@@ -5,6 +5,8 @@ import com.kazemieh.shop.catalog.api.mapper.AdminCatalogMapper
 import com.kazemieh.shop.catalog.application.exception.*
 import com.kazemieh.shop.catalog.persistence.*
 import com.kazemieh.shop.catalog.persistence.entity.*
+import com.kazemieh.shop.cart.persistence.CartItemRepository
+import com.kazemieh.shop.order.persistence.OrderItemRepository
 import com.kazemieh.shop.shared.error.NotFoundException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -21,7 +23,12 @@ class AdminCatalogService(
     private val variantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val optionTypeRepository: OptionTypeRepository,
-    private val optionValueRepository: OptionValueRepository
+    private val optionValueRepository: OptionValueRepository,
+    private val reviewRepository: ProductReviewRepository,
+    private val questionRepository: ProductQuestionRepository,
+    private val favoriteRepository: FavoriteRepository,
+    private val cartItemRepository: CartItemRepository,
+    private val orderItemRepository: OrderItemRepository
 ) {
 
     // ---------- Categories ----------
@@ -121,6 +128,14 @@ class AdminCatalogService(
         )
 
         if (req.variants.isNullOrEmpty()) {
+            // Validate mandatory fields for default variant
+            if (req.basePrice == null) {
+                throw BadRequestException("Base price is required for products without variants", "PRODUCT_PRICE_REQUIRED")
+            }
+            if (req.initialOnHand == null) {
+                throw BadRequestException("Initial inventory is required for products without variants", "PRODUCT_INVENTORY_REQUIRED")
+            }
+
             // Create a default variant if none provided
             createDefaultVariant(saved, req.sku, req.initialOnHand)
         } else {
@@ -216,8 +231,36 @@ class AdminCatalogService(
 
     @Transactional
     fun deleteProductHard(id: Long) {
-        // هشدار: اگر order_items به variant مربوط باشد، DB به خاطر ON DELETE RESTRICT اجازه نمی‌دهد.
         val p = productRepository.findById(id).orElseThrow { ProductNotFoundException(id.toString()) }
+        
+        // 1) Check if any variant is used in orders
+        val variants = variantRepository.findAllByProductId(id)
+        val variantIds = variants.map { it.id }
+        
+        for (vId in variantIds) {
+            if (orderItemRepository.existsByVariantId(vId)) {
+                throw BadRequestException(
+                    "Cannot delete product because one of its variants is used in orders. Use soft delete (isActive=false) instead.",
+                    "PRODUCT_USED_IN_ORDERS"
+                )
+            }
+        }
+
+        // 2) Manual cleanup of related data
+        imageRepository.deleteAllByProductId(id)
+        videoRepository.deleteAllByProductId(id)
+        reviewRepository.deleteAllByProductId(id)
+        questionRepository.deleteAllByProductId(id)
+        favoriteRepository.deleteAllByProductId(id)
+        
+        for (vId in variantIds) {
+            cartItemRepository.deleteAllByVariantId(vId)
+            inventoryRepository.deleteById(vId)
+        }
+        
+        variantRepository.deleteAll(variants)
+        
+        // 3) Delete product
         productRepository.delete(p)
     }
 

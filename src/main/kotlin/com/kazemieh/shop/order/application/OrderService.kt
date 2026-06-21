@@ -2,7 +2,6 @@ package com.kazemieh.shop.order.application
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.kazemieh.shop.cart.persistence.CartItemRepository
 import com.kazemieh.shop.cart.persistence.CartRepository
 import com.kazemieh.shop.catalog.persistence.InventoryRepository
 import com.kazemieh.shop.catalog.persistence.ProductVariantRepository
@@ -32,7 +31,6 @@ class OrderService(
     private val productVariantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val cartRepository: CartRepository,
-    private val cartItemRepository: CartItemRepository,
     private val objectMapper: ObjectMapper,
     private val walletService: com.kazemieh.shop.wallet.application.WalletService,
 ) {
@@ -175,8 +173,10 @@ class OrderService(
         val order = orderRepository.findById(orderId).orElse(null)
         val userId = order?.user?.id
         if (userId != null) {
-            cartRepository.findByUserId(userId)?.let { cart ->
-                cartItemRepository.deleteAllByCartId(cart.id)
+            cartRepository.findWithItemsByUserId(userId)?.let { cart ->
+                cart.items.clear()
+                cart.discount = null
+                cartRepository.save(cart)
             }
         }
     }

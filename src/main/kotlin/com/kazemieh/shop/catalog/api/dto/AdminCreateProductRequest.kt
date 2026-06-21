@@ -15,5 +15,5 @@ data class AdminCreateProductRequest(
     val isActive: Boolean = true,
     val variants: List<AdminCreateVariantRequest>? = null,
     val sku: String? = null,
-    val initialOnHand: Int = 0
+    val initialOnHand: Int? = null
 )

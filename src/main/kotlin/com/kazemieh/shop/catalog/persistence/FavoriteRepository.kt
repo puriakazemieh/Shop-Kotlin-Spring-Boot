@@ -13,4 +13,5 @@ interface FavoriteRepository : JpaRepository<FavoriteEntity, Long> {
     fun findAllByUserId(userId: Long, pageable: Pageable): Page<FavoriteEntity>
     fun findByUserIdAndProductId(userId: Long, productId: Long): FavoriteEntity?
     fun findAllByUserId(userId: Long): List<FavoriteEntity>
+    fun deleteAllByProductId(productId: Long)
 }
