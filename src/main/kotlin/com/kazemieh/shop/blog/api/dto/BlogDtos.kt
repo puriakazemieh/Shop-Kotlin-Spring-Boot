@@ -11,7 +11,7 @@ data class BlogBlock(
 
 data class BlogCreateRequest(
     val title: String,
-    val content: List<BlogBlock>,
+    val content: List<BlogBlock> = emptyList(),
     val summary: String? = null,
     val thumbnailUrl: String? = null,
     val status: BlogStatus = BlogStatus.DRAFT,
@@ -20,6 +20,7 @@ data class BlogCreateRequest(
     val metaTitle: String? = null,
     val metaDescription: String? = null
 )
+
 
 data class BlogUpdateRequest(
     val title: String? = null,

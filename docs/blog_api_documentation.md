@@ -60,7 +60,12 @@
   "id": 1,
   "title": "آموزش کاتلین",
   "slug": "kotlin-tutorial",
-  "content": "{\"blocks\": [...]}", 
+  "content": [
+    {
+      "type": "paragraph",
+      "content": "این متن مقاله است."
+    }
+  ], 
   "summary": "خلاصه‌ای از آموزش کاتلین...",
   "thumbnailUrl": "/uploads/image1.jpg",
   "viewCount": 151,
@@ -70,6 +75,7 @@
   "updatedAt": "2026-06-15T11:10:00"
 }
 ```
+
 
 ---
 
@@ -83,12 +89,18 @@
 ```json
 {
   "title": "عنوان مقاله",
-  "content": "{\"blocks\": [{\"type\": \"paragraph\", \"text\": \"سلام\"}]}",
+  "content": [
+    {
+      "type": "paragraph", 
+      "content": "سلام، این یک مقاله جدید است."
+    }
+  ],
   "summary": "خلاصه اختیاری",
   "thumbnailUrl": "/uploads/cover.jpg",
   "status": "PUBLISHED" 
 }
 ```
+
 
 ### ویرایش مقاله
 `PUT /api/admin/blogs/{id}`
@@ -120,29 +132,32 @@
 
 ---
 
-## ۴. ساختار پیشنهادی Content (JSON Blocks)
+## ۴. ساختار محتوا (Content Structure)
 
-برای اینکه سمت اندروید به راحتی رندر کنید، محتوا را به این صورت در فیلد `content` ارسال و دریافت کنید:
+محتوای مقاله به صورت یک آرایه از اشیاء (Blocks) ارسال و دریافت می‌شود. هر بلاک دارای فیلدهای زیر است:
 
+| فیلد | نوع | توضیح |
+| :--- | :--- | :--- |
+| `type` | String | نوع بلاک: `paragraph`, `header`, `image` |
+| `content` | String | متن (برای پاراگراف و تیتر) یا لینک تصویر |
+| `level` | Integer | (اختیاری) سطح تیتر (1, 2, 3) |
+
+**نمونه محتوا:**
 ```json
-{
-  "blocks": [
-    {
-      "type": "header",
-      "data": { "text": "معرفی بخش اول", "level": 2 }
-    },
-    {
-      "type": "paragraph",
-      "data": { "text": "این یک متن نمونه است." }
-    },
-    {
-      "type": "image",
-      "data": {
-        "url": "/uploads/abc.jpg",
-        "caption": "توضیح تصویر"
-      }
-    }
-  ]
-}
+[
+  {
+    "type": "header",
+    "content": "معرفی بخش اول",
+    "level": 2
+  },
+  {
+    "type": "paragraph",
+    "content": "این یک متن نمونه است."
+  },
+  {
+    "type": "image",
+    "content": "https://example.com/uploads/abc.jpg"
+  }
+]
 ```
-*نکته: در سمت سرور، این کل ساختار به صورت یک String در دیتابیس ذخیره می‌شود.*
+
