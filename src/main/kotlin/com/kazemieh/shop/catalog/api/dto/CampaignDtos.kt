@@ -5,6 +5,7 @@ data class CampaignResponse(
     val id: Long,
     val title: String,
     val endsAt: String,
+    val remainingSeconds: Long,
     val products: List<ProductSummaryResponse>,
 )
 

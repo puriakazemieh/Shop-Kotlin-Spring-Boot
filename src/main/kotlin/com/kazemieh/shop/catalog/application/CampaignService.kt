@@ -14,6 +14,7 @@ import com.kazemieh.shop.catalog.persistence.entity.CampaignEntity
 import com.kazemieh.shop.catalog.persistence.entity.ProductEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.OffsetDateTime
 
 @Service
@@ -28,14 +29,17 @@ class CampaignService(
 
     @Transactional(readOnly = true)
     fun getActiveCampaign(currentUserId: Long?): CampaignResponse? {
+        val now = OffsetDateTime.now()
         val campaign = campaignRepository
-            .findFirstByIsActiveTrueAndEndsAtAfterOrderByEndsAtAsc(OffsetDateTime.now())
+            .findFirstByIsActiveTrueAndEndsAtAfterOrderByEndsAtAsc(now)
             ?: return null
         val products = campaign.products.filter { it.isActive }
+        val remaining = Duration.between(now, campaign.endsAt).seconds.coerceAtLeast(0)
         return CampaignResponse(
             id = campaign.id,
             title = campaign.title,
             endsAt = campaign.endsAt.toString(),
+            remainingSeconds = remaining,
             products = buildSummaries(products, currentUserId),
         )
     }

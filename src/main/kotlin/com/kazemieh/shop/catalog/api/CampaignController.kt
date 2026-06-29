@@ -3,6 +3,7 @@ package com.kazemieh.shop.catalog.api
 import com.kazemieh.shop.catalog.api.dto.CampaignResponse
 import com.kazemieh.shop.catalog.application.CampaignService
 import com.kazemieh.shop.shared.security.UserPrincipal
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -14,9 +15,13 @@ class CampaignController(
     private val campaignService: CampaignService
 ) {
 
-    /** کمپینِ فعالِ جاری (یا null اگر کمپینی فعال نباشد). */
+    /** کمپینِ فعالِ جاری؛ ۲۰۴ اگر کمپینی فعال نباشد. */
     @GetMapping("/active")
     fun active(
         @AuthenticationPrincipal principal: UserPrincipal?,
-    ): CampaignResponse? = campaignService.getActiveCampaign(principal?.id)
+    ): ResponseEntity<CampaignResponse> {
+        val campaign = campaignService.getActiveCampaign(principal?.id)
+            ?: return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(campaign)
+    }
 }
