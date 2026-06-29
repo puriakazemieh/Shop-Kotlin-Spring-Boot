@@ -6,6 +6,7 @@ import com.kazemieh.shop.catalog.application.exception.ProductNotFoundException
 import com.kazemieh.shop.catalog.persistence.FavoriteRepository
 import com.kazemieh.shop.catalog.persistence.ProductImageRepository
 import com.kazemieh.shop.catalog.persistence.ProductRepository
+import com.kazemieh.shop.catalog.persistence.ProductReviewRepository
 import com.kazemieh.shop.catalog.persistence.ProductVariantRepository
 import com.kazemieh.shop.catalog.persistence.entity.FavoriteEntity
 import com.kazemieh.shop.identity.application.exception.UserNotFoundException
@@ -21,6 +22,7 @@ class FavoriteService(
     private val userRepository: UserRepository,
     private val productImageRepository: ProductImageRepository,
     private val variantRepository: ProductVariantRepository,
+    private val productReviewRepository: ProductReviewRepository,
 ) {
 
     @Transactional
@@ -58,8 +60,13 @@ class FavoriteService(
             variantRepository.aggregateByProductIds(productIds).associateBy { it.getProductId() }
         else emptyMap()
 
+        val ratingByProductId = if (productIds.isNotEmpty())
+            productReviewRepository.aggregateRatingsByProductIds(productIds).associateBy { it.getProductId() }
+        else emptyMap()
+
         val items = products.map { p ->
             val agg = aggByProductId[p.id]
+            val rating = ratingByProductId[p.id]
             ProductSummaryResponse(
                 id = p.id,
                 title = p.title,
@@ -73,6 +80,8 @@ class FavoriteService(
                 categoryId = p.category?.id,
                 categoryName = p.category?.name,
                 isFavorite = true,
+                averageRating = rating?.getAvgRating(),
+                reviewCount = rating?.getReviewCount() ?: 0,
             )
         }
 

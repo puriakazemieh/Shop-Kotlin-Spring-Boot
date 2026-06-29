@@ -15,4 +15,28 @@ interface ProductReviewRepository : JpaRepository<ProductReviewEntity, Long> {
     fun findAllByProductIdAndParentIsNullOrderByCreatedAtDesc(productId: Long): List<ProductReviewEntity>
 
     fun deleteAllByProductId(productId: Long)
+
+    /**
+     * Batch aggregate of average rating and rated-review count per product.
+     * Only top-level reviews (parent IS NULL) that carry a rating are counted.
+     */
+    @Query(
+        """
+        SELECT r.product.id AS productId,
+               AVG(r.rating) AS avgRating,
+               COUNT(r.id) AS reviewCount
+        FROM ProductReviewEntity r
+        WHERE r.product.id IN :productIds
+          AND r.rating IS NOT NULL
+          AND r.parent IS NULL
+        GROUP BY r.product.id
+        """
+    )
+    fun aggregateRatingsByProductIds(productIds: List<Long>): List<ProductRatingAggregate>
+}
+
+interface ProductRatingAggregate {
+    fun getProductId(): Long
+    fun getAvgRating(): Double?
+    fun getReviewCount(): Long
 }

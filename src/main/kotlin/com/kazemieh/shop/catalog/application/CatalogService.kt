@@ -20,6 +20,7 @@ class CatalogService(
     private val inventoryRepository: InventoryRepository,
     private val productSearchRepository: ProductSearchRepository,
     private val favoriteRepository: FavoriteRepository,
+    private val productReviewRepository: ProductReviewRepository,
 ) {
 
     // ---------- Categories (Tree) ----------
@@ -138,8 +139,13 @@ class CatalogService(
             favoriteRepository.findAllByUserIdAndProductIdIn(currentUserId, productIds).map { it.product.id }.toSet()
         } else emptySet()
 
+        val ratingByProductId = if (productIds.isNotEmpty())
+            productReviewRepository.aggregateRatingsByProductIds(productIds).associateBy { it.getProductId() }
+        else emptyMap()
+
         val items = products.map { p ->
             val agg = aggByProductId[p.id]
+            val rating = ratingByProductId[p.id]
             ProductSummaryResponse(
                 id = p.id,
                 title = p.title,
@@ -152,7 +158,9 @@ class CatalogService(
                 inStock = agg?.getInStock() ?: false,
                 categoryId = p.category?.id,
                 categoryName = p.category?.name,
-                isFavorite = favoriteProductIds.contains(p.id)
+                isFavorite = favoriteProductIds.contains(p.id),
+                averageRating = rating?.getAvgRating(),
+                reviewCount = rating?.getReviewCount() ?: 0,
             )
         }
 

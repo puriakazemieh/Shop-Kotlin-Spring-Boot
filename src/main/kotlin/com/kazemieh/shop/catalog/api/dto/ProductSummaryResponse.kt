@@ -15,4 +15,6 @@ data class ProductSummaryResponse(
     val categoryId: Long?,
     val categoryName: String?,
     val isFavorite: Boolean = false,
+    val averageRating: Double? = null,
+    val reviewCount: Long = 0,
 )
