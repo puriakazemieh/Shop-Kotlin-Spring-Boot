@@ -71,6 +71,7 @@ class SecurityConfig(
                 it.requestMatchers(
                     "/api/products/**",
                     "/api/categories/**",
+                    "/api/campaigns/**",
                     "/api/sizes/**",
                     "/api/colors/**",
                     "/api/stories/**",
