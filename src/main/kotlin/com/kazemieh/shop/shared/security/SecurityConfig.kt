@@ -82,7 +82,7 @@ class SecurityConfig(
                     "/api/auth/reset-password",
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
-                    "/api/open-api.yml",
+                    "/api/v3/api-docs/**",
                     "/api/auth/*",
                     "/uploads/**"
                 ).permitAll()
