@@ -120,7 +120,7 @@ class DataSeeder(
         val admin = userRepository.save(
             UserEntity(
                 email = "admin@carmilla.test",
-                passwordHash = passwordEncoder.encode("admin1234"),
+                passwordHash = passwordEncoder.encode("admin1234")!!,
                 firstName = "مدیر",
                 lastName = "کارمیلا",
                 city = "تهران",
@@ -132,7 +132,7 @@ class DataSeeder(
         val customer = userRepository.save(
             UserEntity(
                 email = "user@carmilla.test",
-                passwordHash = passwordEncoder.encode("user1234"),
+                passwordHash = passwordEncoder.encode("user1234")!!,
                 firstName = "سارا",
                 lastName = "محمدی",
                 city = "تهران",
