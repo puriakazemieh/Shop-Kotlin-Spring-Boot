@@ -8,6 +8,7 @@ import com.kazemieh.shop.identity.persistence.entity.UserEntity
 import com.kazemieh.shop.shared.EmailService
 import com.kazemieh.shop.shared.SmsService
 import com.kazemieh.shop.shared.security.jwt.JwtService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -26,7 +27,8 @@ class AuthService(
     private val jwtService: JwtService,
     private val refreshTokenService: RefreshTokenService,
     private val emailService: EmailService,
-    private val smsService: SmsService
+    private val smsService: SmsService,
+    @Value("\${app.frontend-url:http://localhost:3000}") private val frontendUrl: String
 ) {
 
     @Transactional
@@ -155,7 +157,7 @@ class AuthService(
             user.resetPasswordTokenExpiry = OffsetDateTime.now().plusHours(1) // Token valid for 1 hour
             userRepository.save(user)
 
-            val resetLink = "http://your-frontend-url/reset-password?token=$token"
+            val resetLink = "${frontendUrl.trimEnd('/')}/reset-password?token=$token"
             val message = "To reset your password, click the link: $resetLink"
             emailService.sendSimpleMessage(user.email!!, "Password Reset Request", message)
         }
@@ -191,7 +193,7 @@ class AuthService(
     }
 
     private fun generateOtp(): String {
-//        return Random.nextInt(100000, 999999).toString()
-        return 1234.toString()
+        // 6-digit random OTP (100000..999999)
+        return Random.nextInt(100000, 1000000).toString()
     }
 }

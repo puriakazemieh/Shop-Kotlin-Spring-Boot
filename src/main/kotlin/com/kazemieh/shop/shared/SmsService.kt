@@ -1,5 +1,6 @@
 package com.kazemieh.shop.shared
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -12,18 +13,27 @@ class SmsService(
     private val restTemplate: RestTemplate
 ) {
 
-    // These values should ideally come from your application.yml or environment variables
-    @Value("\${sms.provider.url:https://api.example-sms-provider.com/v1/send}")
+    private val log = LoggerFactory.getLogger(SmsService::class.java)
+
+    // Provide these via environment variables (e.g. an Iranian gateway: Kavenegar / SMS.ir / Qasedak).
+    @Value("\${sms.provider.url:}")
     private lateinit var apiUrl: String
 
-    @Value("\${sms.provider.api-key:your_api_key_here}")
+    @Value("\${sms.provider.api-key:}")
     private lateinit var apiKey: String
 
-    @Value("\${sms.provider.sender:your_sender_number}")
+    @Value("\${sms.provider.sender:}")
     private lateinit var senderNumber: String
 
+    private val isConfigured: Boolean
+        get() = apiUrl.isNotBlank() && apiKey.isNotBlank()
+
     fun sendSms(mobile: String, message: String) {
-        // Example implementation using a hypothetical REST API
+        // Dev fallback: when no provider is configured, log instead of failing the auth flow.
+        if (!isConfigured) {
+            log.warn("SMS provider not configured; skipping real send to {}. Message: {}", mobile, message)
+            return
+        }
         try {
             val headers = HttpHeaders()
             headers.contentType = MediaType.APPLICATION_JSON
@@ -36,17 +46,11 @@ class SmsService(
             )
 
             val requestEntity = HttpEntity(requestBody, headers)
-
-            // Send the request
-            // val response = restTemplate.postForEntity(apiUrl, requestEntity, String::class.java)
-            // println("SMS sent successfully. Response: \${response.body}")
-            
-            // For now we just log it since we don't have a real API
-            println("Mock sending SMS via HTTP to $mobile: $message")
-
+            restTemplate.postForEntity(apiUrl, requestEntity, String::class.java)
+            log.info("SMS sent to {}", mobile)
         } catch (e: Exception) {
-            println("Failed to send SMS to $mobile: \${e.message}")
-            // Consider logging the error properly or throwing a custom exception
+            // Do not leak OTP/message contents on failure.
+            log.error("Failed to send SMS to {}: {}", mobile, e.message)
         }
     }
 }
