@@ -132,8 +132,7 @@ CREATE TABLE order_items (
     qty                 INT NOT NULL,
     unit_price_snapshot NUMERIC(12,2) NOT NULL,
     title_snapshot      VARCHAR(255) NOT NULL,
-    size_snapshot       VARCHAR(40) NOT NULL,
-    color_snapshot      VARCHAR(60) NOT NULL,
+    options_snapshot    JSONB,
     CONSTRAINT chk_order_item_qty CHECK (qty > 0),
     CONSTRAINT chk_order_item_price CHECK (unit_price_snapshot >= 0)
 );

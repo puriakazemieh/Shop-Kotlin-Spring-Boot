@@ -62,8 +62,5 @@ BEGIN
    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='order_items' AND column_name='color_snapshot') THEN
       ALTER TABLE order_items DROP COLUMN color_snapshot;
    END IF;
-   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='order_items' AND column_name='options_snapshot') THEN
-      ALTER TABLE order_items DROP COLUMN options_snapshot;
-   END IF;
 END;
 $$;
