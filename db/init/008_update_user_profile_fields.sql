@@ -1,12 +1,12 @@
--- V{version}__update_user_profile_fields.sql
-ALTER TABLE users
-DROP COLUMN IF EXISTS full_name;
+-- Split full_name into first/last name and add profile fields.
+-- Idempotent: safe to run on a fresh or already-migrated database.
+ALTER TABLE users DROP COLUMN IF EXISTS full_name;
 
 ALTER TABLE users
-    ADD COLUMN first_name VARCHAR(50),
-    ADD COLUMN last_name VARCHAR(50),
-    ADD COLUMN city VARCHAR(50),
-    ADD COLUMN postal_code INTEGER,
+    ADD COLUMN IF NOT EXISTS first_name  VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS last_name   VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS city        VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS postal_code INTEGER;
 
 ALTER TABLE users
-ALTER COLUMN phone TYPE VARCHAR(30);
+    ALTER COLUMN phone TYPE VARCHAR(30);
