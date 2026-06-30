@@ -40,6 +40,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         WHERE p.is_active = true
           AND (q.query IS NULL OR p.search_vector @@ q.query)
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (
             :needVariantFilter = false
             OR EXISTS (
@@ -75,6 +79,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         WHERE p.is_active = true
           AND (q.query IS NULL OR p.search_vector @@ q.query)
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (
             :needVariantFilter = false
             OR EXISTS (
@@ -98,6 +106,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
         @Param("needVariantFilter") needVariantFilter: Boolean,
+        @Param("discountedOnly") discountedOnly: Boolean,
         pageable: Pageable
     ): Page<ProductEntity>
 
@@ -114,6 +123,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (
             :needVariantFilter = false
             OR EXISTS (
@@ -139,6 +152,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (
             :needVariantFilter = false
             OR EXISTS (
@@ -161,6 +178,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
         @Param("needVariantFilter") needVariantFilter: Boolean,
+        @Param("discountedOnly") discountedOnly: Boolean,
         pageable: Pageable
     ): Page<ProductEntity>
 
@@ -177,6 +195,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (p.title % :q)  -- trigram match
         ORDER BY similarity(p.title, :q) DESC, p.created_at DESC
         """,
@@ -190,6 +212,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+          AND (:discountedOnly = false OR EXISTS (
+            SELECT 1 FROM product_variants pvd
+            WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+          ))
           AND (p.title % :q)
         """,
         nativeQuery = true
@@ -197,6 +223,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
     fun searchFuzzyTitle(
         @Param("q") q: String,
         @Param("categoryId") categoryId: Long?,
+        @Param("discountedOnly") discountedOnly: Boolean,
         pageable: Pageable
     ): Page<ProductEntity>
 
@@ -212,6 +239,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (:discountedOnly = false OR EXISTS (
+          SELECT 1 FROM product_variants pvd
+          WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+        ))
         AND (
           :needVariantFilter = false
           OR EXISTS (
@@ -239,6 +270,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (:discountedOnly = false OR EXISTS (
+          SELECT 1 FROM product_variants pvd
+          WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+        ))
         AND (
           :needVariantFilter = false
           OR EXISTS (
@@ -261,6 +296,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
         @Param("needVariantFilter") needVariantFilter: Boolean,
+        @Param("discountedOnly") discountedOnly: Boolean,
         pageable: Pageable
     ): Page<ProductEntity>
 
@@ -275,6 +311,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (:discountedOnly = false OR EXISTS (
+          SELECT 1 FROM product_variants pvd
+          WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+        ))
         AND (
           :needVariantFilter = false
           OR EXISTS (
@@ -302,6 +342,10 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
+        AND (:discountedOnly = false OR EXISTS (
+          SELECT 1 FROM product_variants pvd
+          WHERE pvd.product_id = p.id AND pvd.is_active = true AND pvd.discounted_price IS NOT NULL
+        ))
         AND (
           :needVariantFilter = false
           OR EXISTS (
@@ -324,6 +368,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         @Param("maxPrice") maxPrice: BigDecimal?,
         @Param("inStock") inStock: Boolean?,
         @Param("needVariantFilter") needVariantFilter: Boolean,
+        @Param("discountedOnly") discountedOnly: Boolean,
         pageable: Pageable
     ): Page<ProductEntity>
 }

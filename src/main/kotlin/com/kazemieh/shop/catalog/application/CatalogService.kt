@@ -56,6 +56,7 @@ class CatalogService(
         size: Int,
         categorySlug: String?,
         sort: String?,
+        discountedOnly: Boolean = false,
         currentUserId: Long? = null
     ): PageResponse<ProductSummaryResponse> {
         val resolvedCategoryId = when {
@@ -86,10 +87,11 @@ class CatalogService(
                     maxPrice = maxPrice,
                     inStock = inStock,
                     needVariantFilter = needVariantFilter,
+                    discountedOnly = discountedOnly,
                     pageable = pageable
                 )
                 if (res.isEmpty && qNorm.length >= 3) {
-                    productSearchRepository.searchFuzzyTitle(qNorm, resolvedCategoryId, pageable)
+                    productSearchRepository.searchFuzzyTitle(qNorm, resolvedCategoryId, discountedOnly, pageable)
                 } else res
             }
             else -> when (sortKey) {
@@ -99,6 +101,7 @@ class CatalogService(
                     maxPrice = maxPrice,
                     inStock = inStock,
                     needVariantFilter = needVariantFilter,
+                    discountedOnly = discountedOnly,
                     pageable = pageable
                 )
                 "price_desc" -> productSearchRepository.searchPriceDesc(
@@ -107,6 +110,7 @@ class CatalogService(
                     maxPrice = maxPrice,
                     inStock = inStock,
                     needVariantFilter = needVariantFilter,
+                    discountedOnly = discountedOnly,
                     pageable = pageable
                 )
                 else -> productSearchRepository.searchNewest(
@@ -115,6 +119,7 @@ class CatalogService(
                     maxPrice = maxPrice,
                     inStock = inStock,
                     needVariantFilter = needVariantFilter,
+                    discountedOnly = discountedOnly,
                     pageable = pageable
                 )
             }

@@ -30,6 +30,7 @@ class CatalogController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(required = false) sort: String?, // newest | price_asc | price_desc
+        @RequestParam(required = false, defaultValue = "false") discountedOnly: Boolean,
         @AuthenticationPrincipal principal: UserPrincipal?,
     ): PageResponse<ProductSummaryResponse> =
         catalogService.listProducts(
@@ -43,6 +44,7 @@ class CatalogController(
             size = size,
             categorySlug = categorySlug,
             sort = sort,
+            discountedOnly = discountedOnly,
             currentUserId = principal?.id
         )
 
