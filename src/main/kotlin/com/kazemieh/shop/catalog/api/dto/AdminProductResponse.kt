@@ -14,4 +14,6 @@ data class AdminProductResponse(
     var basePrice: BigDecimal? = null,
     var discountedPrice: BigDecimal? = null,
     var description: String? = null,
+    var brand: String? = null,
+    var attributes: List<ProductAttributeDto> = emptyList(),
 )

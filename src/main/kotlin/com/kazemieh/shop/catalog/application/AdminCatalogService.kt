@@ -121,6 +121,11 @@ class AdminCatalogService(
                 title = req.title.trim(),
                 slug = slug,
                 description = req.description,
+                brand = req.brand?.trim()?.ifBlank { null },
+                attributes = req.attributes
+                    ?.filter { it.name.isNotBlank() }
+                    ?.map { com.kazemieh.shop.catalog.persistence.entity.ProductAttribute(it.name.trim(), it.value.trim()) }
+                    ?.toMutableList() ?: mutableListOf(),
                 basePrice = req.basePrice,
                 discountedPrice = req.discountedPrice,
                 isActive = req.isActive
@@ -180,6 +185,13 @@ class AdminCatalogService(
         }
 
         if (req.description != null) p.description = req.description
+        if (req.brand != null) p.brand = req.brand.trim().ifBlank { null }
+        if (req.attributes != null) {
+            p.attributes = req.attributes
+                .filter { it.name.isNotBlank() }
+                .map { com.kazemieh.shop.catalog.persistence.entity.ProductAttribute(it.name.trim(), it.value.trim()) }
+                .toMutableList()
+        }
         if (req.basePrice != null) p.basePrice = req.basePrice
         if (req.discountedPrice != null) p.discountedPrice = req.discountedPrice
         req.isActive?.let { p.isActive = it }

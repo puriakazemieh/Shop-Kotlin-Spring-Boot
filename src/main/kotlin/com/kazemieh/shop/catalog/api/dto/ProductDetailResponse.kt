@@ -8,6 +8,8 @@ data class ProductDetailResponse(
     val title: String,
     val slug: String,
     val description: String?,
+    val brand: String? = null,
+    val attributes: List<ProductAttributeDto> = emptyList(),
     val basePrice: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
     val categoryId: Long?,

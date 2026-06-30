@@ -8,6 +8,8 @@ data class AdminUpdateProductRequest(
     @field:Size(min = 1, max = 255) val title: String? = null,
     @field:Size(min = 1, max = 280) val slug: String? = null,
     val description: String? = null,
+    val brand: String? = null,
+    val attributes: List<ProductAttributeDto>? = null,
     val basePrice: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
     val isActive: Boolean? = null,

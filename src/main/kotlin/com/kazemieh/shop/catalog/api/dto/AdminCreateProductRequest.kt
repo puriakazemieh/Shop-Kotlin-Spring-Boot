@@ -10,6 +10,8 @@ data class AdminCreateProductRequest(
     @field:NotBlank @field:Size(max = 255) val title: String,
     @field:NotBlank @field:Size(max = 280) val slug: String,
     val description: String? = null,
+    val brand: String? = null,
+    val attributes: List<ProductAttributeDto>? = null,
     val basePrice: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
     val isActive: Boolean = true,

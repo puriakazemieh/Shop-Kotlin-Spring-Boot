@@ -26,6 +26,8 @@ CREATE TABLE products (
     title       VARCHAR(255) NOT NULL,
     slug        VARCHAR(280) NOT NULL UNIQUE,
     description TEXT,
+    brand       VARCHAR(120),
+    attributes  JSONB,
     base_price  NUMERIC(12,2), -- optional (if price is variant-based you can keep NULL)
     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
