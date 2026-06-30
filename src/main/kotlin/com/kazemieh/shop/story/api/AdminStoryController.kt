@@ -23,9 +23,15 @@ class AdminStoryController(
     fun create(
         @RequestParam("file") file: MultipartFile,
         @RequestParam(value = "productId", required = false) productId: Long?,
+        @RequestParam(value = "linkType", defaultValue = "NONE") linkType: String,
+        @RequestParam(value = "categoryId", required = false) categoryId: Long?,
+        @RequestParam(value = "blogSlug", required = false) blogSlug: String?,
         @RequestParam(value = "title", required = false) title: String?,
         @RequestParam(value = "durationHours", defaultValue = "24") durationHours: Long
-    ) = storyService.createStory(file, AdminCreateStoryRequest(productId, title, durationHours))
+    ) = storyService.createStory(
+        file,
+        AdminCreateStoryRequest(productId, linkType, categoryId, blogSlug, title, durationHours)
+    )
 
     @PatchMapping("/{id}")
     fun update(

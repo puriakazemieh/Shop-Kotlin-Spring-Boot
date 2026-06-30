@@ -25,6 +25,15 @@ class StoryEntity(
     @Column(name = "product_id")
     var productId: Long? = null,
 
+    @Column(name = "link_type", nullable = false, length = 20)
+    var linkType: String = "NONE",
+
+    @Column(name = "category_id")
+    var categoryId: Long? = null,
+
+    @Column(name = "blog_slug", length = 200)
+    var blogSlug: String? = null,
+
     @Column(length = 100)
     var title: String? = null,
 

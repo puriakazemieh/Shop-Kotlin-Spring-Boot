@@ -45,6 +45,9 @@ class StoryService(
             mediaUrl = mediaUrl,
             mediaType = mediaType,
             productId = req.productId,
+            linkType = req.linkType,
+            categoryId = req.categoryId,
+            blogSlug = req.blogSlug,
             title = req.title,
             expiresAt = OffsetDateTime.now().plusHours(req.durationHours)
         )
@@ -57,6 +60,9 @@ class StoryService(
         val story = storyRepository.findById(id).orElseThrow { RuntimeException("Story not found") }
         
         req.productId?.let { story.productId = it }
+        req.linkType?.let { story.linkType = it }
+        req.categoryId?.let { story.categoryId = it }
+        req.blogSlug?.let { story.blogSlug = it }
         req.title?.let { story.title = it }
         req.isActive?.let { story.isActive = it }
 
@@ -73,6 +79,9 @@ class StoryService(
         mediaUrl = mediaUrl,
         mediaType = mediaType,
         productId = productId,
+        linkType = linkType,
+        categoryId = categoryId,
+        blogSlug = blogSlug,
         title = title,
         createdAt = createdAt
     )
