@@ -4,9 +4,11 @@ import com.kazemieh.shop.blog.persistence.entity.BlogStatus
 import java.time.LocalDateTime
 
 data class BlogBlock(
-    val type: String, // "header", "paragraph", "image"
-    val content: String, // For text, it's the text. For image, it's the URL.
-    val level: Int? = null // For header (1, 2, 3)
+    val type: String, // header, paragraph, image, button, list, quote, divider
+    val content: String = "", // text, or image url, or button label
+    val level: Int? = null, // for header (1, 2, 3)
+    val url: String? = null, // for button (link target)
+    val items: List<String>? = null // for list (bullet items)
 )
 
 data class BlogCreateRequest(

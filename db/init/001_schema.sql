@@ -27,7 +27,7 @@ CREATE TABLE products (
     slug        VARCHAR(280) NOT NULL UNIQUE,
     description TEXT,
     brand       VARCHAR(120),
-    attributes  JSONB,
+    attributes  JSONB NOT NULL DEFAULT '[]'::jsonb,
     base_price  NUMERIC(12,2), -- optional (if price is variant-based you can keep NULL)
     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
