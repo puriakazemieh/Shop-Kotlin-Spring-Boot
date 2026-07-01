@@ -25,7 +25,10 @@ class StoryEntity(
     @Column(name = "product_id")
     var productId: Long? = null,
 
-    @Column(name = "link_type", nullable = false, length = 20)
+    // columnDefinition carries a DEFAULT so that when Hibernate (ddl-auto=update) adds this
+    // NOT NULL column to a stories table that already has rows, existing rows are backfilled
+    // with 'NONE' instead of failing with "contains null values".
+    @Column(name = "link_type", nullable = false, columnDefinition = "varchar(20) default 'NONE'")
     var linkType: String = "NONE",
 
     @Column(name = "category_id")
