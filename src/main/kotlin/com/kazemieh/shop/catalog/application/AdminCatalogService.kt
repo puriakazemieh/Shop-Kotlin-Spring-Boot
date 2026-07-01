@@ -27,6 +27,7 @@ class AdminCatalogService(
     private val reviewRepository: ProductReviewRepository,
     private val questionRepository: ProductQuestionRepository,
     private val favoriteRepository: FavoriteRepository,
+    private val recentlyViewedRepository: RecentlyViewedRepository,
     private val cartItemRepository: CartItemRepository,
     private val orderItemRepository: OrderItemRepository
 ) {
@@ -264,6 +265,7 @@ class AdminCatalogService(
         reviewRepository.deleteAllByProductId(id)
         questionRepository.deleteAllByProductId(id)
         favoriteRepository.deleteAllByProductId(id)
+        recentlyViewedRepository.deleteAllByProductId(id)
         
         for (vId in variantIds) {
             cartItemRepository.deleteAllByVariantId(vId)
