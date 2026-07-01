@@ -76,6 +76,7 @@ class SecurityConfig(
                     "/api/sizes/**",
                     "/api/colors/**",
                     "/api/stories/**",
+                    "/api/blogs/**",
                     "/api/auth/register",
                     "/api/auth/login",
                     "/api/auth/refresh",

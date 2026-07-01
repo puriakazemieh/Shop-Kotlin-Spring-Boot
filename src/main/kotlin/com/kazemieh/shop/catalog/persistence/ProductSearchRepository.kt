@@ -30,6 +30,8 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
           p.title,
           p.slug,
           p.description,
+          p.brand,
+          p.attributes,
           p.base_price,
           p.discounted_price,
           p.is_active,
@@ -119,7 +121,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
           SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
         )
         SELECT
-          p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
+          p.id, p.category_id, p.title, p.slug, p.description, p.brand, p.attributes, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
@@ -191,7 +193,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
           SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
         )
         SELECT
-          p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
+          p.id, p.category_id, p.title, p.slug, p.description, p.brand, p.attributes, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
         FROM products p
         WHERE p.is_active = true
           AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
@@ -235,7 +237,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         UNION ALL
         SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
       )
-      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
+      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.brand, p.attributes, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
@@ -307,7 +309,7 @@ interface ProductSearchRepository : Repository<ProductEntity, Long> {
         UNION ALL
         SELECT c.id FROM categories c JOIN cat ON c.parent_id = cat.id
       )
-      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
+      SELECT p.id, p.category_id, p.title, p.slug, p.description, p.brand, p.attributes, p.base_price, p.discounted_price, p.is_active, p.created_at, p.updated_at
       FROM products p
       WHERE p.is_active = true
         AND (:categoryId IS NULL OR p.category_id IN (SELECT id FROM cat))
