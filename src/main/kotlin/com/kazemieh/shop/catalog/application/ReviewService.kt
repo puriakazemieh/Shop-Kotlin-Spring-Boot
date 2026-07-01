@@ -4,7 +4,9 @@ import com.kazemieh.shop.catalog.api.dto.*
 import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.catalog.persistence.ProductReviewRepository
 import com.kazemieh.shop.catalog.persistence.entity.ProductReviewEntity
+import com.kazemieh.shop.identity.domain.UserRole
 import com.kazemieh.shop.identity.persistence.UserRepository
+import com.kazemieh.shop.order.persistence.OrderRepository
 import com.kazemieh.shop.shared.error.ApiException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import org.springframework.data.domain.PageRequest
@@ -18,7 +20,8 @@ import java.time.OffsetDateTime
 class ReviewService(
     private val reviewRepository: ProductReviewRepository,
     private val productRepository: ProductRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val orderRepository: OrderRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -43,7 +46,8 @@ class ReviewService(
     @Transactional(readOnly = true)
     fun getReviewsByProduct(productId: Long): List<ReviewResponse> {
         val reviews = reviewRepository.findAllByProductIdAndParentIsNullOrderByCreatedAtDesc(productId)
-        return reviews.map { it.toResponse() }
+        val purchasers = orderRepository.findPurchaserIdsByProduct(productId).toSet()
+        return reviews.map { it.toResponse(purchasers) }
     }
 
     @Transactional
@@ -68,7 +72,8 @@ class ReviewService(
             isNew = true
         )
 
-        return reviewRepository.save(review).toResponse()
+        val purchasers = orderRepository.findPurchaserIdsByProduct(product.id).toSet()
+        return reviewRepository.save(review).toResponse(purchasers)
     }
 
     @Transactional
@@ -83,7 +88,8 @@ class ReviewService(
         review.rating = if (review.parent == null) request.rating else null
         review.comment = request.comment
 
-        return reviewRepository.save(review).toResponse()
+        val purchasers = orderRepository.findPurchaserIdsByProduct(review.product.id).toSet()
+        return reviewRepository.save(review).toResponse(purchasers)
     }
 
     @Transactional
@@ -98,15 +104,20 @@ class ReviewService(
         reviewRepository.delete(review)
     }
 
-    private fun ProductReviewEntity.toResponse(): ReviewResponse {
+    private fun ProductReviewEntity.toResponse(purchasers: Set<Long> = emptySet()): ReviewResponse {
+        val isSupport = this.user.role == UserRole.ADMIN
+        val displayName = if (isSupport) "پشتیبانی کارمیلا"
+            else "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim()
         return ReviewResponse(
             id = this.id,
             userId = this.user.id,
-            userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
+            userName = displayName,
             rating = this.rating,
             comment = this.comment,
-            replies = this.replies.map { it.toResponse() },
-            createdAt = this.createdAt ?: OffsetDateTime.now()
+            replies = this.replies.map { it.toResponse(purchasers) },
+            createdAt = this.createdAt ?: OffsetDateTime.now(),
+            isSupport = isSupport,
+            verifiedPurchase = !isSupport && purchasers.contains(this.user.id)
         )
     }
 

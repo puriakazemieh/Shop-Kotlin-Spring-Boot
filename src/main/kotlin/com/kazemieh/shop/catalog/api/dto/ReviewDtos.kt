@@ -21,5 +21,7 @@ data class ReviewResponse(
     val rating: Int?,
     val comment: String,
     val replies: List<ReviewResponse>,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    val isSupport: Boolean = false,
+    val verifiedPurchase: Boolean = false
 )

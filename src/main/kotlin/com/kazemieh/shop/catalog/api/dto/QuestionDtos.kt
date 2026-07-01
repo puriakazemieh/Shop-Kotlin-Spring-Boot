@@ -18,5 +18,6 @@ data class QuestionResponse(
     val userName: String,
     val content: String,
     val replies: List<QuestionResponse>,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    val isSupport: Boolean = false
 )
