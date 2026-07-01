@@ -29,6 +29,26 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
         fun getInStock(): Boolean
     }
 
+    interface ProductStockRow {
+        fun getProductId(): Long
+        fun getStock(): Long
+    }
+
+    /** مجموعِ موجودیِ در دسترس (on_hand - reserved) روی همه‌ی واریانت‌های فعالِ هر محصول. */
+    @Query(
+        value = """
+        select
+          pv.product_id as productId,
+          coalesce(sum(coalesce(i.on_hand,0) - coalesce(i.reserved,0)), 0) as stock
+        from product_variants pv
+        left join inventory i on i.variant_id = pv.id
+        where pv.is_active = true and pv.product_id in (:productIds)
+        group by pv.product_id
+        """,
+        nativeQuery = true
+    )
+    fun stockByProductIds(@Param("productIds") productIds: List<Long>): List<ProductStockRow>
+
     @Query(
         value = """
         select 

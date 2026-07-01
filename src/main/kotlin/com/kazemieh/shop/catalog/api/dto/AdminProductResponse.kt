@@ -16,4 +16,8 @@ data class AdminProductResponse(
     var description: String? = null,
     var brand: String? = null,
     var attributes: List<ProductAttributeDto> = emptyList(),
+    // برای کارتِ لیستِ مدیریت محصولات
+    var categoryName: String? = null,
+    var thumbnailUrl: String? = null,
+    var stock: Int = 0,
 )

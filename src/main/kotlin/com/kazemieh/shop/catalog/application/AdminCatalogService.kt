@@ -98,8 +98,24 @@ class AdminCatalogService(
             if (includeInactive) productRepository.findAll(pageable)
             else productRepository.findAll({ root, _, cb -> cb.isTrue(root.get("isActive")) }, pageable)
 
+        val productIds = pageData.content.map { it.id }
+        val thumbByProduct = if (productIds.isNotEmpty())
+            imageRepository.findAllByProductIdInOrderBySortOrderAsc(productIds)
+                .groupBy { it.product?.id }
+                .mapValues { entry -> entry.value.firstOrNull()?.url }
+        else emptyMap()
+        val stockByProduct = if (productIds.isNotEmpty())
+            variantRepository.stockByProductIds(productIds).associate { it.getProductId() to it.getStock().toInt() }
+        else emptyMap<Long, Int>()
+
         return PageResponse(
-            items = pageData.content.map(AdminCatalogMapper::product),
+            items = pageData.content.map { p ->
+                AdminCatalogMapper.product(p).apply {
+                    categoryName = p.category?.name
+                    thumbnailUrl = thumbByProduct[p.id]
+                    stock = stockByProduct[p.id] ?: 0
+                }
+            },
             page = pageData.number,
             size = pageData.size,
             totalElements = pageData.totalElements,
