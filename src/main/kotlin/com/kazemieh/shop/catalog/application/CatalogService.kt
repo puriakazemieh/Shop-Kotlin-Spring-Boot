@@ -205,7 +205,7 @@ class CatalogService(
             slug = p.slug,
             description = p.description,
             brand = p.brand,
-            attributes = p.attributes.map { com.kazemieh.shop.catalog.api.dto.ProductAttributeDto(it.name, it.value) },
+            attributes = p.attributes.orEmpty().map { com.kazemieh.shop.catalog.api.dto.ProductAttributeDto(it.name, it.value) },
             basePrice = p.basePrice,
             discountedPrice = p.discountedPrice,
             categoryId = p.category?.id,

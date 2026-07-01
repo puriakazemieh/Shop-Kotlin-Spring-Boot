@@ -25,7 +25,7 @@ object AdminCatalogMapper {
         discountedPrice = p.discountedPrice,
         description = p.description,
         brand = p.brand,
-        attributes = p.attributes.map { ProductAttributeDto(it.name, it.value) },
+        attributes = p.attributes.orEmpty().map { ProductAttributeDto(it.name, it.value) },
     )
 
     fun image(i: ProductImageEntity) = AdminProductImageResponse(
