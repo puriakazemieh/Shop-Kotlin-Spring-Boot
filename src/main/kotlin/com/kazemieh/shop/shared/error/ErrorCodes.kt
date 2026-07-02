@@ -88,6 +88,13 @@ object ErrorCodes {
     const val TICKET_NOT_FOUND = "TICKET_NOT_FOUND"
     const val TICKET_ACCESS_DENIED = "TICKET_ACCESS_DENIED"
 
+    // ===== Academy =====
+    const val COURSE_NOT_FOUND = "COURSE_NOT_FOUND"
+    const val COURSE_SLUG_EXISTS = "COURSE_SLUG_EXISTS"
+    const val SECTION_NOT_FOUND = "SECTION_NOT_FOUND"
+    const val LESSON_NOT_FOUND = "LESSON_NOT_FOUND"
+    const val NOT_ENROLLED = "NOT_ENROLLED"
+
     // ===== DB / Generic =====
     const val DATA_INTEGRITY_VIOLATION = "DATA_INTEGRITY_VIOLATION"
     const val FOREIGN_KEY_VIOLATION = "FOREIGN_KEY_VIOLATION"

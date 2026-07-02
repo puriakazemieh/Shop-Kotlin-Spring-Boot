@@ -73,6 +73,7 @@ class SecurityConfig(
                     "/api/categories/**",
                     "/api/campaigns/**",
                     "/api/banners",
+                    "/api/courses/**",
                     "/api/sizes/**",
                     "/api/colors/**",
                     "/api/stories/**",
