@@ -37,6 +37,9 @@ class ProductReviewEntity(
     @Column(nullable = false)
     var isNew: Boolean = true,
 
+    @Column(name = "helpful_count", nullable = false)
+    var helpfulCount: Int = 0,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime? = null,

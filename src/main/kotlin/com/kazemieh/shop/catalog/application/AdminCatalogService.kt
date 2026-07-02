@@ -29,7 +29,8 @@ class AdminCatalogService(
     private val favoriteRepository: FavoriteRepository,
     private val recentlyViewedRepository: RecentlyViewedRepository,
     private val cartItemRepository: CartItemRepository,
-    private val orderItemRepository: OrderItemRepository
+    private val orderItemRepository: OrderItemRepository,
+    private val stockNotificationService: StockNotificationService
 ) {
 
     // ---------- Categories ----------
@@ -522,8 +523,12 @@ class AdminCatalogService(
             if (inv.version != expected) throw InventoryConflictException()
         }
 
+        val wasUnavailable = (inv.onHand - inv.reserved) <= 0
         inv.onHand = req.onHand
         val saved = inventoryRepository.save(inv)
+        if (wasUnavailable && (saved.onHand - saved.reserved) > 0) {
+            stockNotificationService.onVariantRestocked(variantId)
+        }
         return AdminCatalogMapper.inventory(saved)
     }
 
@@ -545,8 +550,12 @@ class AdminCatalogService(
         )
         if (newOnHand < 0) throw BadRequestException("onHand cannot be negative", "INVENTORY_INVALID")
 
+        val wasUnavailable = (inv.onHand - inv.reserved) <= 0
         inv.onHand = newOnHand
         val saved = inventoryRepository.save(inv)
+        if (wasUnavailable && (saved.onHand - saved.reserved) > 0) {
+            stockNotificationService.onVariantRestocked(variantId)
+        }
         return AdminCatalogMapper.inventory(saved)
     }
 }
