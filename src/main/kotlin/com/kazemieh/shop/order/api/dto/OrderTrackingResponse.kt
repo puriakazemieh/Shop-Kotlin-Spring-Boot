@@ -8,5 +8,11 @@ data class OrderTrackingResponse(
     val status: OrderStatus,
     val trackingCode: String?,
     val orderedAt: Instant,
-    val shippedAt: Instant?
+    val shippedAt: Instant?,
+    val history: List<OrderStatusHistoryItem> = emptyList()
+)
+
+data class OrderStatusHistoryItem(
+    val status: OrderStatus,
+    val at: Instant
 )

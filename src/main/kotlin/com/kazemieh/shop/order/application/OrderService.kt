@@ -163,6 +163,7 @@ class OrderService(
             )
         }
 
+        order.recordStatus(order.status)
         val saved = orderRepository.save(order)
 
         return OrderMapper.toDetailResponse(saved, objectMapper)
@@ -199,6 +200,7 @@ class OrderService(
         }
 
         o.status = OrderStatus.CANCELLED
+        o.recordStatus(OrderStatus.CANCELLED)
     }
 
     // --- Admin / system status update ---
@@ -238,7 +240,12 @@ class OrderService(
             }
         }
 
+        if (newStatus == OrderStatus.COMPLETED) {
+            o.deliveredAt = OffsetDateTime.now()
+        }
+
         o.status = newStatus
+        o.recordStatus(newStatus)
     }
 
     @Transactional
@@ -251,6 +258,7 @@ class OrderService(
         if (req.markShipped && o.status == OrderStatus.PROCESSING) {
             o.status = OrderStatus.SHIPPING
             o.shippedAt = OffsetDateTime.now()
+            o.recordStatus(OrderStatus.SHIPPING)
         }
     }
 }

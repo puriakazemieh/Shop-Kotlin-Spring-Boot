@@ -50,7 +50,10 @@ object OrderMapper {
         status = o.status,
         trackingCode = o.trackingCode,
         orderedAt = o.createdAt?.toInstant() ?: Instant.now(),
-        shippedAt = o.shippedAt?.toInstant()
+        shippedAt = o.shippedAt?.toInstant(),
+        history = o.statusHistory.map {
+            OrderStatusHistoryItem(status = it.status, at = it.at?.toInstant() ?: Instant.now())
+        }
     )
 
     private fun parseAddressSnapshot(node: JsonNode, om: ObjectMapper): AddressSnapshotResponse =
