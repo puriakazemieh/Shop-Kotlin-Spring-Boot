@@ -42,4 +42,13 @@ class AdminCourseController(
         @PathVariable sectionId: Long,
         @RequestBody req: AdminCreateLessonRequest
     ): Map<String, Long> = mapOf("id" to adminCourseService.addLesson(courseId, sectionId, req))
+
+    // ---- آزمونِ پایانِ دوره (تست‌ساز) ----
+    @GetMapping("/{courseId}/quiz")
+    fun getQuiz(@PathVariable courseId: Long): QuizResponse? = adminCourseService.getQuiz(courseId)
+
+    @PutMapping("/{courseId}/quiz")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun upsertQuiz(@PathVariable courseId: Long, @RequestBody req: AdminUpsertQuizRequest) =
+        adminCourseService.upsertQuiz(courseId, req)
 }

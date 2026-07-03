@@ -2,12 +2,17 @@ package com.kazemieh.shop.academy.application
 
 import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CourseRepository
+import com.kazemieh.shop.academy.persistence.QuizRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseFormat
 import com.kazemieh.shop.academy.persistence.entity.CourseLevel
 import com.kazemieh.shop.academy.persistence.entity.CourseSectionEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseType
 import com.kazemieh.shop.academy.persistence.entity.LessonEntity
+import com.kazemieh.shop.academy.persistence.entity.QuizEntity
+import com.kazemieh.shop.academy.persistence.entity.QuizOption
+import com.kazemieh.shop.academy.persistence.entity.QuizQuestion
+import com.kazemieh.shop.academy.persistence.entity.VideoVariant
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.NotFoundException
@@ -17,7 +22,8 @@ import java.math.BigDecimal
 
 @Service
 class AdminCourseService(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val quizRepository: QuizRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -138,6 +144,7 @@ class AdminCourseService(
             section = section,
             title = req.title.trim(),
             videoUrl = req.videoUrl,
+            videoVariants = req.videoVariants.map { VideoVariant(it.quality, it.url) }.toMutableList(),
             durationSeconds = req.durationSeconds,
             sortOrder = req.sortOrder,
             isFreePreview = req.isFreePreview
@@ -145,6 +152,39 @@ class AdminCourseService(
         section.lessons.add(lesson)
         courseRepository.save(c)
         return lesson.id
+    }
+
+    // ---- آزمونِ پایانِ دوره (upsert) ----
+    @Transactional(readOnly = true)
+    fun getQuiz(courseId: Long): QuizResponse? {
+        val quiz = quizRepository.findByCourseId(courseId) ?: return null
+        return QuizResponse(
+            courseId = courseId,
+            title = quiz.title,
+            passScore = quiz.passScore,
+            questions = quiz.questions.mapIndexed { i, q ->
+                QuizQuestionResponse(
+                    index = i,
+                    text = q.text,
+                    options = q.options.map { QuizOptionResponse(it.text, it.correct) }
+                )
+            }
+        )
+    }
+
+    @Transactional
+    fun upsertQuiz(courseId: Long, req: AdminUpsertQuizRequest) {
+        findCourse(courseId) // اطمینان از وجودِ دوره
+        val quiz = quizRepository.findByCourseId(courseId) ?: QuizEntity(courseId = courseId)
+        quiz.title = req.title
+        quiz.passScore = req.passScore.coerceIn(0, 100)
+        quiz.questions = req.questions.map { q ->
+            QuizQuestion(
+                text = q.text,
+                options = q.options.map { QuizOption(it.text, it.correct == true) }.toMutableList()
+            )
+        }.toMutableList()
+        quizRepository.save(quiz)
     }
 
     private fun findCourse(id: Long): CourseEntity =

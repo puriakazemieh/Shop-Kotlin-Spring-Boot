@@ -50,7 +50,8 @@ class CourseService(
                         isFreePreview = lesson.isFreePreview,
                         videoUrl = if (canWatch) lesson.videoUrl else null,
                         completed = p?.completed ?: false,
-                        lastPositionSeconds = p?.lastPositionSeconds ?: 0
+                        lastPositionSeconds = p?.lastPositionSeconds ?: 0,
+                        videoVariants = if (canWatch) lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) } else emptyList()
                     )
                 }
             )

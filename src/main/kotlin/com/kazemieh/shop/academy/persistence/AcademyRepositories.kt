@@ -1,9 +1,12 @@
 package com.kazemieh.shop.academy.persistence
 
+import com.kazemieh.shop.academy.persistence.entity.CertificateEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.EnrollmentEntity
 import com.kazemieh.shop.academy.persistence.entity.LessonEntity
 import com.kazemieh.shop.academy.persistence.entity.LessonProgressEntity
+import com.kazemieh.shop.academy.persistence.entity.QuizAttemptEntity
+import com.kazemieh.shop.academy.persistence.entity.QuizEntity
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -40,4 +43,21 @@ interface LessonProgressRepository : JpaRepository<LessonProgressEntity, Long> {
     fun findByUserIdAndLessonId(userId: Long, lessonId: Long): LessonProgressEntity?
     fun findAllByUserIdAndCourseId(userId: Long, courseId: Long): List<LessonProgressEntity>
     fun countByUserIdAndCourseIdAndCompletedTrue(userId: Long, courseId: Long): Long
+}
+
+@Repository
+interface QuizRepository : JpaRepository<QuizEntity, Long> {
+    fun findByCourseId(courseId: Long): QuizEntity?
+}
+
+@Repository
+interface QuizAttemptRepository : JpaRepository<QuizAttemptEntity, Long> {
+    fun findAllByUserIdAndCourseIdOrderByCreatedAtDesc(userId: Long, courseId: Long): List<QuizAttemptEntity>
+    fun existsByUserIdAndCourseIdAndPassedTrue(userId: Long, courseId: Long): Boolean
+}
+
+@Repository
+interface CertificateRepository : JpaRepository<CertificateEntity, Long> {
+    fun findByUserIdAndCourseId(userId: Long, courseId: Long): CertificateEntity?
+    fun findAllByUserIdOrderByIssuedAtDesc(userId: Long): List<CertificateEntity>
 }

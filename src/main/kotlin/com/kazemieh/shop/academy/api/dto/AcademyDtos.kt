@@ -21,6 +21,11 @@ data class CourseSummaryResponse(
     val freeUpdateBadge: Boolean = false
 )
 
+data class VideoVariantResponse(
+    val quality: String,
+    val url: String
+)
+
 data class LessonResponse(
     val id: Long,
     val title: String,
@@ -29,7 +34,9 @@ data class LessonResponse(
     /** فقط برای درسِ پیش‌نمایش یا کاربرِ ثبت‌نام‌شده پر می‌شود. */
     val videoUrl: String?,
     val completed: Boolean = false,
-    val lastPositionSeconds: Int = 0
+    val lastPositionSeconds: Int = 0,
+    /** کیفیت‌های جایگزین (فقط وقتی قابلِ تماشا باشد پر می‌شود). */
+    val videoVariants: List<VideoVariantResponse> = emptyList()
 )
 
 data class SectionResponse(
@@ -128,5 +135,56 @@ data class AdminCreateLessonRequest(
     val videoUrl: String? = null,
     val durationSeconds: Int = 0,
     val sortOrder: Int = 0,
-    val isFreePreview: Boolean = false
+    val isFreePreview: Boolean = false,
+    val videoVariants: List<VideoVariantResponse> = emptyList()
+)
+
+// ---------- Quiz ----------
+data class QuizOptionResponse(
+    val text: String,
+    /** فقط برای ادمین/پاسخ‌کلید پر می‌شود؛ در endpointِ عمومی حذف می‌شود. */
+    val correct: Boolean? = null
+)
+
+data class QuizQuestionResponse(
+    val index: Int,
+    val text: String,
+    val options: List<QuizOptionResponse>
+)
+
+data class QuizResponse(
+    val courseId: Long,
+    val title: String,
+    val passScore: Int,
+    val questions: List<QuizQuestionResponse>,
+    val alreadyPassed: Boolean = false
+)
+
+/** پاسخ‌های کاربر: برای هر سؤال، ایندکسِ گزینه‌ی انتخابی. */
+data class SubmitQuizRequest(
+    val answers: Map<Int, Int> = emptyMap()
+)
+
+data class QuizResultResponse(
+    val courseId: Long,
+    val score: Int,
+    val passed: Boolean,
+    val passScore: Int,
+    val certificateNumber: String? = null
+)
+
+data class AdminUpsertQuizRequest(
+    val title: String = "آزمونِ پایانِ دوره",
+    val passScore: Int = 60,
+    val questions: List<QuizQuestionResponse> = emptyList()
+)
+
+// ---------- Certificate ----------
+data class CertificateResponse(
+    val id: Long,
+    val courseId: Long,
+    val courseTitle: String,
+    val certNumber: String,
+    val issuedAt: String,
+    val userName: String? = null
 )

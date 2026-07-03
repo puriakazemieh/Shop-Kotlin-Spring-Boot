@@ -1,6 +1,14 @@
 package com.kazemieh.shop.academy.persistence.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
+
+/** یک کیفیتِ پخشِ ویدیو (مثلاً 720p → url). به‌صورت JSON ذخیره می‌شود. */
+class VideoVariant(
+    var quality: String = "",
+    var url: String = ""
+)
 
 @Entity
 @Table(name = "course_lessons")
@@ -18,6 +26,11 @@ class LessonEntity(
 
     @Column(name = "video_url", length = 500)
     var videoUrl: String? = null,
+
+    /** کیفیت‌های جایگزینِ پخش (۳۶۰/۴۸۰/۷۲۰/۱۰۸۰). اگر خالی باشد، فقط videoUrl استفاده می‌شود. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "video_variants", columnDefinition = "jsonb")
+    var videoVariants: MutableList<VideoVariant> = mutableListOf(),
 
     @Column(name = "duration_seconds", nullable = false)
     var durationSeconds: Int = 0,
