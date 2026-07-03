@@ -27,6 +27,34 @@ class AdminCourseService(
             )
         }
 
+    /** جزئیاتِ کاملِ دوره برای ادمین — برخلافِ endpointِ عمومی، ویدیوها همیشه نمایان‌اند (بدونِ گیتِ ثبت‌نام). */
+    @Transactional(readOnly = true)
+    fun getDetail(id: Long): CourseDetailResponse {
+        val c = findCourse(id)
+        val sections = c.sections.map { section ->
+            SectionResponse(
+                id = section.id,
+                title = section.title,
+                lessons = section.lessons.map { lesson ->
+                    LessonResponse(
+                        id = lesson.id,
+                        title = lesson.title,
+                        durationSeconds = lesson.durationSeconds,
+                        isFreePreview = lesson.isFreePreview,
+                        videoUrl = lesson.videoUrl,
+                        completed = false,
+                        lastPositionSeconds = 0
+                    )
+                }
+            )
+        }
+        return CourseDetailResponse(
+            id = c.id, title = c.title, slug = c.slug, description = c.description,
+            thumbnailUrl = c.thumbnailUrl, instructor = c.instructor, price = c.price,
+            discountedPrice = c.discountedPrice, enrolled = false, progressPercent = 0, sections = sections
+        )
+    }
+
     @Transactional
     fun create(req: AdminCreateCourseRequest): Long {
         val slug = req.slug.trim()

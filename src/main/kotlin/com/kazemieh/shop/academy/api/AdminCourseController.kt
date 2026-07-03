@@ -16,6 +16,9 @@ class AdminCourseController(
     @GetMapping
     fun list(): List<CourseSummaryResponse> = adminCourseService.list()
 
+    @GetMapping("/{id}")
+    fun detail(@PathVariable id: Long): CourseDetailResponse = adminCourseService.getDetail(id)
+
     @PostMapping
     fun create(@RequestBody req: AdminCreateCourseRequest): Map<String, Long> =
         mapOf("id" to adminCourseService.create(req))

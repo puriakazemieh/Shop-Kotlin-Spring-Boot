@@ -12,7 +12,13 @@ data class TherapistSummaryResponse(
     val specialty: String?,
     val photoUrl: String?,
     val sessionPrice: BigDecimal,
-    val availableSlotCount: Int
+    val availableSlotCount: Int,
+    /** آیا رزرو نیازمندِ خریدِ محصولِ لینک‌شده است (therapist.productId != null). */
+    val requiresPurchase: Boolean = false,
+    /** اسلاگِ محصولِ فروشگاه برای لینک‌کردنِ مستقیم به صفحه‌ی خرید (اگر لینک شده باشد). */
+    val productSlug: String? = null,
+    /** تعدادِ اعتبارِ جلسه‌ی باقی‌مانده‌ی کاربرِ لاگین‌شده (اگر لاگین نباشد یا نیازی نباشد، 0). */
+    val sessionCredits: Int = 0
 )
 
 data class SlotResponse(
@@ -33,7 +39,10 @@ data class TherapistDetailResponse(
     val photoUrl: String?,
     val sessionPrice: BigDecimal,
     val sessionDurationMinutes: Int,
-    val slots: List<SlotResponse>
+    val slots: List<SlotResponse>,
+    val requiresPurchase: Boolean = false,
+    val productSlug: String? = null,
+    val sessionCredits: Int = 0
 )
 
 // ---------- Appointments ----------
@@ -85,4 +94,23 @@ data class AdminAddSlotRequest(
 
 data class AdminConfirmAppointmentRequest(
     val videoRoomUrl: String
+)
+
+data class AdminSlotResponse(
+    val id: Long,
+    val startTime: OffsetDateTime,
+    val endTime: OffsetDateTime,
+    val isBooked: Boolean
+)
+
+data class AdminAppointmentResponse(
+    val id: Long,
+    val userId: Long,
+    val therapistId: Long,
+    val therapistName: String,
+    val status: AppointmentStatus,
+    val dayLabel: String,
+    val timeLabel: String,
+    val videoRoomUrl: String?,
+    val notes: String?
 )

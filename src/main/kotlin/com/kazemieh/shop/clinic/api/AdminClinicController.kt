@@ -33,7 +33,14 @@ class AdminClinicController(
     fun addSlot(@PathVariable therapistId: Long, @RequestBody req: AdminAddSlotRequest): Map<String, Long> =
         mapOf("id" to adminClinicService.addSlot(therapistId, req))
 
+    @GetMapping("/{therapistId}/slots")
+    fun listSlots(@PathVariable therapistId: Long): List<AdminSlotResponse> =
+        adminClinicService.listSlots(therapistId)
+
     // ---- Appointments (admin) ----
+    @GetMapping("/appointments")
+    fun listAppointments(): List<AdminAppointmentResponse> = adminClinicService.listAppointments()
+
     @PostMapping("/appointments/{id}/confirm")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun confirmAppointment(@PathVariable id: Long, @RequestBody req: AdminConfirmAppointmentRequest) =

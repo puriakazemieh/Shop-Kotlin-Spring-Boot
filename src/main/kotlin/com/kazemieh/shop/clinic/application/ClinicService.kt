@@ -1,12 +1,15 @@
 package com.kazemieh.shop.clinic.application
 
+import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.clinic.api.dto.*
 import com.kazemieh.shop.clinic.persistence.AppointmentRepository
 import com.kazemieh.shop.clinic.persistence.AvailabilitySlotRepository
+import com.kazemieh.shop.clinic.persistence.SessionCreditRepository
 import com.kazemieh.shop.clinic.persistence.TherapistRepository
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentStatus
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.ForbiddenException
@@ -20,24 +23,29 @@ import java.time.format.DateTimeFormatter
 class ClinicService(
     private val therapistRepository: TherapistRepository,
     private val slotRepository: AvailabilitySlotRepository,
-    private val appointmentRepository: AppointmentRepository
+    private val appointmentRepository: AppointmentRepository,
+    private val creditRepository: SessionCreditRepository,
+    private val productRepository: ProductRepository
 ) {
 
     @Transactional(readOnly = true)
-    fun listTherapists(): List<TherapistSummaryResponse> {
+    fun listTherapists(userId: Long?): List<TherapistSummaryResponse> {
         val now = OffsetDateTime.now()
         return therapistRepository.findAllByIsActiveTrueOrderByCreatedAtDesc().map { t ->
             val slots = slotRepository
                 .findAllByTherapistIdAndIsBookedFalseAndStartTimeAfterOrderByStartTimeAsc(t.id, now)
             TherapistSummaryResponse(
                 id = t.id, name = t.name, slug = t.slug, specialty = t.specialty,
-                photoUrl = t.photoUrl, sessionPrice = t.sessionPrice, availableSlotCount = slots.size
+                photoUrl = t.photoUrl, sessionPrice = t.sessionPrice, availableSlotCount = slots.size,
+                requiresPurchase = t.productId != null,
+                productSlug = t.productId?.let { productRepository.findById(it).orElse(null)?.slug },
+                sessionCredits = creditsFor(userId, t.id)
             )
         }
     }
 
     @Transactional(readOnly = true)
-    fun getTherapist(slug: String): TherapistDetailResponse {
+    fun getTherapist(slug: String, userId: Long?): TherapistDetailResponse {
         val t = therapistRepository.findBySlug(slug)
             ?: throw NotFoundException("Therapist not found", ErrorCodes.THERAPIST_NOT_FOUND)
         val now = OffsetDateTime.now()
@@ -47,7 +55,10 @@ class ClinicService(
         return TherapistDetailResponse(
             id = t.id, name = t.name, slug = t.slug, specialty = t.specialty, bio = t.bio,
             photoUrl = t.photoUrl, sessionPrice = t.sessionPrice,
-            sessionDurationMinutes = t.sessionDurationMinutes, slots = slots
+            sessionDurationMinutes = t.sessionDurationMinutes, slots = slots,
+            requiresPurchase = t.productId != null,
+            productSlug = t.productId?.let { productRepository.findById(it).orElse(null)?.slug },
+            sessionCredits = creditsFor(userId, t.id)
         )
     }
 
@@ -55,12 +66,25 @@ class ClinicService(
     fun myAppointments(userId: Long): List<AppointmentResponse> =
         appointmentRepository.findAllByUserIdOrderByCreatedAtDesc(userId).map { it.toResponse() }
 
-    /** رزروِ اتمیکِ یک بازه. اگر همزمان رزرو شده باشد، خطای SLOT_ALREADY_BOOKED. */
+    /**
+     * رزروِ اتمیکِ یک بازه. اگر درمانگر به محصولی لینک شده باشد (requiresPurchase)،
+     * کاربر باید اعتبارِ جلسه (از خرید) داشته باشد؛ در غیرِ این‌صورت خطای INSUFFICIENT_SESSION_CREDITS.
+     * درمانگرهایی بدونِ لینکِ محصول (مشاوره‌ی رایگان) نیازی به اعتبار ندارند.
+     */
     @Transactional
     fun book(userId: Long, req: BookAppointmentRequest): AppointmentResponse {
         val slot = slotRepository.findByIdForUpdate(req.slotId)
             ?: throw NotFoundException("Slot not found", ErrorCodes.SLOT_NOT_FOUND)
         if (slot.isBooked) throw ConflictException("Slot already booked", ErrorCodes.SLOT_ALREADY_BOOKED)
+
+        if (slot.therapist.productId != null) {
+            val credit = creditRepository.findByUserIdAndTherapistIdForUpdate(userId, slot.therapist.id)
+            if (credit == null || credit.remaining <= 0) {
+                throw ForbiddenException("No session credits for this therapist", ErrorCodes.INSUFFICIENT_SESSION_CREDITS)
+            }
+            credit.remaining -= 1
+            creditRepository.save(credit)
+        }
 
         slot.isBooked = true
         slotRepository.save(slot)
@@ -75,6 +99,7 @@ class ClinicService(
         return appointmentRepository.save(appointment).toResponse()
     }
 
+    /** لغوِ نوبت؛ بازه دوباره آزاد و در صورتِ نیاز، اعتبارِ مصرف‌شده بازگردانده می‌شود. */
     @Transactional
     fun cancel(userId: Long, appointmentId: Long) {
         val appointment = appointmentRepository.findByIdAndUserId(appointmentId, userId)
@@ -86,9 +111,21 @@ class ClinicService(
         appointment.slot.isBooked = false
         slotRepository.save(appointment.slot)
         appointmentRepository.save(appointment)
+
+        if (appointment.therapist.productId != null) {
+            val credit = creditRepository.findByUserIdAndTherapistIdForUpdate(userId, appointment.therapist.id)
+                ?: SessionCreditEntity(userId = userId, therapistId = appointment.therapist.id, remaining = 0)
+            credit.remaining += 1
+            creditRepository.save(credit)
+        }
     }
 
     // ---------- mappers / helpers ----------
+
+    private fun creditsFor(userId: Long?, therapistId: Long): Int {
+        if (userId == null) return 0
+        return creditRepository.findByUserIdAndTherapistId(userId, therapistId)?.remaining ?: 0
+    }
 
     private fun AvailabilitySlotEntity.toSlotResponse() = SlotResponse(
         id = id,

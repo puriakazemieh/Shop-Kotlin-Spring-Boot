@@ -2,6 +2,7 @@ package com.kazemieh.shop.clinic.persistence
 
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
@@ -31,10 +32,29 @@ interface AvailabilitySlotRepository : JpaRepository<AvailabilitySlotEntity, Lon
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from AvailabilitySlotEntity s where s.id = :id")
     fun findByIdForUpdate(@Param("id") id: Long): AvailabilitySlotEntity?
+
+    /** همه‌ی بازه‌های یک درمانگر (برای مدیریتِ ادمین). */
+    fun findAllByTherapistIdOrderByStartTimeAsc(therapistId: Long): List<AvailabilitySlotEntity>
 }
 
 @Repository
 interface AppointmentRepository : JpaRepository<AppointmentEntity, Long> {
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<AppointmentEntity>
     fun findByIdAndUserId(id: Long, userId: Long): AppointmentEntity?
+
+    /** همه‌ی نوبت‌ها (برای مدیریتِ ادمین). */
+    fun findAllByOrderByCreatedAtDesc(): List<AppointmentEntity>
+}
+
+@Repository
+interface SessionCreditRepository : JpaRepository<SessionCreditEntity, Long> {
+    fun findByUserIdAndTherapistId(userId: Long, therapistId: Long): SessionCreditEntity?
+
+    /** قفلِ ردیف برای مصرفِ اتمیکِ اعتبار هنگامِ رزرو. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from SessionCreditEntity c where c.userId = :userId and c.therapistId = :therapistId")
+    fun findByUserIdAndTherapistIdForUpdate(
+        @Param("userId") userId: Long,
+        @Param("therapistId") therapistId: Long
+    ): SessionCreditEntity?
 }

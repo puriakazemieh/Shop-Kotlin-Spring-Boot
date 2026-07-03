@@ -34,6 +34,7 @@ class OrderService(
     private val objectMapper: ObjectMapper,
     private val walletService: com.kazemieh.shop.wallet.application.WalletService,
     private val courseAccessService: com.kazemieh.shop.academy.application.CourseAccessService,
+    private val clinicAccessService: com.kazemieh.shop.clinic.application.ClinicAccessService,
 ) {
 
     @Transactional(readOnly = true)
@@ -167,10 +168,15 @@ class OrderService(
         order.recordStatus(order.status)
         val saved = orderRepository.save(order)
 
-        // اگر سفارش با کیف‌پول کامل پرداخت شد (مستقیم PROCESSING شد)، دسترسیِ دیجیتال (دوره‌ها) را اعطا کن.
+        // اگر سفارش با کیف‌پول کامل پرداخت شد (مستقیم PROCESSING شد)، دسترسیِ دیجیتال را اعطا کن.
         if (saved.status == OrderStatus.PROCESSING) {
-            val productIds = normalizedItems.keys.mapNotNull { variants[it]?.product?.id }
-            courseAccessService.grantAccessForProducts(userId, productIds)
+            val productQty = mutableMapOf<Long, Int>()
+            for ((variantId, qty) in normalizedItems) {
+                val productId = variants[variantId]?.product?.id ?: continue
+                productQty[productId] = (productQty[productId] ?: 0) + qty
+            }
+            courseAccessService.grantAccessForProducts(userId, productQty.keys)
+            clinicAccessService.grantSessionCredits(userId, productQty)
         }
 
         return OrderMapper.toDetailResponse(saved, objectMapper)
@@ -251,12 +257,18 @@ class OrderService(
             o.deliveredAt = OffsetDateTime.now()
         }
 
-        // پرداختِ درگاه: با تأییدِ پرداخت سفارش به PROCESSING می‌رود ⇒ اعطای دسترسیِ دیجیتال (دوره‌ها).
+        // پرداختِ درگاه: با تأییدِ پرداخت سفارش به PROCESSING می‌رود ⇒ اعطای دسترسیِ دیجیتال (دوره‌ها/اعتبارِ جلسه).
         if (newStatus == OrderStatus.PROCESSING) {
             o.user?.id?.let { uid ->
                 val variantIds = o.items.map { it.variantId }.distinct()
-                val productIds = productVariantRepository.findWithAllOptionsByIds(variantIds).mapNotNull { it.product?.id }
-                courseAccessService.grantAccessForProducts(uid, productIds)
+                val variantsById = productVariantRepository.findWithAllOptionsByIds(variantIds).associateBy { it.id }
+                val productQty = mutableMapOf<Long, Int>()
+                for (item in o.items) {
+                    val productId = variantsById[item.variantId]?.product?.id ?: continue
+                    productQty[productId] = (productQty[productId] ?: 0) + item.qty
+                }
+                courseAccessService.grantAccessForProducts(uid, productQty.keys)
+                clinicAccessService.grantSessionCredits(uid, productQty)
             }
         }
 

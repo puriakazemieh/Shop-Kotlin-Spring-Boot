@@ -13,6 +13,7 @@ import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.NotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.format.DateTimeFormatter
 
 @Service
 class AdminClinicService(
@@ -20,6 +21,9 @@ class AdminClinicService(
     private val slotRepository: AvailabilitySlotRepository,
     private val appointmentRepository: AppointmentRepository
 ) {
+
+    private val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+    private val timeFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     @Transactional(readOnly = true)
     fun listTherapists(): List<TherapistSummaryResponse> =
@@ -82,6 +86,28 @@ class AdminClinicService(
         )
         return slotRepository.save(slot).id
     }
+
+    @Transactional(readOnly = true)
+    fun listSlots(therapistId: Long): List<AdminSlotResponse> =
+        slotRepository.findAllByTherapistIdOrderByStartTimeAsc(therapistId).map {
+            AdminSlotResponse(id = it.id, startTime = it.startTime, endTime = it.endTime, isBooked = it.isBooked)
+        }
+
+    @Transactional(readOnly = true)
+    fun listAppointments(): List<AdminAppointmentResponse> =
+        appointmentRepository.findAllByOrderByCreatedAtDesc().map { a ->
+            AdminAppointmentResponse(
+                id = a.id,
+                userId = a.userId,
+                therapistId = a.therapist.id,
+                therapistName = a.therapist.name,
+                status = a.status,
+                dayLabel = a.slot.startTime.format(dayFmt),
+                timeLabel = "${a.slot.startTime.format(timeFmt)}–${a.slot.endTime.format(timeFmt)}",
+                videoRoomUrl = a.videoRoomUrl,
+                notes = a.notes
+            )
+        }
 
     /** تأییدِ نوبت توسطِ ادمین + ثبتِ لینکِ اتاقِ تماسِ تصویری. */
     @Transactional
