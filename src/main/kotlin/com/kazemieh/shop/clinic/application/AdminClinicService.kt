@@ -3,9 +3,12 @@ package com.kazemieh.shop.clinic.application
 import com.kazemieh.shop.clinic.api.dto.*
 import com.kazemieh.shop.clinic.persistence.AppointmentRepository
 import com.kazemieh.shop.clinic.persistence.AvailabilitySlotRepository
+import com.kazemieh.shop.clinic.persistence.PatientNoteRepository
 import com.kazemieh.shop.clinic.persistence.TherapistRepository
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentStatus
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
+import com.kazemieh.shop.clinic.persistence.entity.SessionMode
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
 import com.kazemieh.shop.shared.error.BadRequestException
 import com.kazemieh.shop.shared.error.ConflictException
@@ -19,7 +22,8 @@ import java.time.format.DateTimeFormatter
 class AdminClinicService(
     private val therapistRepository: TherapistRepository,
     private val slotRepository: AvailabilitySlotRepository,
-    private val appointmentRepository: AppointmentRepository
+    private val appointmentRepository: AppointmentRepository,
+    private val patientNoteRepository: PatientNoteRepository
 ) {
 
     private val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
@@ -48,6 +52,8 @@ class AdminClinicService(
             photoUrl = req.photoUrl,
             sessionPrice = req.sessionPrice,
             sessionDurationMinutes = req.sessionDurationMinutes,
+            mode = parseMode(req.mode),
+            location = req.location,
             productId = req.productId,
             isActive = req.isActive
         )
@@ -64,8 +70,13 @@ class AdminClinicService(
         req.sessionPrice?.let { t.sessionPrice = it }
         req.sessionDurationMinutes?.let { t.sessionDurationMinutes = it }
         req.isActive?.let { t.isActive = it }
+        req.mode?.let { t.mode = parseMode(it) }
+        req.location?.let { t.location = it }
         therapistRepository.save(t)
     }
+
+    private fun parseMode(v: String?): SessionMode =
+        runCatching { SessionMode.valueOf(v!!.trim().uppercase()) }.getOrDefault(SessionMode.ONLINE)
 
     @Transactional
     fun deleteTherapist(id: Long) {
@@ -85,6 +96,28 @@ class AdminClinicService(
             isBooked = false
         )
         return slotRepository.save(slot).id
+    }
+
+    /**
+     * تولیدِ خودکارِ بازه‌ها از یک بازه‌ی کاری، با گامِ slotMinutes (پیش‌فرض = مدتِ جلسه‌ی درمانگر).
+     * بازه‌های تداخل‌کننده رد نمی‌شوند؛ ادمین مسئولِ ورودیِ درست است.
+     */
+    @Transactional
+    fun generateSlots(therapistId: Long, req: AdminGenerateSlotsRequest): Int {
+        val t = findTherapist(therapistId)
+        if (!req.windowEnd.isAfter(req.windowStart)) {
+            throw BadRequestException("End must be after start", ErrorCodes.INVALID_INPUT)
+        }
+        val step = (req.slotMinutes ?: t.sessionDurationMinutes).coerceAtLeast(1).toLong()
+        var cursor = req.windowStart
+        var created = 0
+        while (cursor.plusMinutes(step) <= req.windowEnd) {
+            val end = cursor.plusMinutes(step)
+            slotRepository.save(AvailabilitySlotEntity(therapist = t, startTime = cursor, endTime = end, isBooked = false))
+            cursor = end
+            created++
+        }
+        return created
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +159,24 @@ class AdminClinicService(
         appointment.status = AppointmentStatus.COMPLETED
         appointmentRepository.save(appointment)
     }
+
+    // ---- یادداشت‌های محرمانه‌ی مراجع (فقط ادمین/مشاور) ----
+    @Transactional
+    fun addPatientNote(counselorId: Long, appointmentId: Long, req: AdminAddPatientNoteRequest): Long {
+        appointmentRepository.findById(appointmentId)
+            .orElseThrow { NotFoundException("Appointment not found", ErrorCodes.APPOINTMENT_NOT_FOUND) }
+        val note = PatientNoteEntity(appointmentId = appointmentId, counselorId = counselorId, note = req.note.trim())
+        return patientNoteRepository.save(note).id
+    }
+
+    @Transactional(readOnly = true)
+    fun listPatientNotes(appointmentId: Long): List<PatientNoteResponse> =
+        patientNoteRepository.findAllByAppointmentIdOrderByCreatedAtDesc(appointmentId).map {
+            PatientNoteResponse(
+                id = it.id, appointmentId = it.appointmentId, counselorId = it.counselorId,
+                note = it.note, createdAt = it.createdAt.toString()
+            )
+        }
 
     private fun findTherapist(id: Long): TherapistEntity =
         therapistRepository.findById(id)

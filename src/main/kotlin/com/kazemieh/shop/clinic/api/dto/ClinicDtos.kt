@@ -42,7 +42,9 @@ data class TherapistDetailResponse(
     val slots: List<SlotResponse>,
     val requiresPurchase: Boolean = false,
     val productSlug: String? = null,
-    val sessionCredits: Int = 0
+    val sessionCredits: Int = 0,
+    val mode: String = "ONLINE",
+    val location: String? = null
 )
 
 // ---------- Appointments ----------
@@ -74,7 +76,9 @@ data class AdminCreateTherapistRequest(
     val sessionPrice: BigDecimal = BigDecimal.ZERO,
     val sessionDurationMinutes: Int = 45,
     val productId: Long? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val mode: String = "ONLINE",
+    val location: String? = null
 )
 
 data class AdminUpdateTherapistRequest(
@@ -84,7 +88,9 @@ data class AdminUpdateTherapistRequest(
     val photoUrl: String? = null,
     val sessionPrice: BigDecimal? = null,
     val sessionDurationMinutes: Int? = null,
-    val isActive: Boolean? = null
+    val isActive: Boolean? = null,
+    val mode: String? = null,
+    val location: String? = null
 )
 
 data class AdminAddSlotRequest(
@@ -92,8 +98,31 @@ data class AdminAddSlotRequest(
     val endTime: OffsetDateTime
 )
 
+/**
+ * تولیدِ خودکارِ بازه‌ها: بازه‌ی کاری [windowStart, windowEnd] به قطعاتِ slotMinutes
+ * (پیش‌فرض = مدتِ جلسه‌ی درمانگر) تقسیم می‌شود.
+ */
+data class AdminGenerateSlotsRequest(
+    val windowStart: OffsetDateTime,
+    val windowEnd: OffsetDateTime,
+    val slotMinutes: Int? = null
+)
+
 data class AdminConfirmAppointmentRequest(
     val videoRoomUrl: String
+)
+
+// ---------- Patient notes (حساس) ----------
+data class AdminAddPatientNoteRequest(
+    val note: String
+)
+
+data class PatientNoteResponse(
+    val id: Long,
+    val appointmentId: Long,
+    val counselorId: Long,
+    val note: String,
+    val createdAt: String
 )
 
 data class AdminSlotResponse(

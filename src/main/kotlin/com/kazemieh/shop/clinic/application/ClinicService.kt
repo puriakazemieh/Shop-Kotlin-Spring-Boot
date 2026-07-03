@@ -58,7 +58,9 @@ class ClinicService(
             sessionDurationMinutes = t.sessionDurationMinutes, slots = slots,
             requiresPurchase = t.productId != null,
             productSlug = t.productId?.let { productRepository.findById(it).orElse(null)?.slug },
-            sessionCredits = creditsFor(userId, t.id)
+            sessionCredits = creditsFor(userId, t.id),
+            mode = t.mode.name,
+            location = t.location
         )
     }
 

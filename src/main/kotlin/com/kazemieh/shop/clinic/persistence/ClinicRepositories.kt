@@ -2,6 +2,7 @@ package com.kazemieh.shop.clinic.persistence
 
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
 import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
 import jakarta.persistence.LockModeType
@@ -44,6 +45,11 @@ interface AppointmentRepository : JpaRepository<AppointmentEntity, Long> {
 
     /** همه‌ی نوبت‌ها (برای مدیریتِ ادمین). */
     fun findAllByOrderByCreatedAtDesc(): List<AppointmentEntity>
+}
+
+@Repository
+interface PatientNoteRepository : JpaRepository<PatientNoteEntity, Long> {
+    fun findAllByAppointmentIdOrderByCreatedAtDesc(appointmentId: Long): List<PatientNoteEntity>
 }
 
 @Repository

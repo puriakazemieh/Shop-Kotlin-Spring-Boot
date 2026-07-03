@@ -6,6 +6,9 @@ import org.hibernate.annotations.UpdateTimestamp
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
+/** نحوه‌ی برگزاریِ جلسه‌ی مشاوره. */
+enum class SessionMode { IN_PERSON, ONLINE, PHONE }
+
 /**
  * درمانگر/مشاور — واحدِ ارائه‌ی خدمات مشاوره. هر درمانگر بازه‌های زمانیِ آزاد
  * (AvailabilitySlot) دارد که کاربران می‌توانند برای گرفتنِ نوبت رزرو کنند.
@@ -38,6 +41,14 @@ class TherapistEntity(
 
     @Column(name = "session_duration_minutes", nullable = false)
     var sessionDurationMinutes: Int = 45,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", nullable = false, length = 20)
+    var mode: SessionMode = SessionMode.ONLINE,
+
+    /** فقط برای جلسه‌ی حضوری: نشانیِ محلِ برگزاری. */
+    @Column(name = "location", length = 300)
+    var location: String? = null,
 
     /** لینکِ اختیاری به محصولِ فروشگاه (برای خرید از طریقِ سبد/سفارش). */
     @Column(name = "product_id")
