@@ -33,6 +33,7 @@ class OrderService(
     private val cartRepository: CartRepository,
     private val objectMapper: ObjectMapper,
     private val walletService: com.kazemieh.shop.wallet.application.WalletService,
+    private val courseAccessService: com.kazemieh.shop.academy.application.CourseAccessService,
 ) {
 
     @Transactional(readOnly = true)
@@ -166,6 +167,12 @@ class OrderService(
         order.recordStatus(order.status)
         val saved = orderRepository.save(order)
 
+        // اگر سفارش با کیف‌پول کامل پرداخت شد (مستقیم PROCESSING شد)، دسترسیِ دیجیتال (دوره‌ها) را اعطا کن.
+        if (saved.status == OrderStatus.PROCESSING) {
+            val productIds = normalizedItems.keys.mapNotNull { variants[it]?.product?.id }
+            courseAccessService.grantAccessForProducts(userId, productIds)
+        }
+
         return OrderMapper.toDetailResponse(saved, objectMapper)
     }
 
@@ -242,6 +249,15 @@ class OrderService(
 
         if (newStatus == OrderStatus.COMPLETED) {
             o.deliveredAt = OffsetDateTime.now()
+        }
+
+        // پرداختِ درگاه: با تأییدِ پرداخت سفارش به PROCESSING می‌رود ⇒ اعطای دسترسیِ دیجیتال (دوره‌ها).
+        if (newStatus == OrderStatus.PROCESSING) {
+            o.user?.id?.let { uid ->
+                val variantIds = o.items.map { it.variantId }.distinct()
+                val productIds = productVariantRepository.findWithAllOptionsByIds(variantIds).mapNotNull { it.product?.id }
+                courseAccessService.grantAccessForProducts(uid, productIds)
+            }
         }
 
         o.status = newStatus

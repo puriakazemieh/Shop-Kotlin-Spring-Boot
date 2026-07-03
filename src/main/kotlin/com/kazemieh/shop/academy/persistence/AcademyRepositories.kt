@@ -12,6 +12,8 @@ interface CourseRepository : JpaRepository<CourseEntity, Long> {
     fun findAllByIsPublishedTrueOrderByCreatedAtDesc(): List<CourseEntity>
     fun findBySlug(slug: String): CourseEntity?
     fun existsBySlug(slug: String): Boolean
+    /** دوره‌هایی که به این محصولات لینک شده‌اند (برای اعطای دسترسی پس از خرید). */
+    fun findAllByProductIdIn(productIds: Collection<Long>): List<CourseEntity>
 }
 
 @Repository
