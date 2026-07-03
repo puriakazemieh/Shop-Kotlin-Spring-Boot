@@ -35,6 +35,7 @@ class OrderService(
     private val walletService: com.kazemieh.shop.wallet.application.WalletService,
     private val courseAccessService: com.kazemieh.shop.academy.application.CourseAccessService,
     private val clinicAccessService: com.kazemieh.shop.clinic.application.ClinicAccessService,
+    private val psychTestAccessService: com.kazemieh.shop.psychtest.application.PsychTestAccessService,
 ) {
 
     @Transactional(readOnly = true)
@@ -177,6 +178,7 @@ class OrderService(
             }
             courseAccessService.grantAccessForProducts(userId, productQty.keys)
             clinicAccessService.grantSessionCredits(userId, productQty)
+            psychTestAccessService.grantTestAccess(userId, productQty)
         }
 
         return OrderMapper.toDetailResponse(saved, objectMapper)
@@ -269,6 +271,7 @@ class OrderService(
                 }
                 courseAccessService.grantAccessForProducts(uid, productQty.keys)
                 clinicAccessService.grantSessionCredits(uid, productQty)
+                psychTestAccessService.grantTestAccess(uid, productQty)
             }
         }
 
