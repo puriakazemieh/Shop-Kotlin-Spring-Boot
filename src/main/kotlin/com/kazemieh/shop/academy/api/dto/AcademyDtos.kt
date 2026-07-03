@@ -12,7 +12,13 @@ data class CourseSummaryResponse(
     val price: BigDecimal,
     val discountedPrice: BigDecimal?,
     val lessonCount: Int,
-    val enrolled: Boolean = false
+    val enrolled: Boolean = false,
+    val courseType: String = "COURSE",
+    val format: String = "ONLINE_RECORDED",
+    val isOnline: Boolean = true,
+    val level: String? = null,
+    val jobMarketBadge: Boolean = false,
+    val freeUpdateBadge: Boolean = false
 )
 
 data class LessonResponse(
@@ -43,7 +49,19 @@ data class CourseDetailResponse(
     val discountedPrice: BigDecimal?,
     val enrolled: Boolean,
     val progressPercent: Int,
-    val sections: List<SectionResponse>
+    val sections: List<SectionResponse>,
+    val courseType: String = "COURSE",
+    val format: String = "ONLINE_RECORDED",
+    val isOnline: Boolean = true,
+    val level: String? = null,
+    val location: String? = null,
+    val capacity: Int? = null,
+    val seatsTaken: Int = 0,
+    val seatsRemaining: Int? = null,
+    val jobMarketBadge: Boolean = false,
+    val freeUpdateBadge: Boolean = false,
+    val instructorBio: String? = null,
+    val instructorSkills: List<String> = emptyList()
 )
 
 // ---------- Progress ----------
@@ -69,7 +87,16 @@ data class AdminCreateCourseRequest(
     val price: BigDecimal = BigDecimal.ZERO,
     val discountedPrice: BigDecimal? = null,
     val productId: Long? = null,
-    val isPublished: Boolean = true
+    val isPublished: Boolean = true,
+    val courseType: String = "COURSE",
+    val format: String = "ONLINE_RECORDED",
+    val level: String? = null,
+    val location: String? = null,
+    val capacity: Int? = null,
+    val jobMarketBadge: Boolean = false,
+    val freeUpdateBadge: Boolean = false,
+    val instructorBio: String? = null,
+    val instructorSkills: String? = null
 )
 
 data class AdminUpdateCourseRequest(
@@ -79,7 +106,16 @@ data class AdminUpdateCourseRequest(
     val instructor: String? = null,
     val price: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
-    val isPublished: Boolean? = null
+    val isPublished: Boolean? = null,
+    val courseType: String? = null,
+    val format: String? = null,
+    val level: String? = null,
+    val location: String? = null,
+    val capacity: Int? = null,
+    val jobMarketBadge: Boolean? = null,
+    val freeUpdateBadge: Boolean? = null,
+    val instructorBio: String? = null,
+    val instructorSkills: String? = null
 )
 
 data class AdminCreateSectionRequest(

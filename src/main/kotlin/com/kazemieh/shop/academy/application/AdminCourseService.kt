@@ -3,7 +3,10 @@ package com.kazemieh.shop.academy.application
 import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CourseRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
+import com.kazemieh.shop.academy.persistence.entity.CourseFormat
+import com.kazemieh.shop.academy.persistence.entity.CourseLevel
 import com.kazemieh.shop.academy.persistence.entity.CourseSectionEntity
+import com.kazemieh.shop.academy.persistence.entity.CourseType
 import com.kazemieh.shop.academy.persistence.entity.LessonEntity
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
@@ -23,7 +26,9 @@ class AdminCourseService(
             CourseSummaryResponse(
                 id = it.id, title = it.title, slug = it.slug, thumbnailUrl = it.thumbnailUrl,
                 instructor = it.instructor, price = it.price, discountedPrice = it.discountedPrice,
-                lessonCount = it.sections.sumOf { s -> s.lessons.size }, enrolled = false
+                lessonCount = it.sections.sumOf { s -> s.lessons.size }, enrolled = false,
+                courseType = it.courseType.name, format = it.format.name, isOnline = it.format.isOnline,
+                level = it.level?.name, jobMarketBadge = it.jobMarketBadge, freeUpdateBadge = it.freeUpdateBadge
             )
         }
 
@@ -48,11 +53,7 @@ class AdminCourseService(
                 }
             )
         }
-        return CourseDetailResponse(
-            id = c.id, title = c.title, slug = c.slug, description = c.description,
-            thumbnailUrl = c.thumbnailUrl, instructor = c.instructor, price = c.price,
-            discountedPrice = c.discountedPrice, enrolled = false, progressPercent = 0, sections = sections
-        )
+        return c.toDetail(enrolled = false, sections = sections, progressPercent = 0)
     }
 
     @Transactional
@@ -68,7 +69,16 @@ class AdminCourseService(
             price = req.price,
             discountedPrice = req.discountedPrice,
             productId = req.productId,
-            isPublished = req.isPublished
+            isPublished = req.isPublished,
+            courseType = parseType(req.courseType),
+            format = parseFormat(req.format),
+            level = parseLevel(req.level),
+            location = req.location,
+            capacity = req.capacity,
+            jobMarketBadge = req.jobMarketBadge,
+            freeUpdateBadge = req.freeUpdateBadge,
+            instructorBio = req.instructorBio,
+            instructorSkills = req.instructorSkills
         )
         return courseRepository.save(course).id
     }
@@ -83,8 +93,26 @@ class AdminCourseService(
         req.price?.let { c.price = it }
         req.discountedPrice?.let { c.discountedPrice = it }
         req.isPublished?.let { c.isPublished = it }
+        req.courseType?.let { c.courseType = parseType(it) }
+        req.format?.let { c.format = parseFormat(it) }
+        req.level?.let { c.level = parseLevel(it) }
+        req.location?.let { c.location = it }
+        req.capacity?.let { c.capacity = it }
+        req.jobMarketBadge?.let { c.jobMarketBadge = it }
+        req.freeUpdateBadge?.let { c.freeUpdateBadge = it }
+        req.instructorBio?.let { c.instructorBio = it }
+        req.instructorSkills?.let { c.instructorSkills = it }
         courseRepository.save(c)
     }
+
+    private fun parseType(v: String?): CourseType =
+        runCatching { CourseType.valueOf(v!!.trim().uppercase()) }.getOrDefault(CourseType.COURSE)
+
+    private fun parseFormat(v: String?): CourseFormat =
+        runCatching { CourseFormat.valueOf(v!!.trim().uppercase()) }.getOrDefault(CourseFormat.ONLINE_RECORDED)
+
+    private fun parseLevel(v: String?): CourseLevel? =
+        v?.takeIf { it.isNotBlank() }?.let { runCatching { CourseLevel.valueOf(it.trim().uppercase()) }.getOrNull() }
 
     @Transactional
     fun delete(id: Long) {
