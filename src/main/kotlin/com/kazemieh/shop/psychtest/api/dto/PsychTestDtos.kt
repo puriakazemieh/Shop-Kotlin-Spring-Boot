@@ -13,7 +13,8 @@ data class PsychTestSummaryResponse(
     val resultMode: String,
     val questionCount: Int,
     val owned: Boolean = false,
-    val productId: Long? = null
+    val productId: Long? = null,
+    val productSlug: String? = null
 )
 
 data class TestOptionResponse(

@@ -1,5 +1,6 @@
 package com.kazemieh.shop.psychtest.application
 
+import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.psychtest.api.dto.*
 import com.kazemieh.shop.psychtest.persistence.PsychTestRepository
 import com.kazemieh.shop.psychtest.persistence.UserPsychTestRepository
@@ -17,7 +18,8 @@ import java.time.OffsetDateTime
 @Service
 class PsychTestService(
     private val testRepository: PsychTestRepository,
-    private val userTestRepository: UserPsychTestRepository
+    private val userTestRepository: UserPsychTestRepository,
+    private val productRepository: ProductRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -102,7 +104,8 @@ class PsychTestService(
     private fun PsychTestEntity.toSummary(owned: Boolean) = PsychTestSummaryResponse(
         id = id, title = title, slug = slug, description = description, price = price,
         discountedPrice = discountedPrice, resultMode = resultMode.name,
-        questionCount = questions.size, owned = owned, productId = productId
+        questionCount = questions.size, owned = owned, productId = productId,
+        productSlug = productId?.let { productRepository.findById(it).orElse(null)?.slug }
     )
 
     private fun UserPsychTestEntity.toResponse(test: PsychTestEntity?) = UserPsychTestResponse(
