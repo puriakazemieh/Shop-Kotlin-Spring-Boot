@@ -68,7 +68,13 @@ data class CourseDetailResponse(
     val jobMarketBadge: Boolean = false,
     val freeUpdateBadge: Boolean = false,
     val instructorBio: String? = null,
-    val instructorSkills: List<String> = emptyList()
+    val instructorSkills: List<String> = emptyList(),
+    /** آیا ظرفیتِ کلاسِ حضوری تکمیل شده (فقط برای حضوری/آفلاینِ دارایِ ظرفیت). */
+    val isFull: Boolean = false,
+    /** آیا کاربرِ لاگین‌شده در لیستِ انتظار است (هنوز مطلع نشده). */
+    val onWaitlist: Boolean = false,
+    /** لینکِ محصولِ فروشگاه (اگر باشد) — برای نمایشِ بخشِ نظراتِ همان محصول با برچسبِ «نظرِ شاگردان». */
+    val productId: Long? = null
 )
 
 // ---------- Progress ----------
@@ -82,6 +88,27 @@ data class ProgressResponse(
     val totalLessons: Int,
     val completedLessons: Int,
     val progressPercent: Int
+)
+
+// ---------- Waitlist (کلاسِ حضوریِ پرشده) ----------
+data class WaitlistResponse(
+    val courseId: Long,
+    val joined: Boolean,
+    /** جایگاهِ کاربر در صفِ انتظار (۱ = نفرِ بعدی). null یعنی از قبل مطلع شده یا عضو نیست. */
+    val position: Int? = null
+)
+
+data class AdminWaitlistEntryResponse(
+    val id: Long,
+    val userId: Long,
+    val notified: Boolean,
+    val createdAt: String,
+    val notifiedAt: String? = null
+)
+
+data class AdminNotifyNextResponse(
+    val found: Boolean,
+    val entry: AdminWaitlistEntryResponse? = null
 )
 
 // ---------- Admin ----------

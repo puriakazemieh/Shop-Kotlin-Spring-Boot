@@ -60,7 +60,8 @@ class ClinicService(
             productSlug = t.productId?.let { productRepository.findById(it).orElse(null)?.slug },
             sessionCredits = creditsFor(userId, t.id),
             mode = t.mode.name,
-            location = t.location
+            location = t.location,
+            productId = t.productId
         )
     }
 

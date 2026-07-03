@@ -8,6 +8,7 @@ import com.kazemieh.shop.academy.api.dto.QuizResponse
 import com.kazemieh.shop.academy.api.dto.QuizResultResponse
 import com.kazemieh.shop.academy.api.dto.SubmitQuizRequest
 import com.kazemieh.shop.academy.api.dto.UpdateProgressRequest
+import com.kazemieh.shop.academy.api.dto.WaitlistResponse
 import com.kazemieh.shop.academy.application.CourseService
 import com.kazemieh.shop.academy.application.QuizService
 import com.kazemieh.shop.shared.security.UserPrincipal
@@ -58,6 +59,13 @@ class AcademyController(
         @PathVariable courseId: Long,
         @RequestBody request: SubmitQuizRequest
     ): QuizResultResponse = quizService.submit(principal.id, courseId, request)
+
+    // ---- لیستِ انتظارِ کلاسِ حضوریِ پرشده ----
+    @PostMapping("/courses/{courseId}/waitlist")
+    fun joinWaitlist(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable courseId: Long
+    ): WaitlistResponse = courseService.joinWaitlist(principal.id, courseId)
 
     // ---- گواهی‌ها ----
     @GetMapping("/certificates")

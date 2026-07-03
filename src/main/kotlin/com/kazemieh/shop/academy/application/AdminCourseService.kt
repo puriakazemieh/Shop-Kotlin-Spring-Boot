@@ -2,6 +2,7 @@ package com.kazemieh.shop.academy.application
 
 import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CourseRepository
+import com.kazemieh.shop.academy.persistence.CourseWaitlistRepository
 import com.kazemieh.shop.academy.persistence.QuizRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseFormat
@@ -19,11 +20,13 @@ import com.kazemieh.shop.shared.error.NotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 
 @Service
 class AdminCourseService(
     private val courseRepository: CourseRepository,
-    private val quizRepository: QuizRepository
+    private val quizRepository: QuizRepository,
+    private val waitlistRepository: CourseWaitlistRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -109,6 +112,33 @@ class AdminCourseService(
         req.instructorBio?.let { c.instructorBio = it }
         req.instructorSkills?.let { c.instructorSkills = it }
         courseRepository.save(c)
+    }
+
+    // ---- لیستِ انتظارِ کلاسِ حضوری ----
+    @Transactional(readOnly = true)
+    fun listWaitlist(courseId: Long): List<AdminWaitlistEntryResponse> =
+        waitlistRepository.findAllByCourseIdOrderByCreatedAtAsc(courseId).map {
+            AdminWaitlistEntryResponse(
+                id = it.id, userId = it.userId, notified = it.notified,
+                createdAt = it.createdAt.toString(), notifiedAt = it.notifiedAt?.toString()
+            )
+        }
+
+    /** اطلاع‌رسانیِ دستیِ نفرِ اولِ صفِ انتظار (وقتی ادمین صندلیِ آزادشده را به او اختصاص می‌دهد). */
+    @Transactional
+    fun notifyNextInWaitlist(courseId: Long): AdminNotifyNextResponse {
+        val next = waitlistRepository.findAllByCourseIdAndNotifiedFalseOrderByCreatedAtAsc(courseId).firstOrNull()
+            ?: return AdminNotifyNextResponse(found = false)
+        next.notified = true
+        next.notifiedAt = OffsetDateTime.now()
+        waitlistRepository.save(next)
+        return AdminNotifyNextResponse(
+            found = true,
+            entry = AdminWaitlistEntryResponse(
+                id = next.id, userId = next.userId, notified = true,
+                createdAt = next.createdAt.toString(), notifiedAt = next.notifiedAt.toString()
+            )
+        )
     }
 
     private fun parseType(v: String?): CourseType =

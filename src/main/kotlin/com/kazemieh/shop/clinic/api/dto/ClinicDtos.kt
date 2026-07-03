@@ -44,7 +44,9 @@ data class TherapistDetailResponse(
     val productSlug: String? = null,
     val sessionCredits: Int = 0,
     val mode: String = "ONLINE",
-    val location: String? = null
+    val location: String? = null,
+    /** لینکِ محصولِ فروشگاه (اگر باشد) — برای نمایشِ بخشِ نظراتِ همان محصول با برچسبِ «نظرِ مراجعان». */
+    val productId: Long? = null
 )
 
 // ---------- Appointments ----------

@@ -95,6 +95,7 @@ object ErrorCodes {
     const val LESSON_NOT_FOUND = "LESSON_NOT_FOUND"
     const val NOT_ENROLLED = "NOT_ENROLLED"
     const val COURSE_CLASS_FULL = "COURSE_CLASS_FULL"
+    const val COURSE_NOT_FULL = "COURSE_NOT_FULL"
     const val QUIZ_NOT_FOUND = "QUIZ_NOT_FOUND"
     const val QUIZ_NOT_PASSED = "QUIZ_NOT_PASSED"
     const val CERTIFICATE_NOT_FOUND = "CERTIFICATE_NOT_FOUND"

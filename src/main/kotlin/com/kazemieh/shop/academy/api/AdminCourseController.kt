@@ -51,4 +51,13 @@ class AdminCourseController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun upsertQuiz(@PathVariable courseId: Long, @RequestBody req: AdminUpsertQuizRequest) =
         adminCourseService.upsertQuiz(courseId, req)
+
+    // ---- لیستِ انتظارِ کلاسِ حضوری ----
+    @GetMapping("/{courseId}/waitlist")
+    fun listWaitlist(@PathVariable courseId: Long): List<AdminWaitlistEntryResponse> =
+        adminCourseService.listWaitlist(courseId)
+
+    @PostMapping("/{courseId}/waitlist/notify-next")
+    fun notifyNext(@PathVariable courseId: Long): AdminNotifyNextResponse =
+        adminCourseService.notifyNextInWaitlist(courseId)
 }

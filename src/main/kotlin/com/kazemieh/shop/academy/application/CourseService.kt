@@ -2,12 +2,15 @@ package com.kazemieh.shop.academy.application
 
 import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CourseRepository
+import com.kazemieh.shop.academy.persistence.CourseWaitlistRepository
 import com.kazemieh.shop.academy.persistence.EnrollmentRepository
 import com.kazemieh.shop.academy.persistence.LessonProgressRepository
 import com.kazemieh.shop.academy.persistence.LessonRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
+import com.kazemieh.shop.academy.persistence.entity.CourseWaitlistEntity
 import com.kazemieh.shop.academy.persistence.entity.EnrollmentEntity
 import com.kazemieh.shop.academy.persistence.entity.LessonProgressEntity
+import com.kazemieh.shop.shared.error.BadRequestException
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.ForbiddenException
@@ -20,7 +23,8 @@ class CourseService(
     private val courseRepository: CourseRepository,
     private val lessonRepository: LessonRepository,
     private val enrollmentRepository: EnrollmentRepository,
-    private val progressRepository: LessonProgressRepository
+    private val progressRepository: LessonProgressRepository,
+    private val waitlistRepository: CourseWaitlistRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -58,7 +62,8 @@ class CourseService(
         }
         val total = sections.sumOf { it.lessons.size }
         val completed = progressByLesson.values.count { it.completed }
-        return course.toDetail(enrolled, sections, percent(completed, total))
+        val onWaitlist = userId != null && waitlistRepository.existsByCourseIdAndUserIdAndNotifiedFalse(course.id, userId)
+        return course.toDetail(enrolled, sections, percent(completed, total), onWaitlist = onWaitlist)
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +96,33 @@ class CourseService(
             enrollmentRepository.save(EnrollmentEntity(userId = userId, course = course))
         }
         return getCourseDetail(course.slug, userId)
+    }
+
+    /**
+     * پیوستن به لیستِ انتظارِ کلاسِ حضوری/آفلاینِ پرشده. idempotent. فقط وقتی مجاز است که
+     * ظرفیت واقعاً تکمیل باشد (وگرنه کاربر باید مستقیم ثبت‌نام کند).
+     */
+    @Transactional
+    fun joinWaitlist(userId: Long, courseId: Long): WaitlistResponse {
+        val course = courseRepository.findById(courseId)
+            .orElseThrow { NotFoundException("Course not found", ErrorCodes.COURSE_NOT_FOUND) }
+        val cap = course.capacity
+        if (course.format.isOnline || cap == null || course.seatsTaken < cap) {
+            throw BadRequestException("Class is not full", ErrorCodes.COURSE_NOT_FULL)
+        }
+        val existing = waitlistRepository.findByCourseIdAndUserId(courseId, userId)
+        if (existing == null) {
+            waitlistRepository.save(CourseWaitlistEntity(courseId = courseId, userId = userId))
+        } else if (existing.notified) {
+            // اگر قبلاً مطلع شده بود ولی دوباره درخواست داد (مثلاً صندلی را از دست داد)، دوباره فعال کن.
+            existing.notified = false
+            existing.notifiedAt = null
+            waitlistRepository.save(existing)
+        }
+        val position = waitlistRepository.findAllByCourseIdAndNotifiedFalseOrderByCreatedAtAsc(courseId)
+            .indexOfFirst { it.userId == userId }
+            .let { if (it >= 0) it + 1 else null }
+        return WaitlistResponse(courseId = courseId, joined = true, position = position)
     }
 
     @Transactional
@@ -148,7 +180,8 @@ class CourseService(
 internal fun CourseEntity.toDetail(
     enrolled: Boolean,
     sections: List<SectionResponse>,
-    progressPercent: Int
+    progressPercent: Int,
+    onWaitlist: Boolean = false
 ): CourseDetailResponse = CourseDetailResponse(
     id = id,
     title = title,
@@ -172,5 +205,8 @@ internal fun CourseEntity.toDetail(
     jobMarketBadge = jobMarketBadge,
     freeUpdateBadge = freeUpdateBadge,
     instructorBio = instructorBio,
-    instructorSkills = instructorSkills?.split("،", ",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+    instructorSkills = instructorSkills?.split("،", ",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
+    isFull = !format.isOnline && capacity != null && seatsTaken >= capacity!!,
+    onWaitlist = onWaitlist,
+    productId = productId
 )
