@@ -68,4 +68,21 @@ class AdminClinicController(
         @PathVariable id: Long,
         @RequestBody req: AdminAddPatientNoteRequest
     ): Map<String, Long> = mapOf("id" to adminClinicService.addPatientNote(principal.id, id, req))
+
+    // ---- CRMِ سبکِ مراجعان + پرونده‌ی کاملِ مراجع ----
+    @GetMapping("/{therapistId}/patients")
+    fun listPatients(@PathVariable therapistId: Long): List<AdminPatientSummaryResponse> =
+        adminClinicService.listPatients(therapistId)
+
+    @PutMapping("/{therapistId}/patients/{userId}/tags")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun setPatientTags(
+        @PathVariable therapistId: Long,
+        @PathVariable userId: Long,
+        @RequestBody req: AdminSetPatientTagsRequest
+    ) = adminClinicService.setPatientTags(therapistId, userId, req)
+
+    @GetMapping("/{therapistId}/patients/{userId}")
+    fun getPatientFile(@PathVariable therapistId: Long, @PathVariable userId: Long): PatientFileResponse =
+        adminClinicService.getPatientFile(therapistId, userId)
 }

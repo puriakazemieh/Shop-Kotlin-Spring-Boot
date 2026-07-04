@@ -45,6 +45,12 @@ interface AppointmentRepository : JpaRepository<AppointmentEntity, Long> {
 
     /** همه‌ی نوبت‌ها (برای مدیریتِ ادمین). */
     fun findAllByOrderByCreatedAtDesc(): List<AppointmentEntity>
+
+    /** همه‌ی نوبت‌های یک درمانگر (برای CRM/پرونده‌ی مراجع). */
+    fun findAllByTherapistId(therapistId: Long): List<AppointmentEntity>
+
+    /** نوبت‌های یک مراجعِ خاص نزدِ یک درمانگرِ خاص (پرونده‌ی مراجع). */
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<AppointmentEntity>
 }
 
 @Repository

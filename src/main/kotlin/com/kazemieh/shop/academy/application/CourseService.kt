@@ -5,6 +5,7 @@ import com.kazemieh.shop.academy.persistence.CourseRepository
 import com.kazemieh.shop.academy.persistence.CourseWaitlistRepository
 import com.kazemieh.shop.academy.persistence.EnrollmentRepository
 import com.kazemieh.shop.academy.persistence.LessonProgressRepository
+import com.kazemieh.shop.academy.persistence.LessonQuizRepository
 import com.kazemieh.shop.academy.persistence.LessonRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseWaitlistEntity
@@ -24,7 +25,8 @@ class CourseService(
     private val lessonRepository: LessonRepository,
     private val enrollmentRepository: EnrollmentRepository,
     private val progressRepository: LessonProgressRepository,
-    private val waitlistRepository: CourseWaitlistRepository
+    private val waitlistRepository: CourseWaitlistRepository,
+    private val lessonQuizRepository: LessonQuizRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -39,6 +41,8 @@ class CourseService(
         val progressByLesson = if (userId != null)
             progressRepository.findAllByUserIdAndCourseId(userId, course.id).associateBy { it.lessonId }
         else emptyMap()
+        val allLessonIds = course.sections.flatMap { it.lessons.map { l -> l.id } }
+        val lessonIdsWithQuiz = lessonQuizRepository.findAllByLessonIdIn(allLessonIds).map { it.lessonId }.toSet()
 
         val sections = course.sections.map { section ->
             SectionResponse(
@@ -55,7 +59,9 @@ class CourseService(
                         videoUrl = if (canWatch) lesson.videoUrl else null,
                         completed = p?.completed ?: false,
                         lastPositionSeconds = p?.lastPositionSeconds ?: 0,
-                        videoVariants = if (canWatch) lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) } else emptyList()
+                        videoVariants = if (canWatch) lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) } else emptyList(),
+                        resourceFiles = if (canWatch) lesson.resourceFiles.map { LessonFileResponse(it.name, it.url, it.sizeLabel) } else emptyList(),
+                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id)
                     )
                 }
             )
@@ -208,5 +214,6 @@ internal fun CourseEntity.toDetail(
     instructorSkills = instructorSkills?.split("،", ",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
     isFull = !format.isOnline && capacity != null && seatsTaken >= capacity!!,
     onWaitlist = onWaitlist,
-    productId = productId
+    productId = productId,
+    requiresProjectSubmission = requiresProjectSubmission
 )

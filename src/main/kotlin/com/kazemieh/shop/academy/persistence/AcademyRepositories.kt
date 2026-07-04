@@ -5,6 +5,9 @@ import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.EnrollmentEntity
 import com.kazemieh.shop.academy.persistence.entity.LessonEntity
 import com.kazemieh.shop.academy.persistence.entity.LessonProgressEntity
+import com.kazemieh.shop.academy.persistence.entity.LessonQuizAttemptEntity
+import com.kazemieh.shop.academy.persistence.entity.LessonQuizEntity
+import com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionEntity
 import com.kazemieh.shop.academy.persistence.entity.QuizAttemptEntity
 import com.kazemieh.shop.academy.persistence.entity.QuizEntity
 import jakarta.persistence.LockModeType
@@ -60,4 +63,22 @@ interface QuizAttemptRepository : JpaRepository<QuizAttemptEntity, Long> {
 interface CertificateRepository : JpaRepository<CertificateEntity, Long> {
     fun findByUserIdAndCourseId(userId: Long, courseId: Long): CertificateEntity?
     fun findAllByUserIdOrderByIssuedAtDesc(userId: Long): List<CertificateEntity>
+}
+
+@Repository
+interface LessonQuizRepository : JpaRepository<LessonQuizEntity, Long> {
+    fun findByLessonId(lessonId: Long): LessonQuizEntity?
+    fun findAllByLessonIdIn(lessonIds: Collection<Long>): List<LessonQuizEntity>
+}
+
+@Repository
+interface LessonQuizAttemptRepository : JpaRepository<LessonQuizAttemptEntity, Long> {
+    fun existsByUserIdAndLessonIdAndPassedTrue(userId: Long, lessonId: Long): Boolean
+}
+
+@Repository
+interface ProjectSubmissionRepository : JpaRepository<ProjectSubmissionEntity, Long> {
+    fun findByCourseIdAndUserId(courseId: Long, userId: Long): ProjectSubmissionEntity?
+    fun findAllByCourseIdOrderBySubmittedAtDesc(courseId: Long): List<ProjectSubmissionEntity>
+    fun existsByCourseIdAndUserIdAndStatus(courseId: Long, userId: Long, status: com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus): Boolean
 }

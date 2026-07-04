@@ -4,12 +4,18 @@ import com.kazemieh.shop.clinic.api.dto.*
 import com.kazemieh.shop.clinic.persistence.AppointmentRepository
 import com.kazemieh.shop.clinic.persistence.AvailabilitySlotRepository
 import com.kazemieh.shop.clinic.persistence.PatientNoteRepository
+import com.kazemieh.shop.clinic.persistence.PatientRelationRepository
 import com.kazemieh.shop.clinic.persistence.TherapistRepository
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentStatus
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
 import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
+import com.kazemieh.shop.clinic.persistence.entity.PatientRelationEntity
 import com.kazemieh.shop.clinic.persistence.entity.SessionMode
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
+import com.kazemieh.shop.identity.persistence.UserRepository
+import com.kazemieh.shop.psychtest.persistence.PsychTestRepository
+import com.kazemieh.shop.psychtest.persistence.UserPsychTestRepository
+import com.kazemieh.shop.psychtest.persistence.entity.UserTestStatus
 import com.kazemieh.shop.shared.error.BadRequestException
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
@@ -23,7 +29,11 @@ class AdminClinicService(
     private val therapistRepository: TherapistRepository,
     private val slotRepository: AvailabilitySlotRepository,
     private val appointmentRepository: AppointmentRepository,
-    private val patientNoteRepository: PatientNoteRepository
+    private val patientNoteRepository: PatientNoteRepository,
+    private val patientRelationRepository: PatientRelationRepository,
+    private val userRepository: UserRepository,
+    private val psychTestRepository: PsychTestRepository,
+    private val userPsychTestRepository: UserPsychTestRepository
 ) {
 
     private val dayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
@@ -181,4 +191,71 @@ class AdminClinicService(
     private fun findTherapist(id: Long): TherapistEntity =
         therapistRepository.findById(id)
             .orElseThrow { NotFoundException("Therapist not found", ErrorCodes.THERAPIST_NOT_FOUND) }
+
+    // ---- CRMِ سبکِ مراجعان (لیستِ مراجعانِ هر درمانگر + برچسب) ----
+    @Transactional(readOnly = true)
+    fun listPatients(therapistId: Long): List<AdminPatientSummaryResponse> {
+        val appointments = appointmentRepository.findAllByTherapistId(therapistId)
+        val tagsByUser = patientRelationRepository.findAllByTherapistId(therapistId).associateBy { it.userId }
+        return appointments.groupBy { it.userId }.map { (userId, list) ->
+            val user = userRepository.findById(userId).orElse(null)
+            val name = listOfNotNull(user?.firstName, user?.lastName).joinToString(" ").ifBlank { user?.email ?: "مراجع" }
+            val last = list.maxByOrNull { it.createdAt ?: java.time.OffsetDateTime.MIN }
+            AdminPatientSummaryResponse(
+                userId = userId,
+                userName = name,
+                therapistId = therapistId,
+                appointmentCount = list.size,
+                lastAppointmentAt = last?.createdAt?.toString(),
+                tags = tagsByUser[userId]?.tags ?: emptyList()
+            )
+        }.sortedByDescending { it.lastAppointmentAt }
+    }
+
+    @Transactional
+    fun setPatientTags(therapistId: Long, userId: Long, req: AdminSetPatientTagsRequest) {
+        findTherapist(therapistId)
+        val relation = patientRelationRepository.findByTherapistIdAndUserId(therapistId, userId)
+            ?: PatientRelationEntity(therapistId = therapistId, userId = userId)
+        relation.tags = req.tags.toMutableList()
+        patientRelationRepository.save(relation)
+    }
+
+    /** پرونده‌ی کاملِ مراجع: نوبت‌ها + یادداشت‌ها + نتایجِ تستِ روان‌شناسی، همه در یک نما. */
+    @Transactional(readOnly = true)
+    fun getPatientFile(therapistId: Long, userId: Long): PatientFileResponse {
+        findTherapist(therapistId)
+        val user = userRepository.findById(userId).orElse(null)
+        val name = listOfNotNull(user?.firstName, user?.lastName).joinToString(" ").ifBlank { user?.email ?: "مراجع" }
+        val tags = patientRelationRepository.findByTherapistIdAndUserId(therapistId, userId)?.tags ?: emptyList()
+
+        val appointments = appointmentRepository.findAllByTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId, userId).map { a ->
+            PatientFileAppointmentResponse(
+                id = a.id,
+                status = a.status,
+                dayLabel = a.slot.startTime.format(dayFmt),
+                timeLabel = "${a.slot.startTime.format(timeFmt)}–${a.slot.endTime.format(timeFmt)}",
+                notes = patientNoteRepository.findAllByAppointmentIdOrderByCreatedAtDesc(a.id).map {
+                    PatientNoteResponse(id = it.id, appointmentId = it.appointmentId, counselorId = it.counselorId, note = it.note, createdAt = it.createdAt.toString())
+                }
+            )
+        }
+
+        val testResults = userPsychTestRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+            .filter { it.status == UserTestStatus.COMPLETED }
+            .map { t ->
+                val test = psychTestRepository.findById(t.testId).orElse(null)
+                PatientFileTestResultResponse(
+                    testTitle = test?.title ?: "تست",
+                    totalScore = t.totalScore,
+                    interpretation = t.interpretation,
+                    completedAt = t.completedAt?.toString()
+                )
+            }
+
+        return PatientFileResponse(
+            userId = userId, userName = name, therapistId = therapistId, tags = tags,
+            appointments = appointments, testResults = testResults
+        )
+    }
 }

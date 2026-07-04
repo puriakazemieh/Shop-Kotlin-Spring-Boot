@@ -99,6 +99,10 @@ class CourseEntity(
     @Column(name = "instructor_skills", length = 500)
     var instructorSkills: String? = null,
 
+    /** اگر true باشد، صدورِ گواهی علاوه‌بر قبولیِ آزمون نیازمندِ تأییدِ پروژه‌ی پایانی هم هست. */
+    @Column(name = "requires_project_submission", nullable = false)
+    var requiresProjectSubmission: Boolean = false,
+
     @OneToMany(mappedBy = "course", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     var sections: MutableList<CourseSectionEntity> = mutableListOf(),

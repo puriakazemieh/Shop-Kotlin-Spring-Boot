@@ -3,6 +3,9 @@ package com.kazemieh.shop.academy.application
 import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CourseRepository
 import com.kazemieh.shop.academy.persistence.CourseWaitlistRepository
+import com.kazemieh.shop.academy.persistence.LessonQuizRepository
+import com.kazemieh.shop.academy.persistence.LessonRepository
+import com.kazemieh.shop.academy.persistence.ProjectSubmissionRepository
 import com.kazemieh.shop.academy.persistence.QuizRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseFormat
@@ -10,10 +13,16 @@ import com.kazemieh.shop.academy.persistence.entity.CourseLevel
 import com.kazemieh.shop.academy.persistence.entity.CourseSectionEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseType
 import com.kazemieh.shop.academy.persistence.entity.LessonEntity
+import com.kazemieh.shop.academy.persistence.entity.LessonFile
+import com.kazemieh.shop.academy.persistence.entity.LessonQuizEntity
+import com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionEntity
+import com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus
 import com.kazemieh.shop.academy.persistence.entity.QuizEntity
 import com.kazemieh.shop.academy.persistence.entity.QuizOption
 import com.kazemieh.shop.academy.persistence.entity.QuizQuestion
 import com.kazemieh.shop.academy.persistence.entity.VideoVariant
+import com.kazemieh.shop.identity.persistence.UserRepository
+import com.kazemieh.shop.shared.error.BadRequestException
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.NotFoundException
@@ -26,7 +35,12 @@ import java.time.OffsetDateTime
 class AdminCourseService(
     private val courseRepository: CourseRepository,
     private val quizRepository: QuizRepository,
-    private val waitlistRepository: CourseWaitlistRepository
+    private val waitlistRepository: CourseWaitlistRepository,
+    private val lessonRepository: LessonRepository,
+    private val lessonQuizRepository: LessonQuizRepository,
+    private val projectSubmissionRepository: ProjectSubmissionRepository,
+    private val userRepository: UserRepository,
+    private val quizService: QuizService
 ) {
 
     @Transactional(readOnly = true)
@@ -45,6 +59,8 @@ class AdminCourseService(
     @Transactional(readOnly = true)
     fun getDetail(id: Long): CourseDetailResponse {
         val c = findCourse(id)
+        val allLessonIds = c.sections.flatMap { it.lessons.map { l -> l.id } }
+        val lessonIdsWithQuiz = lessonQuizRepository.findAllByLessonIdIn(allLessonIds).map { it.lessonId }.toSet()
         val sections = c.sections.map { section ->
             SectionResponse(
                 id = section.id,
@@ -57,7 +73,10 @@ class AdminCourseService(
                         isFreePreview = lesson.isFreePreview,
                         videoUrl = lesson.videoUrl,
                         completed = false,
-                        lastPositionSeconds = 0
+                        lastPositionSeconds = 0,
+                        videoVariants = lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) },
+                        resourceFiles = lesson.resourceFiles.map { LessonFileResponse(it.name, it.url, it.sizeLabel) },
+                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id)
                     )
                 }
             )
@@ -87,7 +106,8 @@ class AdminCourseService(
             jobMarketBadge = req.jobMarketBadge,
             freeUpdateBadge = req.freeUpdateBadge,
             instructorBio = req.instructorBio,
-            instructorSkills = req.instructorSkills
+            instructorSkills = req.instructorSkills,
+            requiresProjectSubmission = req.requiresProjectSubmission
         )
         return courseRepository.save(course).id
     }
@@ -111,6 +131,7 @@ class AdminCourseService(
         req.freeUpdateBadge?.let { c.freeUpdateBadge = it }
         req.instructorBio?.let { c.instructorBio = it }
         req.instructorSkills?.let { c.instructorSkills = it }
+        req.requiresProjectSubmission?.let { c.requiresProjectSubmission = it }
         courseRepository.save(c)
     }
 
@@ -215,6 +236,98 @@ class AdminCourseService(
             )
         }.toMutableList()
         quizRepository.save(quiz)
+    }
+
+    // ---- فایل‌های ضمیمه‌ی درس (کنارِ ویدیو) ----
+    // نکته: چون resourceFiles ستونِ jsonb است، لیستِ جدید باید reassign شود (نه mutateِ درجا)
+    // تا Hibernate تغییر را در dirty-checking تشخیص دهد — هم‌الگو با upsertQuiz بالا.
+    @Transactional
+    fun addLessonFile(courseId: Long, lessonId: Long, req: AdminAddLessonFileRequest): Int {
+        val lesson = findLessonInCourse(courseId, lessonId)
+        val newFile = LessonFile(name = req.name.trim(), url = req.url, sizeLabel = req.sizeLabel)
+        lesson.resourceFiles = (lesson.resourceFiles + newFile).toMutableList()
+        lessonRepository.save(lesson)
+        return lesson.resourceFiles.size - 1
+    }
+
+    @Transactional
+    fun deleteLessonFile(courseId: Long, lessonId: Long, index: Int) {
+        val lesson = findLessonInCourse(courseId, lessonId)
+        if (index in lesson.resourceFiles.indices) {
+            lesson.resourceFiles = lesson.resourceFiles.filterIndexed { i, _ -> i != index }.toMutableList()
+            lessonRepository.save(lesson)
+        }
+    }
+
+    // ---- آزمونِ کوتاهِ درس (checkpoint) ----
+    @Transactional(readOnly = true)
+    fun getLessonQuiz(courseId: Long, lessonId: Long): LessonQuizResponse? {
+        findLessonInCourse(courseId, lessonId)
+        val quiz = lessonQuizRepository.findByLessonId(lessonId) ?: return null
+        return LessonQuizResponse(
+            lessonId = lessonId,
+            title = quiz.title,
+            passScore = quiz.passScore,
+            questions = quiz.questions.mapIndexed { i, q ->
+                QuizQuestionResponse(
+                    index = i,
+                    text = q.text,
+                    options = q.options.map { QuizOptionResponse(it.text, it.correct) }
+                )
+            }
+        )
+    }
+
+    @Transactional
+    fun upsertLessonQuiz(courseId: Long, lessonId: Long, req: AdminUpsertLessonQuizRequest) {
+        findLessonInCourse(courseId, lessonId)
+        val quiz = lessonQuizRepository.findByLessonId(lessonId) ?: LessonQuizEntity(lessonId = lessonId)
+        quiz.title = req.title
+        quiz.passScore = req.passScore.coerceIn(0, 100)
+        quiz.questions = req.questions.map { q ->
+            QuizQuestion(
+                text = q.text,
+                options = q.options.map { QuizOption(it.text, it.correct == true) }.toMutableList()
+            )
+        }.toMutableList()
+        lessonQuizRepository.save(quiz)
+    }
+
+    // ---- پروژه‌های پایانی (ارزیابیِ پروژه‌محور) ----
+    @Transactional(readOnly = true)
+    fun listProjectSubmissions(courseId: Long): List<ProjectSubmissionResponse> =
+        projectSubmissionRepository.findAllByCourseIdOrderBySubmittedAtDesc(courseId).map { it.toResponse() }
+
+    @Transactional
+    fun reviewProjectSubmission(submissionId: Long, req: AdminReviewProjectRequest) {
+        val submission = projectSubmissionRepository.findById(submissionId)
+            .orElseThrow { NotFoundException("Project submission not found", ErrorCodes.PROJECT_SUBMISSION_NOT_FOUND) }
+        val status = runCatching { ProjectSubmissionStatus.valueOf(req.status.trim().uppercase()) }
+            .getOrElse { throw BadRequestException("Invalid status", ErrorCodes.INVALID_INPUT) }
+        submission.status = status
+        submission.mentorFeedback = req.mentorFeedback
+        submission.reviewedAt = OffsetDateTime.now()
+        projectSubmissionRepository.save(submission)
+        if (status == ProjectSubmissionStatus.APPROVED) {
+            quizService.tryIssueCertificateIfEligible(submission.userId, submission.courseId)
+        }
+    }
+
+    private fun ProjectSubmissionEntity.toResponse(): ProjectSubmissionResponse {
+        val user = userRepository.findById(userId).orElse(null)
+        val name = listOfNotNull(user?.firstName, user?.lastName).joinToString(" ").ifBlank { user?.email ?: "کاربر" }
+        return ProjectSubmissionResponse(
+            id = id, courseId = courseId, userId = userId, fileUrl = fileUrl, note = note,
+            status = status.name, mentorFeedback = mentorFeedback,
+            submittedAt = submittedAt.toString(), reviewedAt = reviewedAt?.toString(), userName = name
+        )
+    }
+
+    private fun findLessonInCourse(courseId: Long, lessonId: Long): LessonEntity {
+        val c = findCourse(courseId)
+        val lesson = c.sections.flatMap { it.lessons }.firstOrNull { it.id == lessonId }
+            ?: throw NotFoundException("Lesson not found", ErrorCodes.LESSON_NOT_FOUND)
+        return lesson
     }
 
     private fun findCourse(id: Long): CourseEntity =

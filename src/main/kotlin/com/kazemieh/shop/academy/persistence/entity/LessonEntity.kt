@@ -10,6 +10,13 @@ class VideoVariant(
     var url: String = ""
 )
 
+/** یک فایلِ ضمیمه‌ی درس (جزوه/کدِ نمونه/...) — کنارِ ویدیو، نه به‌جایِ آن. */
+class LessonFile(
+    var name: String = "",
+    var url: String = "",
+    var sizeLabel: String? = null
+)
+
 @Entity
 @Table(name = "course_lessons")
 class LessonEntity(
@@ -31,6 +38,11 @@ class LessonEntity(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "video_variants", columnDefinition = "jsonb")
     var videoVariants: MutableList<VideoVariant> = mutableListOf(),
+
+    /** فایل‌های ضمیمه‌ی این درس (جزوه/کدِ نمونه/...) — کنارِ ویدیو نمایش داده می‌شوند. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "resource_files", columnDefinition = "jsonb")
+    var resourceFiles: MutableList<LessonFile> = mutableListOf(),
 
     @Column(name = "duration_seconds", nullable = false)
     var durationSeconds: Int = 0,

@@ -145,3 +145,46 @@ data class AdminAppointmentResponse(
     val videoRoomUrl: String?,
     val notes: String?
 )
+
+// ---------- پرونده‌ی مراجع + CRMِ سبک (فقط ادمین/مشاور) ----------
+
+/** یک ردیفِ لیستِ مراجعانِ یک درمانگر (کارتِ CRM). */
+data class AdminPatientSummaryResponse(
+    val userId: Long,
+    val userName: String,
+    val therapistId: Long,
+    val appointmentCount: Int,
+    val lastAppointmentAt: String?,
+    val tags: List<String> = emptyList()
+)
+
+data class AdminSetPatientTagsRequest(
+    val tags: List<String> = emptyList()
+)
+
+/** یک نوبتِ گذشته/آینده‌ی همین مراجع، برای نمایش در پرونده. */
+data class PatientFileAppointmentResponse(
+    val id: Long,
+    val status: AppointmentStatus,
+    val dayLabel: String,
+    val timeLabel: String,
+    val notes: List<PatientNoteResponse> = emptyList()
+)
+
+/** یک نتیجه‌ی تستِ روان‌شناسیِ همین مراجع (اگر عمودیِ تست فعال باشد). */
+data class PatientFileTestResultResponse(
+    val testTitle: String,
+    val totalScore: Int?,
+    val interpretation: String?,
+    val completedAt: String?
+)
+
+/** پرونده‌ی کاملِ مراجع: نوبت‌ها + یادداشت‌ها + نتایجِ تست، همه در یک نما. */
+data class PatientFileResponse(
+    val userId: Long,
+    val userName: String,
+    val therapistId: Long,
+    val tags: List<String> = emptyList(),
+    val appointments: List<PatientFileAppointmentResponse> = emptyList(),
+    val testResults: List<PatientFileTestResultResponse> = emptyList()
+)

@@ -26,6 +26,12 @@ data class VideoVariantResponse(
     val url: String
 )
 
+data class LessonFileResponse(
+    val name: String,
+    val url: String,
+    val sizeLabel: String? = null
+)
+
 data class LessonResponse(
     val id: Long,
     val title: String,
@@ -36,7 +42,11 @@ data class LessonResponse(
     val completed: Boolean = false,
     val lastPositionSeconds: Int = 0,
     /** کیفیت‌های جایگزین (فقط وقتی قابلِ تماشا باشد پر می‌شود). */
-    val videoVariants: List<VideoVariantResponse> = emptyList()
+    val videoVariants: List<VideoVariantResponse> = emptyList(),
+    /** فایل‌های ضمیمه‌ی این درس (فقط وقتی قابلِ تماشا باشد پر می‌شود). */
+    val resourceFiles: List<LessonFileResponse> = emptyList(),
+    /** آیا این درس آزمونِ کوتاهِ خودش را دارد (برای نمایشِ تبِ «آزمون» در پخش‌کننده). */
+    val hasQuiz: Boolean = false
 )
 
 data class SectionResponse(
@@ -74,7 +84,9 @@ data class CourseDetailResponse(
     /** آیا کاربرِ لاگین‌شده در لیستِ انتظار است (هنوز مطلع نشده). */
     val onWaitlist: Boolean = false,
     /** لینکِ محصولِ فروشگاه (اگر باشد) — برای نمایشِ بخشِ نظراتِ همان محصول با برچسبِ «نظرِ شاگردان». */
-    val productId: Long? = null
+    val productId: Long? = null,
+    /** آیا صدورِ گواهی نیازمندِ تأییدِ پروژه‌ی پایانی هم هست (کنارِ قبولیِ آزمون). */
+    val requiresProjectSubmission: Boolean = false
 )
 
 // ---------- Progress ----------
@@ -130,7 +142,8 @@ data class AdminCreateCourseRequest(
     val jobMarketBadge: Boolean = false,
     val freeUpdateBadge: Boolean = false,
     val instructorBio: String? = null,
-    val instructorSkills: String? = null
+    val instructorSkills: String? = null,
+    val requiresProjectSubmission: Boolean = false
 )
 
 data class AdminUpdateCourseRequest(
@@ -149,7 +162,8 @@ data class AdminUpdateCourseRequest(
     val jobMarketBadge: Boolean? = null,
     val freeUpdateBadge: Boolean? = null,
     val instructorBio: String? = null,
-    val instructorSkills: String? = null
+    val instructorSkills: String? = null,
+    val requiresProjectSubmission: Boolean? = null
 )
 
 data class AdminCreateSectionRequest(
@@ -164,6 +178,12 @@ data class AdminCreateLessonRequest(
     val sortOrder: Int = 0,
     val isFreePreview: Boolean = false,
     val videoVariants: List<VideoVariantResponse> = emptyList()
+)
+
+data class AdminAddLessonFileRequest(
+    val name: String,
+    val url: String,
+    val sizeLabel: String? = null
 )
 
 // ---------- Quiz ----------
@@ -214,4 +234,66 @@ data class CertificateResponse(
     val certNumber: String,
     val issuedAt: String,
     val userName: String? = null
+)
+
+// ---------- Lesson quiz (checkpoint per lesson, separate from the course-final quiz) ----------
+data class LessonQuizResponse(
+    val lessonId: Long,
+    val title: String,
+    val passScore: Int,
+    val questions: List<QuizQuestionResponse>,
+    val alreadyPassed: Boolean = false
+)
+
+data class SubmitLessonQuizRequest(
+    val answers: Map<Int, Int> = emptyMap()
+)
+
+data class LessonQuizResultResponse(
+    val lessonId: Long,
+    val score: Int,
+    val passed: Boolean,
+    val passScore: Int
+)
+
+data class AdminUpsertLessonQuizRequest(
+    val title: String = "آزمونِ این درس",
+    val passScore: Int = 60,
+    val questions: List<QuizQuestionResponse> = emptyList()
+)
+
+/** wrapper به‌جای JSONِ نال‌بلِ خام (سازگار با safeApiCallRaw<reified T> کلاینت). */
+data class AdminLessonQuizResponse(
+    val found: Boolean,
+    val quiz: LessonQuizResponse? = null
+)
+
+// ---------- Project-based assessment ----------
+data class ProjectSubmissionResponse(
+    val id: Long,
+    val courseId: Long,
+    val userId: Long,
+    val fileUrl: String,
+    val note: String?,
+    val status: String,
+    val mentorFeedback: String?,
+    val submittedAt: String,
+    val reviewedAt: String? = null,
+    val userName: String? = null
+)
+
+data class SubmitProjectRequest(
+    val fileUrl: String,
+    val note: String? = null
+)
+
+data class AdminReviewProjectRequest(
+    val status: String,
+    val mentorFeedback: String? = null
+)
+
+/** wrapper به‌جای JSONِ نال‌بلِ خام (سازگار با safeApiCallRaw<reified T> کلاینت). */
+data class MyProjectResponse(
+    val found: Boolean,
+    val submission: ProjectSubmissionResponse? = null
 )

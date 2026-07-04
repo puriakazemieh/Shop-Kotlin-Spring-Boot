@@ -4,9 +4,11 @@ import com.kazemieh.shop.academy.api.dto.*
 import com.kazemieh.shop.academy.persistence.CertificateRepository
 import com.kazemieh.shop.academy.persistence.CourseRepository
 import com.kazemieh.shop.academy.persistence.EnrollmentRepository
+import com.kazemieh.shop.academy.persistence.ProjectSubmissionRepository
 import com.kazemieh.shop.academy.persistence.QuizAttemptRepository
 import com.kazemieh.shop.academy.persistence.QuizRepository
 import com.kazemieh.shop.academy.persistence.entity.CertificateEntity
+import com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus
 import com.kazemieh.shop.academy.persistence.entity.QuizAttemptEntity
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.ForbiddenException
@@ -25,7 +27,8 @@ class QuizService(
     private val quizAttemptRepository: QuizAttemptRepository,
     private val certificateRepository: CertificateRepository,
     private val courseRepository: CourseRepository,
-    private val enrollmentRepository: EnrollmentRepository
+    private val enrollmentRepository: EnrollmentRepository,
+    private val projectSubmissionRepository: ProjectSubmissionRepository
 ) {
 
     /** آزمونِ عمومی — بدونِ افشایِ پاسخِ درست (correct = null). */
@@ -65,16 +68,29 @@ class QuizService(
         val passed = score >= quiz.passScore
         quizAttemptRepository.save(QuizAttemptEntity(userId = userId, courseId = courseId, score = score, passed = passed))
 
-        var certNumber: String? = null
-        if (passed) {
-            val existing = certificateRepository.findByUserIdAndCourseId(userId, courseId)
-            certNumber = existing?.certNumber ?: run {
-                val number = generateCertNumber(courseId, userId)
-                certificateRepository.save(CertificateEntity(userId = userId, courseId = courseId, certNumber = number))
-                number
-            }
-        }
+        val certNumber = if (passed) tryIssueCertificateIfEligible(userId, courseId) else null
         return QuizResultResponse(courseId, score, passed, quiz.passScore, certNumber)
+    }
+
+    /**
+     * صدورِ گواهی اگر کاربر واجدِ شرایط باشد: آزمون را قبول شده باشد و — اگر دوره پروژه‌محور باشد —
+     * پروژه‌اش هم تأییدشده باشد. idempotent؛ هم از submit() و هم پس از تأییدِ ادمینِ پروژه صدا زده می‌شود.
+     */
+    @Transactional
+    fun tryIssueCertificateIfEligible(userId: Long, courseId: Long): String? {
+        if (!quizAttemptRepository.existsByUserIdAndCourseIdAndPassedTrue(userId, courseId)) return null
+        val course = courseRepository.findById(courseId).orElse(null) ?: return null
+        if (course.requiresProjectSubmission &&
+            !projectSubmissionRepository.existsByCourseIdAndUserIdAndStatus(courseId, userId, ProjectSubmissionStatus.APPROVED)
+        ) {
+            return null
+        }
+        val existing = certificateRepository.findByUserIdAndCourseId(userId, courseId)
+        return existing?.certNumber ?: run {
+            val number = generateCertNumber(courseId, userId)
+            certificateRepository.save(CertificateEntity(userId = userId, courseId = courseId, certNumber = number))
+            number
+        }
     }
 
     @Transactional(readOnly = true)
