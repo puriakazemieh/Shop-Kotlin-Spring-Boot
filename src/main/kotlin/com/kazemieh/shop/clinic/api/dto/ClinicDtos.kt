@@ -62,10 +62,13 @@ data class AppointmentResponse(
     val status: AppointmentStatus,
     val dayLabel: String,
     val timeLabel: String,
+    /** برای حالتِ ONLINE: لینکِ اتاقِ تماس. برای PHONE: همین فیلد شماره‌تماس را نگه می‌دارد. */
     val videoRoomUrl: String?,
-    /** آیا کاربر می‌تواند واردِ جلسه شود (تأییدشده و لینک آماده). */
+    /** آیا کاربر می‌تواند واردِ جلسه شود (تأییدشده و لینک/شماره آماده). */
     val canJoin: Boolean,
-    val notes: String?
+    val notes: String?,
+    /** نحوه‌ی برگزاریِ این جلسه (ONLINE/IN_PERSON/PHONE) — برای تطبیقِ برچسبِ UI. */
+    val mode: String = "ONLINE"
 )
 
 // ---------- Admin ----------
@@ -110,6 +113,7 @@ data class AdminGenerateSlotsRequest(
     val slotMinutes: Int? = null
 )
 
+/** برای حالتِ ONLINE این فیلد لینکِ اتاقِ تماس است؛ برای PHONE همین فیلد شماره‌تماس را نگه می‌دارد. */
 data class AdminConfirmAppointmentRequest(
     val videoRoomUrl: String
 )
@@ -143,7 +147,9 @@ data class AdminAppointmentResponse(
     val dayLabel: String,
     val timeLabel: String,
     val videoRoomUrl: String?,
-    val notes: String?
+    val notes: String?,
+    /** نحوه‌ی برگزاریِ این جلسه (ONLINE/IN_PERSON/PHONE) — برای تطبیقِ برچسبِ فرمِ تأیید. */
+    val mode: String = "ONLINE"
 )
 
 // ---------- پرونده‌ی مراجع + CRMِ سبک (فقط ادمین/مشاور) ----------

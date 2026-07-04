@@ -148,7 +148,8 @@ class AdminClinicService(
                 dayLabel = a.slot.startTime.format(dayFmt),
                 timeLabel = "${a.slot.startTime.format(timeFmt)}–${a.slot.endTime.format(timeFmt)}",
                 videoRoomUrl = a.videoRoomUrl,
-                notes = a.notes
+                notes = a.notes,
+                mode = a.therapist.mode.name
             )
         }
 

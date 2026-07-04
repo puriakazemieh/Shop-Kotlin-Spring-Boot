@@ -147,7 +147,8 @@ class ClinicService(
         timeLabel = "${slot.startTime.format(TIME_FMT)}–${slot.endTime.format(TIME_FMT)}",
         videoRoomUrl = videoRoomUrl,
         canJoin = status == AppointmentStatus.CONFIRMED && !videoRoomUrl.isNullOrBlank(),
-        notes = notes
+        notes = notes,
+        mode = therapist.mode.name
     )
 
     companion object {
