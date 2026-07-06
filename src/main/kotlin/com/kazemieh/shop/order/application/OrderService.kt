@@ -42,6 +42,7 @@ class OrderService(
     private val clinicAccessService: com.kazemieh.shop.clinic.application.ClinicAccessService,
     private val psychTestAccessService: com.kazemieh.shop.psychtest.application.PsychTestAccessService,
     private val referralService: com.kazemieh.shop.identity.referral.ReferralService,
+    private val membershipService: com.kazemieh.shop.identity.membership.MembershipService,
 ) {
 
     @Transactional(readOnly = true)
@@ -116,6 +117,11 @@ class OrderService(
 
             val effectivePrice = v.discountedPrice ?: v.price
             subtotal = subtotal.add(effectivePrice.multiply(qty.toBigDecimal()))
+        }
+
+        val membershipDiscountPercent = membershipService.getActiveDiscountPercent(userId)
+        if (membershipDiscountPercent > BigDecimal.ZERO) {
+            subtotal = subtotal.subtract(subtotal.multiply(membershipDiscountPercent)).setScale(2, java.math.RoundingMode.HALF_UP)
         }
 
         val shipping = BigDecimal.ZERO
