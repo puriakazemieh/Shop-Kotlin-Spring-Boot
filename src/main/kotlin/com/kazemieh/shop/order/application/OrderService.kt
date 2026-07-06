@@ -2,6 +2,8 @@ package com.kazemieh.shop.order.application
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.kazemieh.shop.cart.api.dto.AddCartItemRequest
+import com.kazemieh.shop.cart.application.CartService
 import com.kazemieh.shop.cart.persistence.CartRepository
 import com.kazemieh.shop.catalog.persistence.InventoryRepository
 import com.kazemieh.shop.catalog.persistence.ProductVariantRepository
@@ -12,12 +14,14 @@ import com.kazemieh.shop.order.api.dto.AdminUpdateShippingRequest
 import com.kazemieh.shop.order.api.dto.CreateOrderRequest
 import com.kazemieh.shop.order.api.dto.OrderDetailResponse
 import com.kazemieh.shop.order.api.dto.OrderTrackingResponse
+import com.kazemieh.shop.order.api.dto.ReorderResponse
 import com.kazemieh.shop.order.api.mapper.OrderMapper
 import com.kazemieh.shop.order.application.exception.*
 import com.kazemieh.shop.order.persistence.OrderRepository
 import com.kazemieh.shop.order.persistence.entity.OrderEntity
 import com.kazemieh.shop.order.persistence.entity.OrderItemEntity
 import com.kazemieh.shop.order.persistence.entity.OrderStatus
+import com.kazemieh.shop.shared.error.ApiException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -31,6 +35,7 @@ class OrderService(
     private val productVariantRepository: ProductVariantRepository,
     private val inventoryRepository: InventoryRepository,
     private val cartRepository: CartRepository,
+    private val cartService: CartService,
     private val objectMapper: ObjectMapper,
     private val walletService: com.kazemieh.shop.wallet.application.WalletService,
     private val courseAccessService: com.kazemieh.shop.academy.application.CourseAccessService,
@@ -57,6 +62,27 @@ class OrderService(
     fun trackOrder(orderId: Long): OrderTrackingResponse {
         val order = orderRepository.findById(orderId).orElseThrow { OrderNotFoundException(orderId) }
         return OrderMapper.toOrderTrackingResponse(order)
+    }
+
+    /** سفارشِ مجددِ یک‌کلیکی: آیتم‌هایِ یک سفارشِ قبلی را به سبدِ فعلی اضافه می‌کند؛ آیتم‌هایِ
+     * غیرفعال/ناموجود به‌آرامی رد می‌شوند و در پاسخ فهرست می‌شوند، بدونِ متوقف‌کردنِ کلِ عملیات. */
+    @Transactional
+    fun reorder(userId: Long, orderId: Long): ReorderResponse {
+        val order = orderRepository.findByIdAndUserId(orderId, userId) ?: throw OrderNotFoundException(orderId)
+
+        val skipped = mutableListOf<String>()
+        var cartResponse = com.kazemieh.shop.cart.api.dto.CartResponse(
+            items = emptyList(), savedForLater = emptyList(),
+            subtotal = BigDecimal.ZERO, discountAmount = BigDecimal.ZERO, total = BigDecimal.ZERO, totalQty = 0
+        )
+        for (item in order.items) {
+            try {
+                cartResponse = cartService.addItem(userId, AddCartItemRequest(variantId = item.variantId, qty = item.qty))
+            } catch (e: ApiException) {
+                skipped.add(item.titleSnapshot)
+            }
+        }
+        return ReorderResponse(cart = cartResponse, skippedTitles = skipped)
     }
 
     @Transactional
@@ -145,7 +171,9 @@ class OrderService(
             totalPrice = total,
             walletPaidAmount = walletPaid,
             gatewayPaidAmount = gatewayPaid,
-            addressSnapshot = addressSnapshot
+            addressSnapshot = addressSnapshot,
+            isGift = req.isGift,
+            giftMessage = req.giftMessage?.takeIf { req.isGift }
         )
 
         for ((variantId, qty) in normalizedItems) {

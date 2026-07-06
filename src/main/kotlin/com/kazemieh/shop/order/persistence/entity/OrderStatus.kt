@@ -79,6 +79,12 @@ class OrderEntity(
 
     @Column(name = "delivered_at")
     var deliveredAt: OffsetDateTime? = null,
+
+    @Column(name = "is_gift", nullable = false)
+    var isGift: Boolean = false,
+
+    @Column(name = "gift_message", columnDefinition = "text")
+    var giftMessage: String? = null,
 ) {
     /** یک رکوردِ تاریخچه برای وضعیتِ داده‌شده اضافه می‌کند. */
     fun recordStatus(newStatus: OrderStatus) {

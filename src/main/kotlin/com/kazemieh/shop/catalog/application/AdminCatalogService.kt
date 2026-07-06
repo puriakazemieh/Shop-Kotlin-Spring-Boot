@@ -30,7 +30,8 @@ class AdminCatalogService(
     private val recentlyViewedRepository: RecentlyViewedRepository,
     private val cartItemRepository: CartItemRepository,
     private val orderItemRepository: OrderItemRepository,
-    private val stockNotificationService: StockNotificationService
+    private val stockNotificationService: StockNotificationService,
+    private val priceAlertService: PriceAlertService
 ) {
 
     // ---------- Categories ----------
@@ -478,6 +479,8 @@ class AdminCatalogService(
             newOptionValues.forEach { v.addOptionValue(it) }
         }
 
+        val previousEffectivePrice = v.discountedPrice ?: v.price
+
         req.sku?.let {
             val newSku = it.trim()
             if (newSku != v.sku && variantRepository.existsBySku(newSku)) throw SkuExistsException(newSku)
@@ -487,6 +490,11 @@ class AdminCatalogService(
         req.discountedPrice?.let { v.discountedPrice = it }
         req.compareAtPrice?.let { v.compareAtPrice = it }
         req.isActive?.let { v.isActive = it }
+
+        val newEffectivePrice = v.discountedPrice ?: v.price
+        if (newEffectivePrice < previousEffectivePrice) {
+            priceAlertService.onVariantPriceChanged(variantId, newEffectivePrice)
+        }
 
         val inv = inventoryRepository.findById(variantId).orElse(null)
 

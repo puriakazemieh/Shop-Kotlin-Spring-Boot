@@ -41,7 +41,9 @@ object OrderMapper {
                     title = it.titleSnapshot,
                     options = options
                 )
-            }
+            },
+            isGift = o.isGift,
+            giftMessage = o.giftMessage
         )
     }
 

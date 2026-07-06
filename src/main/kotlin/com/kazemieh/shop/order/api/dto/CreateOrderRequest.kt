@@ -10,5 +10,8 @@ data class CreateOrderRequest(
     @field:Valid
     val items: List<CreateOrderItemRequest>,
 
-    val useWallet: Boolean = false
+    val useWallet: Boolean = false,
+
+    val isGift: Boolean = false,
+    val giftMessage: String? = null,
 )

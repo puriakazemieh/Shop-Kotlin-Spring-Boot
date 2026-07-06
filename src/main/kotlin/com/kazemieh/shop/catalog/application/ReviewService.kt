@@ -95,7 +95,8 @@ class ReviewService(
             rating = if (parent == null) request.rating else null, // Rating only for top-level reviews
             comment = request.comment,
             parent = parent,
-            isNew = true
+            isNew = true,
+            images = request.images.toMutableList()
         )
 
         return reviewRepository.save(review).toResponse()
@@ -112,6 +113,7 @@ class ReviewService(
 
         review.rating = if (review.parent == null) request.rating else null
         review.comment = request.comment
+        review.images = request.images.toMutableList()
 
         return reviewRepository.save(review).toResponse()
     }
@@ -138,7 +140,8 @@ class ReviewService(
             replies = this.replies.map { it.toResponse(helpfulIds) },
             helpfulCount = this.helpfulCount,
             helpfulByMe = helpfulIds.contains(this.id),
-            createdAt = this.createdAt ?: OffsetDateTime.now()
+            createdAt = this.createdAt ?: OffsetDateTime.now(),
+            images = this.images
         )
     }
 

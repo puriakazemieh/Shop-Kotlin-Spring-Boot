@@ -23,6 +23,13 @@ class CatalogService(
     private val productReviewRepository: ProductReviewRepository,
 ) {
 
+    /** محصولاتی که در سفارش‌هایِ گذشته اغلب با این محصول با هم خریده شده‌اند (الگوریتمیِ هم‌رخدادی). */
+    @Transactional(readOnly = true)
+    fun getFrequentlyBoughtTogether(productId: Long, currentUserId: Long? = null, limit: Int = 6): List<ProductSummaryResponse> {
+        val ids = productRepository.findFrequentlyBoughtTogetherIds(productId, limit)
+        return summarizeProducts(ids, currentUserId)
+    }
+
     /** خلاصه‌ی چند محصولِ دلخواه با شناسه (بدونِ صفحه‌بندی) — برای باندل/مقایسه و مشابه. */
     @Transactional(readOnly = true)
     fun summarizeProducts(productIds: List<Long>, currentUserId: Long? = null): List<ProductSummaryResponse> {
