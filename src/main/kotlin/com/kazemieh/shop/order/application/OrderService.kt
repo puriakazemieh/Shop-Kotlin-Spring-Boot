@@ -41,6 +41,7 @@ class OrderService(
     private val courseAccessService: com.kazemieh.shop.academy.application.CourseAccessService,
     private val clinicAccessService: com.kazemieh.shop.clinic.application.ClinicAccessService,
     private val psychTestAccessService: com.kazemieh.shop.psychtest.application.PsychTestAccessService,
+    private val referralService: com.kazemieh.shop.identity.referral.ReferralService,
 ) {
 
     @Transactional(readOnly = true)
@@ -301,6 +302,7 @@ class OrderService(
                 clinicAccessService.grantSessionCredits(uid, productQty)
                 psychTestAccessService.grantTestAccess(uid, productQty)
             }
+            referralService.rewardReferrerIfEligible(o)
         }
 
         o.status = newStatus

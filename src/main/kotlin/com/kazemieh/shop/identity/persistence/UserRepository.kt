@@ -13,4 +13,6 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
     fun existsByEmail(email: String): Boolean
     fun existsByPhone(phone: String): Boolean
     fun findByResetPasswordToken(token: String): Optional<UserEntity>
+    fun findByReferralCode(referralCode: String): UserEntity?
+    fun countByReferredByUserId(referrerId: Long): Long
 }

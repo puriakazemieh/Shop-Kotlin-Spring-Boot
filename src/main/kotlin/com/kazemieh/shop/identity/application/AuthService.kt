@@ -45,11 +45,13 @@ class AuthService(
         }
 
         val hash = passwordEncoder.encode(req.password) ?: throw InvalidCredentialsException("Password is required")
+        val referrer = req.referralCode?.let { userRepository.findByReferralCode(it) }
         val saved = userRepository.save(
             UserEntity(
                 email = req.email,
                 phone = req.mobile,
-                passwordHash = hash
+                passwordHash = hash,
+                referredByUserId = referrer?.id
             )
         )
 
