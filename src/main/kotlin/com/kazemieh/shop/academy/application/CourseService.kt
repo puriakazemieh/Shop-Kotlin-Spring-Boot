@@ -69,7 +69,21 @@ class CourseService(
         val total = sections.sumOf { it.lessons.size }
         val completed = progressByLesson.values.count { it.completed }
         val onWaitlist = userId != null && waitlistRepository.existsByCourseIdAndUserIdAndNotifiedFalse(course.id, userId)
-        return course.toDetail(enrolled, sections, percent(completed, total), onWaitlist = onWaitlist)
+        val existingEnrollment = userId?.let { enrollmentRepository.findByUserIdAndCourseId(it, course.id) }
+        return course.toDetail(
+            enrolled, sections, percent(completed, total),
+            onWaitlist = onWaitlist, hasUnseenUpdate = existingEnrollment?.hasUnseenUpdate == true
+        )
+    }
+
+    /** وقتی کاربر صفحه‌ی دوره را باز می‌کند، پرچمِ «به‌روزرسانیِ دیده‌نشده» پاک می‌شود. */
+    @Transactional
+    fun clearUpdateFlag(userId: Long, courseId: Long) {
+        val enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId) ?: return
+        if (enrollment.hasUnseenUpdate) {
+            enrollment.hasUnseenUpdate = false
+            enrollmentRepository.save(enrollment)
+        }
     }
 
     @Transactional(readOnly = true)
@@ -174,7 +188,9 @@ class CourseService(
             isOnline = format.isOnline,
             level = level?.name,
             jobMarketBadge = jobMarketBadge,
-            freeUpdateBadge = freeUpdateBadge
+            freeUpdateBadge = freeUpdateBadge,
+            hasUnseenUpdate = userId != null &&
+                enrollmentRepository.findByUserIdAndCourseId(userId, id)?.hasUnseenUpdate == true
         )
     }
 
@@ -187,7 +203,8 @@ internal fun CourseEntity.toDetail(
     enrolled: Boolean,
     sections: List<SectionResponse>,
     progressPercent: Int,
-    onWaitlist: Boolean = false
+    onWaitlist: Boolean = false,
+    hasUnseenUpdate: Boolean = false
 ): CourseDetailResponse = CourseDetailResponse(
     id = id,
     title = title,
@@ -215,5 +232,9 @@ internal fun CourseEntity.toDetail(
     isFull = !format.isOnline && capacity != null && seatsTaken >= capacity!!,
     onWaitlist = onWaitlist,
     productId = productId,
-    requiresProjectSubmission = requiresProjectSubmission
+    requiresProjectSubmission = requiresProjectSubmission,
+    instructorDiscountCode = instructorDiscountCode,
+    totalDurationSeconds = sections.sumOf { s -> s.lessons.sumOf { it.durationSeconds } },
+    resourceFileCount = sections.sumOf { s -> s.lessons.sumOf { it.resourceFiles.size } },
+    hasUnseenUpdate = hasUnseenUpdate
 )

@@ -93,6 +93,20 @@ class QuizService(
         }
     }
 
+    /** استعلامِ عمومیِ صحتِ گواهی با شماره‌ی سریال — بدونِ نیازِ لاگین. */
+    @Transactional(readOnly = true)
+    fun verifyCertificate(certNumber: String): CertificateVerifyResponse {
+        val cert = certificateRepository.findByCertNumber(certNumber)
+            ?: return CertificateVerifyResponse(valid = false)
+        val course = courseRepository.findById(cert.courseId).orElse(null)
+        return CertificateVerifyResponse(
+            valid = true,
+            courseTitle = course?.title,
+            certNumber = cert.certNumber,
+            issuedAt = cert.issuedAt.toString()
+        )
+    }
+
     @Transactional(readOnly = true)
     fun myCertificates(userId: Long): List<CertificateResponse> =
         certificateRepository.findAllByUserIdOrderByIssuedAtDesc(userId).map { cert ->

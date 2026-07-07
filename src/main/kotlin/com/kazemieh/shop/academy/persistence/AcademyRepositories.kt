@@ -39,6 +39,7 @@ interface EnrollmentRepository : JpaRepository<EnrollmentEntity, Long> {
     fun findByUserIdAndCourseId(userId: Long, courseId: Long): EnrollmentEntity?
     fun existsByUserIdAndCourseId(userId: Long, courseId: Long): Boolean
     fun findAllByUserIdOrderByEnrolledAtDesc(userId: Long): List<EnrollmentEntity>
+    fun findAllByCourseId(courseId: Long): List<EnrollmentEntity>
 }
 
 @Repository
@@ -63,6 +64,7 @@ interface QuizAttemptRepository : JpaRepository<QuizAttemptEntity, Long> {
 interface CertificateRepository : JpaRepository<CertificateEntity, Long> {
     fun findByUserIdAndCourseId(userId: Long, courseId: Long): CertificateEntity?
     fun findAllByUserIdOrderByIssuedAtDesc(userId: Long): List<CertificateEntity>
+    fun findByCertNumber(certNumber: String): CertificateEntity?
 }
 
 @Repository
@@ -81,4 +83,8 @@ interface ProjectSubmissionRepository : JpaRepository<ProjectSubmissionEntity, L
     fun findByCourseIdAndUserId(courseId: Long, userId: Long): ProjectSubmissionEntity?
     fun findAllByCourseIdOrderBySubmittedAtDesc(courseId: Long): List<ProjectSubmissionEntity>
     fun existsByCourseIdAndUserIdAndStatus(courseId: Long, userId: Long, status: com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus): Boolean
+    fun findAllByCourseIdAndStatusOrderBySubmittedAtDesc(
+        courseId: Long,
+        status: com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus
+    ): List<ProjectSubmissionEntity>
 }

@@ -18,7 +18,8 @@ data class CourseSummaryResponse(
     val isOnline: Boolean = true,
     val level: String? = null,
     val jobMarketBadge: Boolean = false,
-    val freeUpdateBadge: Boolean = false
+    val freeUpdateBadge: Boolean = false,
+    val hasUnseenUpdate: Boolean = false
 )
 
 data class VideoVariantResponse(
@@ -86,7 +87,13 @@ data class CourseDetailResponse(
     /** لینکِ محصولِ فروشگاه (اگر باشد) — برای نمایشِ بخشِ نظراتِ همان محصول با برچسبِ «نظرِ شاگردان». */
     val productId: Long? = null,
     /** آیا صدورِ گواهی نیازمندِ تأییدِ پروژه‌ی پایانی هم هست (کنارِ قبولیِ آزمون). */
-    val requiresProjectSubmission: Boolean = false
+    val requiresProjectSubmission: Boolean = false,
+    /** کدِ تخفیفِ اختصاصیِ مدرس (اگر ادمین تنظیم کرده باشد). */
+    val instructorDiscountCode: String? = null,
+    /** جعبه‌ی «این دوره شامل چیست» — مجموعِ مدتِ ویدیوها و تعدادِ فایل‌های ضمیمه. */
+    val totalDurationSeconds: Int = 0,
+    val resourceFileCount: Int = 0,
+    val hasUnseenUpdate: Boolean = false
 )
 
 // ---------- Progress ----------
@@ -163,7 +170,8 @@ data class AdminUpdateCourseRequest(
     val freeUpdateBadge: Boolean? = null,
     val instructorBio: String? = null,
     val instructorSkills: String? = null,
-    val requiresProjectSubmission: Boolean? = null
+    val requiresProjectSubmission: Boolean? = null,
+    val instructorDiscountCode: String? = null
 )
 
 data class AdminCreateSectionRequest(
@@ -236,6 +244,13 @@ data class CertificateResponse(
     val userName: String? = null
 )
 
+data class CertificateVerifyResponse(
+    val valid: Boolean,
+    val courseTitle: String? = null,
+    val certNumber: String? = null,
+    val issuedAt: String? = null
+)
+
 // ---------- Lesson quiz (checkpoint per lesson, separate from the course-final quiz) ----------
 data class LessonQuizResponse(
     val lessonId: Long,
@@ -280,6 +295,18 @@ data class ProjectSubmissionResponse(
     val submittedAt: String,
     val reviewedAt: String? = null,
     val userName: String? = null
+)
+
+data class PeerCommentResponse(
+    val id: Long,
+    val userId: Long,
+    val userName: String,
+    val comment: String,
+    val createdAt: String?
+)
+
+data class CreatePeerCommentRequest(
+    val comment: String
 )
 
 data class SubmitProjectRequest(

@@ -1,8 +1,10 @@
 package com.kazemieh.shop.academy.api
 
+import com.kazemieh.shop.academy.api.dto.CertificateVerifyResponse
 import com.kazemieh.shop.academy.api.dto.CourseDetailResponse
 import com.kazemieh.shop.academy.api.dto.CourseSummaryResponse
 import com.kazemieh.shop.academy.application.CourseService
+import com.kazemieh.shop.academy.application.QuizService
 import com.kazemieh.shop.shared.security.UserPrincipal
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
@@ -11,7 +13,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/courses")
 class CourseController(
-    private val courseService: CourseService
+    private val courseService: CourseService,
+    private val quizService: QuizService
 ) {
 
     @GetMapping
@@ -23,4 +26,9 @@ class CourseController(
         @AuthenticationPrincipal principal: UserPrincipal?,
         @PathVariable slug: String
     ): CourseDetailResponse = courseService.getCourseDetail(slug, principal?.id)
+
+    /** صفحه‌ی عمومیِ تاییدِ گواهی — بدونِ نیازِ لاگین، با شماره‌ی سریال. */
+    @GetMapping("/certificates/verify/{certNumber}")
+    fun verifyCertificate(@PathVariable certNumber: String): CertificateVerifyResponse =
+        quizService.verifyCertificate(certNumber)
 }

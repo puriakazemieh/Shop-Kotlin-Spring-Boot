@@ -103,6 +103,10 @@ class CourseEntity(
     @Column(name = "requires_project_submission", nullable = false)
     var requiresProjectSubmission: Boolean = false,
 
+    /** کدِ تخفیفِ اختصاصیِ مدرس (باید جداگانه در سیستمِ تخفیف هم ساخته شود تا در چک‌اوت قابلِ‌اعمال باشد). */
+    @Column(name = "instructor_discount_code", length = 40)
+    var instructorDiscountCode: String? = null,
+
     @OneToMany(mappedBy = "course", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     var sections: MutableList<CourseSectionEntity> = mutableListOf(),

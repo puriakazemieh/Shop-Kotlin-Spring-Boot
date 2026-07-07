@@ -40,8 +40,15 @@ class AdminCourseService(
     private val lessonQuizRepository: LessonQuizRepository,
     private val projectSubmissionRepository: ProjectSubmissionRepository,
     private val userRepository: UserRepository,
-    private val quizService: QuizService
+    private val quizService: QuizService,
+    private val enrollmentRepository: com.kazemieh.shop.academy.persistence.EnrollmentRepository
 ) {
+
+    private fun markEnrollmentsUpdated(courseId: Long) {
+        val enrollments = enrollmentRepository.findAllByCourseId(courseId)
+        enrollments.forEach { it.hasUnseenUpdate = true }
+        enrollmentRepository.saveAll(enrollments)
+    }
 
     @Transactional(readOnly = true)
     fun list(): List<CourseSummaryResponse> =
@@ -132,6 +139,7 @@ class AdminCourseService(
         req.instructorBio?.let { c.instructorBio = it }
         req.instructorSkills?.let { c.instructorSkills = it }
         req.requiresProjectSubmission?.let { c.requiresProjectSubmission = it }
+        req.instructorDiscountCode?.let { c.instructorDiscountCode = it.ifBlank { null } }
         courseRepository.save(c)
     }
 
@@ -183,6 +191,7 @@ class AdminCourseService(
         val section = CourseSectionEntity(course = c, title = req.title.trim(), sortOrder = req.sortOrder)
         c.sections.add(section)
         courseRepository.save(c)
+        markEnrollmentsUpdated(courseId)
         return section.id
     }
 
@@ -202,6 +211,7 @@ class AdminCourseService(
         )
         section.lessons.add(lesson)
         courseRepository.save(c)
+        markEnrollmentsUpdated(courseId)
         return lesson.id
     }
 

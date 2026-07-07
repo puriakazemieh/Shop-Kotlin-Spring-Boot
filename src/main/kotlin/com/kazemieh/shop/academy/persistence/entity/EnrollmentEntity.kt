@@ -24,5 +24,9 @@ class EnrollmentEntity(
 
     @CreationTimestamp
     @Column(name = "enrolled_at", nullable = false, updatable = false)
-    var enrolledAt: OffsetDateTime? = null
+    var enrolledAt: OffsetDateTime? = null,
+
+    /** وقتی مدرس درسِ/بخشِ جدیدی به این دوره اضافه می‌کند، true می‌شود؛ با بازکردنِ دوره پاک می‌شود. */
+    @Column(name = "has_unseen_update", nullable = false)
+    var hasUnseenUpdate: Boolean = false
 )

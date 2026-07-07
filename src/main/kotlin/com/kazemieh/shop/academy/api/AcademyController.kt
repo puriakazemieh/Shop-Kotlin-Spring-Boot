@@ -1,6 +1,8 @@
 package com.kazemieh.shop.academy.api
 
 import com.kazemieh.shop.academy.api.dto.CertificateResponse
+import com.kazemieh.shop.academy.api.dto.CreatePeerCommentRequest
+import com.kazemieh.shop.academy.api.dto.PeerCommentResponse
 import com.kazemieh.shop.academy.api.dto.CourseDetailResponse
 import com.kazemieh.shop.academy.api.dto.CourseSummaryResponse
 import com.kazemieh.shop.academy.api.dto.LessonQuizResponse
@@ -46,6 +48,15 @@ class AcademyController(
         @AuthenticationPrincipal principal: UserPrincipal,
         @PathVariable courseId: Long
     ): CourseDetailResponse = courseService.enroll(principal.id, courseId)
+
+    /** با بازکردنِ صفحه‌ی دوره صدا زده می‌شود تا نشانِ «به‌روزرسانیِ جدید» پاک شود. */
+    @PostMapping("/courses/{courseId}/mark-update-seen")
+    fun markUpdateSeen(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable courseId: Long
+    ) {
+        courseService.clearUpdateFlag(principal.id, courseId)
+    }
 
     @GetMapping("/courses/{courseId}/progress")
     fun progress(
@@ -128,4 +139,22 @@ class AcademyController(
         val submission = projectSubmissionService.getMine(principal.id, courseId)
         return MyProjectResponse(found = submission != null, submission = submission)
     }
+
+    /** نقدِ همتایان: فهرستِ پروژه‌هایِ تاییدشده‌ی هم‌دوره‌ای‌ها برایِ الهام/یادگیری. */
+    @GetMapping("/courses/{courseId}/project/peers")
+    fun peerSubmissions(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable courseId: Long
+    ): List<ProjectSubmissionResponse> = projectSubmissionService.listApprovedForPeerReview(principal.id, courseId)
+
+    @GetMapping("/project/{submissionId}/comments")
+    fun peerComments(@PathVariable submissionId: Long): List<PeerCommentResponse> =
+        projectSubmissionService.listPeerComments(submissionId)
+
+    @PostMapping("/project/{submissionId}/comments")
+    fun addPeerComment(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable submissionId: Long,
+        @RequestBody request: CreatePeerCommentRequest
+    ): PeerCommentResponse = projectSubmissionService.addPeerComment(principal.id, submissionId, request.comment)
 }
