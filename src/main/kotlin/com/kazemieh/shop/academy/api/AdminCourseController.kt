@@ -17,6 +17,11 @@ class AdminCourseController(
     private val fileStorageService: FileStorageService
 ) {
 
+    // ---- آپلودِ عمومیِ رسانه (تصویرِ کاور دوره یا ویدیویِ درس) — بازگرداندنِ فقط URL، بدونِ نیازِ courseId/lessonId ----
+    @PostMapping("/media/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadMedia(@RequestParam("file") file: MultipartFile): Map<String, String> =
+        mapOf("url" to fileStorageService.saveFile(file))
+
     @GetMapping
     fun list(): List<CourseSummaryResponse> = adminCourseService.list()
 
