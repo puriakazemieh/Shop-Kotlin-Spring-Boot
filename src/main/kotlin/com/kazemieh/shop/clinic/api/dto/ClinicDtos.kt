@@ -27,7 +27,10 @@ data class SlotResponse(
     val endTime: OffsetDateTime,
     /** برچسب‌های آماده‌ی نمایش (سمتِ سرور محاسبه می‌شوند تا کلاینت درگیرِ پارس تاریخ نشود). */
     val dayLabel: String,
-    val timeLabel: String
+    val timeLabel: String,
+    /** ظرفیتِ کل و باقی‌مانده — بیش‌تر از ۱ یعنی جلسه‌ی گروهی. */
+    val capacity: Int = 1,
+    val remainingCapacity: Int = 1
 )
 
 data class TherapistDetailResponse(
@@ -81,6 +84,7 @@ data class AdminCreateTherapistRequest(
     val sessionPrice: BigDecimal = BigDecimal.ZERO,
     val sessionDurationMinutes: Int = 45,
     val productId: Long? = null,
+    val messagingProductId: Long? = null,
     val isActive: Boolean = true,
     val mode: String = "ONLINE",
     val location: String? = null
@@ -95,12 +99,15 @@ data class AdminUpdateTherapistRequest(
     val sessionDurationMinutes: Int? = null,
     val isActive: Boolean? = null,
     val mode: String? = null,
-    val location: String? = null
+    val location: String? = null,
+    val messagingProductId: Long? = null
 )
 
 data class AdminAddSlotRequest(
     val startTime: OffsetDateTime,
-    val endTime: OffsetDateTime
+    val endTime: OffsetDateTime,
+    /** بیش‌تر از ۱ یعنی جلسه‌ی گروهی. */
+    val capacity: Int = 1
 )
 
 /**
@@ -110,7 +117,8 @@ data class AdminAddSlotRequest(
 data class AdminGenerateSlotsRequest(
     val windowStart: OffsetDateTime,
     val windowEnd: OffsetDateTime,
-    val slotMinutes: Int? = null
+    val slotMinutes: Int? = null,
+    val capacity: Int = 1
 )
 
 /** برای حالتِ ONLINE این فیلد لینکِ اتاقِ تماس است؛ برای PHONE همین فیلد شماره‌تماس را نگه می‌دارد. */
@@ -135,7 +143,9 @@ data class AdminSlotResponse(
     val id: Long,
     val startTime: OffsetDateTime,
     val endTime: OffsetDateTime,
-    val isBooked: Boolean
+    val isBooked: Boolean,
+    val capacity: Int = 1,
+    val bookedCount: Int = 0
 )
 
 data class AdminAppointmentResponse(
@@ -256,4 +266,99 @@ data class SessionReceiptResponse(
     val sessionDate: String,
     val sessionDurationMinutes: Int,
     val amountPaid: java.math.BigDecimal
+)
+
+// ---------- پیام‌رسانیِ امنِ بینِ‌جلسه‌ای (Phase Y) ----------
+data class SendMessageRequest(
+    val body: String
+)
+
+data class ClinicMessageResponse(
+    val id: Long,
+    val senderType: String,
+    val body: String,
+    val createdAt: String?
+)
+
+// ---------- تکلیف/تمرینِ بینِ‌جلسه‌ای (Phase Y) ----------
+data class AssignHomeworkRequest(
+    val title: String,
+    val description: String? = null,
+    val dueDate: OffsetDateTime? = null
+)
+
+data class HomeworkResponse(
+    val id: Long,
+    val therapistId: Long,
+    val therapistName: String,
+    val title: String,
+    val description: String?,
+    val status: String,
+    val dueDate: String?,
+    val completedAt: String?,
+    val createdAt: String?
+)
+
+// ---------- یادداشتِ روزانه (ژورنال) — Phase Y ----------
+data class JournalEntryRequest(
+    val content: String,
+    val sharedWithTherapistId: Long? = null
+)
+
+data class JournalEntryResponse(
+    val id: Long,
+    val content: String,
+    val sharedWithTherapistId: Long?,
+    val createdAt: String?
+)
+
+// ---------- پرسشنامه‌ی تطبیقِ درمانگر (Phase Y) ----------
+data class TherapistMatchQuestionResponse(
+    val id: Long,
+    val questionText: String,
+    val tag: String
+)
+
+data class AdminCreateMatchQuestionRequest(
+    val questionText: String,
+    val tag: String,
+    val displayOrder: Int = 0
+)
+
+data class SubmitTherapistMatchRequest(
+    val selectedTags: List<String>
+)
+
+data class TherapistMatchResultResponse(
+    val therapist: TherapistSummaryResponse,
+    val matchScore: Int
+)
+
+// ---------- پلنِ اشتراکِ پیام‌رسانیِ نامحدود (Phase Y) ----------
+data class MessagingPlanStatusResponse(
+    val therapistId: Long,
+    val active: Boolean,
+    val freeMessagesRemaining: Int
+)
+
+// ---------- بسته‌ی مشاوره‌ی سازمانی (Phase Y) ----------
+data class BuyClinicSeatsRequest(
+    val therapistId: Long,
+    val sessionCount: Int,
+    val count: Int
+)
+
+data class AssignClinicSeatRequest(
+    val therapistId: Long,
+    val email: String
+)
+
+data class ClinicSeatResponse(
+    val id: Long,
+    val organizationId: Long,
+    val therapistId: Long,
+    val sessionCount: Int,
+    val assignedUserId: Long?,
+    val assignedEmail: String?,
+    val assignedAt: String?
 )

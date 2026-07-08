@@ -2,6 +2,10 @@ package com.kazemieh.shop.clinic.api
 
 import com.kazemieh.shop.clinic.api.dto.*
 import com.kazemieh.shop.clinic.application.AdminClinicService
+import com.kazemieh.shop.clinic.application.ClinicHomeworkService
+import com.kazemieh.shop.clinic.application.ClinicMessageService
+import com.kazemieh.shop.clinic.application.JournalService
+import com.kazemieh.shop.clinic.application.TherapistMatchService
 import com.kazemieh.shop.shared.security.UserPrincipal
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -12,7 +16,11 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/admin/therapists")
 @PreAuthorize("hasRole('ADMIN')")
 class AdminClinicController(
-    private val adminClinicService: AdminClinicService
+    private val adminClinicService: AdminClinicService,
+    private val messageService: ClinicMessageService,
+    private val homeworkService: ClinicHomeworkService,
+    private val journalService: JournalService,
+    private val therapistMatchService: TherapistMatchService
 ) {
 
     @GetMapping
@@ -85,4 +93,45 @@ class AdminClinicController(
     @GetMapping("/{therapistId}/patients/{userId}")
     fun getPatientFile(@PathVariable therapistId: Long, @PathVariable userId: Long): PatientFileResponse =
         adminClinicService.getPatientFile(therapistId, userId)
+
+    // ---- پیام‌رسانیِ امنِ بینِ‌جلسه‌ای (به‌عنوانِ درمانگر) ----
+    @GetMapping("/{therapistId}/patients/{userId}/messages")
+    fun listMessages(@PathVariable therapistId: Long, @PathVariable userId: Long): List<ClinicMessageResponse> =
+        messageService.listThread(therapistId, userId)
+
+    @PostMapping("/{therapistId}/patients/{userId}/messages")
+    fun sendMessage(
+        @PathVariable therapistId: Long,
+        @PathVariable userId: Long,
+        @RequestBody request: SendMessageRequest
+    ): ClinicMessageResponse = messageService.sendAsTherapist(therapistId, userId, request.body)
+
+    // ---- تکلیف/تمرینِ بینِ‌جلسه‌ای ----
+    @GetMapping("/{therapistId}/patients/{userId}/homework")
+    fun listHomework(@PathVariable therapistId: Long, @PathVariable userId: Long): List<HomeworkResponse> =
+        homeworkService.listForPatient(therapistId, userId)
+
+    @PostMapping("/{therapistId}/patients/{userId}/homework")
+    fun assignHomework(
+        @PathVariable therapistId: Long,
+        @PathVariable userId: Long,
+        @RequestBody request: AssignHomeworkRequest
+    ): HomeworkResponse = homeworkService.assign(therapistId, userId, request)
+
+    // ---- یادداشت‌هایِ روزانه‌یِ به‌اشتراک‌گذاشته‌شده ----
+    @GetMapping("/{therapistId}/patients/{userId}/journal")
+    fun sharedJournal(@PathVariable therapistId: Long, @PathVariable userId: Long): List<JournalEntryResponse> =
+        journalService.listSharedWithTherapist(therapistId, userId)
+
+    // ---- مدیریتِ پرسشنامه‌ی تطبیقِ درمانگر ----
+    @GetMapping("/match-questions")
+    fun listMatchQuestions(): List<TherapistMatchQuestionResponse> = therapistMatchService.listQuestions()
+
+    @PostMapping("/match-questions")
+    fun createMatchQuestion(@RequestBody request: AdminCreateMatchQuestionRequest): TherapistMatchQuestionResponse =
+        therapistMatchService.createQuestion(request.questionText, request.tag, request.displayOrder)
+
+    @DeleteMapping("/match-questions/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deleteMatchQuestion(@PathVariable id: Long) = therapistMatchService.deleteQuestion(id)
 }

@@ -213,6 +213,7 @@ class OrderService(
             }
             courseAccessService.grantAccessForProducts(userId, productQty.keys)
             clinicAccessService.grantSessionCredits(userId, productQty)
+            clinicAccessService.grantMessagingPlans(userId, productQty)
             psychTestAccessService.grantTestAccess(userId, productQty)
         }
 
@@ -306,6 +307,7 @@ class OrderService(
                 }
                 courseAccessService.grantAccessForProducts(uid, productQty.keys)
                 clinicAccessService.grantSessionCredits(uid, productQty)
+                clinicAccessService.grantMessagingPlans(uid, productQty)
                 psychTestAccessService.grantTestAccess(uid, productQty)
             }
             referralService.rewardReferrerIfEligible(o)

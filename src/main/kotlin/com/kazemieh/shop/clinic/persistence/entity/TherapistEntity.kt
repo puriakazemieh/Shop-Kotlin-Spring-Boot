@@ -54,6 +54,10 @@ class TherapistEntity(
     @Column(name = "product_id")
     var productId: Long? = null,
 
+    /** لینکِ اختیاری به محصولِ فروشگاه که با خرید، پیام‌رسانیِ نامحدود را فعال می‌کند. */
+    @Column(name = "messaging_product_id")
+    var messagingProductId: Long? = null,
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
 

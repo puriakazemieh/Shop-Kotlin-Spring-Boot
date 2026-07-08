@@ -65,6 +65,7 @@ class AdminClinicService(
             mode = parseMode(req.mode),
             location = req.location,
             productId = req.productId,
+            messagingProductId = req.messagingProductId,
             isActive = req.isActive
         )
         return therapistRepository.save(therapist).id
@@ -82,6 +83,7 @@ class AdminClinicService(
         req.isActive?.let { t.isActive = it }
         req.mode?.let { t.mode = parseMode(it) }
         req.location?.let { t.location = it }
+        req.messagingProductId?.let { t.messagingProductId = it }
         therapistRepository.save(t)
     }
 
@@ -103,7 +105,8 @@ class AdminClinicService(
             therapist = t,
             startTime = req.startTime,
             endTime = req.endTime,
-            isBooked = false
+            isBooked = false,
+            capacity = req.capacity.coerceAtLeast(1)
         )
         return slotRepository.save(slot).id
     }
@@ -119,11 +122,12 @@ class AdminClinicService(
             throw BadRequestException("End must be after start", ErrorCodes.INVALID_INPUT)
         }
         val step = (req.slotMinutes ?: t.sessionDurationMinutes).coerceAtLeast(1).toLong()
+        val capacity = req.capacity.coerceAtLeast(1)
         var cursor = req.windowStart
         var created = 0
         while (cursor.plusMinutes(step) <= req.windowEnd) {
             val end = cursor.plusMinutes(step)
-            slotRepository.save(AvailabilitySlotEntity(therapist = t, startTime = cursor, endTime = end, isBooked = false))
+            slotRepository.save(AvailabilitySlotEntity(therapist = t, startTime = cursor, endTime = end, isBooked = false, capacity = capacity))
             cursor = end
             created++
         }
@@ -133,7 +137,7 @@ class AdminClinicService(
     @Transactional(readOnly = true)
     fun listSlots(therapistId: Long): List<AdminSlotResponse> =
         slotRepository.findAllByTherapistIdOrderByStartTimeAsc(therapistId).map {
-            AdminSlotResponse(id = it.id, startTime = it.startTime, endTime = it.endTime, isBooked = it.isBooked)
+            AdminSlotResponse(id = it.id, startTime = it.startTime, endTime = it.endTime, isBooked = it.isBooked, capacity = it.capacity, bookedCount = it.bookedCount)
         }
 
     @Transactional(readOnly = true)

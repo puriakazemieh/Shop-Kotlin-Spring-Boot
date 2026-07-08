@@ -2,11 +2,17 @@ package com.kazemieh.shop.clinic.persistence
 
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicHomeworkEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicMessageEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicOrganizationSeatEntity
+import com.kazemieh.shop.clinic.persistence.entity.JournalEntryEntity
+import com.kazemieh.shop.clinic.persistence.entity.MessagingPlanEntity
 import com.kazemieh.shop.clinic.persistence.entity.MoodCheckInEntity
 import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
 import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
 import com.kazemieh.shop.clinic.persistence.entity.SwitchRequestStatus
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
+import com.kazemieh.shop.clinic.persistence.entity.TherapistMatchQuestionEntity
 import com.kazemieh.shop.clinic.persistence.entity.TherapistSwitchRequestEntity
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
@@ -84,4 +90,40 @@ interface TherapistSwitchRequestRepository : JpaRepository<TherapistSwitchReques
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<TherapistSwitchRequestEntity>
     fun findAllByOrderByCreatedAtDesc(): List<TherapistSwitchRequestEntity>
     fun existsByUserIdAndFromTherapistIdAndStatus(userId: Long, fromTherapistId: Long, status: SwitchRequestStatus): Boolean
+}
+
+@Repository
+interface ClinicMessageRepository : JpaRepository<ClinicMessageEntity, Long> {
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtAsc(therapistId: Long, userId: Long): List<ClinicMessageEntity>
+    fun countByTherapistIdAndUserIdAndSenderType(therapistId: Long, userId: Long, senderType: com.kazemieh.shop.clinic.persistence.entity.MessageSenderType): Long
+}
+
+@Repository
+interface ClinicHomeworkRepository : JpaRepository<ClinicHomeworkEntity, Long> {
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<ClinicHomeworkEntity>
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<ClinicHomeworkEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): ClinicHomeworkEntity?
+}
+
+@Repository
+interface JournalEntryRepository : JpaRepository<JournalEntryEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<JournalEntryEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): JournalEntryEntity?
+    fun findAllBySharedWithTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<JournalEntryEntity>
+}
+
+@Repository
+interface TherapistMatchQuestionRepository : JpaRepository<TherapistMatchQuestionEntity, Long> {
+    fun findAllByOrderByDisplayOrderAsc(): List<TherapistMatchQuestionEntity>
+}
+
+@Repository
+interface MessagingPlanRepository : JpaRepository<MessagingPlanEntity, Long> {
+    fun findByUserIdAndTherapistId(userId: Long, therapistId: Long): MessagingPlanEntity?
+}
+
+@Repository
+interface ClinicOrganizationSeatRepository : JpaRepository<ClinicOrganizationSeatEntity, Long> {
+    fun findAllByOrganizationIdOrderByIdAsc(organizationId: Long): List<ClinicOrganizationSeatEntity>
+    fun findAllByOrganizationIdAndTherapistIdAndAssignedUserIdIsNull(organizationId: Long, therapistId: Long): List<ClinicOrganizationSeatEntity>
 }

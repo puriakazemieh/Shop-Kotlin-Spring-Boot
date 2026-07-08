@@ -80,7 +80,7 @@ class ClinicService(
     fun book(userId: Long, req: BookAppointmentRequest): AppointmentResponse {
         val slot = slotRepository.findByIdForUpdate(req.slotId)
             ?: throw NotFoundException("Slot not found", ErrorCodes.SLOT_NOT_FOUND)
-        if (slot.isBooked) throw ConflictException("Slot already booked", ErrorCodes.SLOT_ALREADY_BOOKED)
+        if (slot.isFull) throw ConflictException("Slot already booked", ErrorCodes.SLOT_ALREADY_BOOKED)
 
         if (slot.therapist.productId != null) {
             val credit = creditRepository.findByUserIdAndTherapistIdForUpdate(userId, slot.therapist.id)
@@ -91,7 +91,8 @@ class ClinicService(
             creditRepository.save(credit)
         }
 
-        slot.isBooked = true
+        slot.bookedCount += 1
+        slot.isBooked = slot.isFull
         slotRepository.save(slot)
 
         val appointment = AppointmentEntity(
@@ -113,7 +114,8 @@ class ClinicService(
             throw ForbiddenException("Completed appointment cannot be cancelled", ErrorCodes.APPOINTMENT_ACCESS_DENIED)
         }
         appointment.status = AppointmentStatus.CANCELLED
-        appointment.slot.isBooked = false
+        appointment.slot.bookedCount = (appointment.slot.bookedCount - 1).coerceAtLeast(0)
+        appointment.slot.isBooked = appointment.slot.isFull
         slotRepository.save(appointment.slot)
         appointmentRepository.save(appointment)
 
@@ -156,7 +158,9 @@ class ClinicService(
         startTime = startTime,
         endTime = endTime,
         dayLabel = startTime.format(DAY_FMT),
-        timeLabel = "${startTime.format(TIME_FMT)}–${endTime.format(TIME_FMT)}"
+        timeLabel = "${startTime.format(TIME_FMT)}–${endTime.format(TIME_FMT)}",
+        capacity = capacity,
+        remainingCapacity = (capacity - bookedCount).coerceAtLeast(0)
     )
 
     private fun AppointmentEntity.toResponse() = AppointmentResponse(
