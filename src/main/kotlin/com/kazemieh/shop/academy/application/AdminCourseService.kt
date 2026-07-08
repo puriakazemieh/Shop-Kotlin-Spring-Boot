@@ -20,6 +20,7 @@ import com.kazemieh.shop.academy.persistence.entity.ProjectSubmissionStatus
 import com.kazemieh.shop.academy.persistence.entity.QuizEntity
 import com.kazemieh.shop.academy.persistence.entity.QuizOption
 import com.kazemieh.shop.academy.persistence.entity.QuizQuestion
+import com.kazemieh.shop.academy.persistence.entity.SubtitleTrack
 import com.kazemieh.shop.academy.persistence.entity.VideoVariant
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.BadRequestException
@@ -83,7 +84,8 @@ class AdminCourseService(
                         lastPositionSeconds = 0,
                         videoVariants = lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) },
                         resourceFiles = lesson.resourceFiles.map { LessonFileResponse(it.name, it.url, it.sizeLabel) },
-                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id)
+                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id),
+                        subtitles = lesson.subtitles.map { SubtitleTrackResponse(it.language, it.url) }
                     )
                 }
             )
@@ -114,7 +116,8 @@ class AdminCourseService(
             freeUpdateBadge = req.freeUpdateBadge,
             instructorBio = req.instructorBio,
             instructorSkills = req.instructorSkills,
-            requiresProjectSubmission = req.requiresProjectSubmission
+            requiresProjectSubmission = req.requiresProjectSubmission,
+            cohortStartDate = parseCohortDate(req.cohortStartDate)
         )
         return courseRepository.save(course).id
     }
@@ -140,8 +143,12 @@ class AdminCourseService(
         req.instructorSkills?.let { c.instructorSkills = it }
         req.requiresProjectSubmission?.let { c.requiresProjectSubmission = it }
         req.instructorDiscountCode?.let { c.instructorDiscountCode = it.ifBlank { null } }
+        req.cohortStartDate?.let { c.cohortStartDate = parseCohortDate(it) }
         courseRepository.save(c)
     }
+
+    private fun parseCohortDate(v: String?): OffsetDateTime? =
+        v?.takeIf { it.isNotBlank() }?.let { runCatching { OffsetDateTime.parse(it) }.getOrNull() }
 
     // ---- لیستِ انتظارِ کلاسِ حضوری ----
     @Transactional(readOnly = true)
@@ -205,6 +212,7 @@ class AdminCourseService(
             title = req.title.trim(),
             videoUrl = req.videoUrl,
             videoVariants = req.videoVariants.map { VideoVariant(it.quality, it.url) }.toMutableList(),
+            subtitles = req.subtitles.map { SubtitleTrack(it.language, it.url) }.toMutableList(),
             durationSeconds = req.durationSeconds,
             sortOrder = req.sortOrder,
             isFreePreview = req.isFreePreview

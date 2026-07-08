@@ -61,7 +61,8 @@ class CourseService(
                         lastPositionSeconds = p?.lastPositionSeconds ?: 0,
                         videoVariants = if (canWatch) lesson.videoVariants.map { VideoVariantResponse(it.quality, it.url) } else emptyList(),
                         resourceFiles = if (canWatch) lesson.resourceFiles.map { LessonFileResponse(it.name, it.url, it.sizeLabel) } else emptyList(),
-                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id)
+                        hasQuiz = lessonIdsWithQuiz.contains(lesson.id),
+                        subtitles = if (canWatch) lesson.subtitles.map { SubtitleTrackResponse(it.language, it.url) } else emptyList()
                     )
                 }
             )
@@ -236,5 +237,6 @@ internal fun CourseEntity.toDetail(
     instructorDiscountCode = instructorDiscountCode,
     totalDurationSeconds = sections.sumOf { s -> s.lessons.sumOf { it.durationSeconds } },
     resourceFileCount = sections.sumOf { s -> s.lessons.sumOf { it.resourceFiles.size } },
-    hasUnseenUpdate = hasUnseenUpdate
+    hasUnseenUpdate = hasUnseenUpdate,
+    cohortStartDate = cohortStartDate?.toString()
 )

@@ -107,6 +107,10 @@ class CourseEntity(
     @Column(name = "instructor_discount_code", length = 40)
     var instructorDiscountCode: String? = null,
 
+    /** برایِ دوره‌های همگروهی/زنده: تاریخِ شروعِ گروه (نمایشِ «شروعِ دوره: ...»). */
+    @Column(name = "cohort_start_date")
+    var cohortStartDate: OffsetDateTime? = null,
+
     @OneToMany(mappedBy = "course", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     var sections: MutableList<CourseSectionEntity> = mutableListOf(),

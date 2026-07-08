@@ -17,6 +17,12 @@ class LessonFile(
     var sizeLabel: String? = null
 )
 
+/** یک زیرنویسِ درس به یک زبان (مثلاً فارسی/انگلیسی) — لینکِ فایلِ WebVTT/SRT. */
+class SubtitleTrack(
+    var language: String = "",
+    var url: String = ""
+)
+
 @Entity
 @Table(name = "course_lessons")
 class LessonEntity(
@@ -43,6 +49,11 @@ class LessonEntity(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "resource_files", columnDefinition = "jsonb")
     var resourceFiles: MutableList<LessonFile> = mutableListOf(),
+
+    /** زیرنویس‌های چندزبانه‌ی این درس. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "subtitles", columnDefinition = "jsonb")
+    var subtitles: MutableList<SubtitleTrack> = mutableListOf(),
 
     @Column(name = "duration_seconds", nullable = false)
     var durationSeconds: Int = 0,

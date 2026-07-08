@@ -47,7 +47,9 @@ data class LessonResponse(
     /** فایل‌های ضمیمه‌ی این درس (فقط وقتی قابلِ تماشا باشد پر می‌شود). */
     val resourceFiles: List<LessonFileResponse> = emptyList(),
     /** آیا این درس آزمونِ کوتاهِ خودش را دارد (برای نمایشِ تبِ «آزمون» در پخش‌کننده). */
-    val hasQuiz: Boolean = false
+    val hasQuiz: Boolean = false,
+    /** زیرنویس‌های چندزبانه‌ی این درس. */
+    val subtitles: List<SubtitleTrackResponse> = emptyList()
 )
 
 data class SectionResponse(
@@ -93,7 +95,9 @@ data class CourseDetailResponse(
     /** جعبه‌ی «این دوره شامل چیست» — مجموعِ مدتِ ویدیوها و تعدادِ فایل‌های ضمیمه. */
     val totalDurationSeconds: Int = 0,
     val resourceFileCount: Int = 0,
-    val hasUnseenUpdate: Boolean = false
+    val hasUnseenUpdate: Boolean = false,
+    /** برایِ دوره‌های همگروهی/زنده: تاریخِ شروعِ گروه. */
+    val cohortStartDate: String? = null
 )
 
 // ---------- Progress ----------
@@ -150,7 +154,8 @@ data class AdminCreateCourseRequest(
     val freeUpdateBadge: Boolean = false,
     val instructorBio: String? = null,
     val instructorSkills: String? = null,
-    val requiresProjectSubmission: Boolean = false
+    val requiresProjectSubmission: Boolean = false,
+    val cohortStartDate: String? = null
 )
 
 data class AdminUpdateCourseRequest(
@@ -171,7 +176,8 @@ data class AdminUpdateCourseRequest(
     val instructorBio: String? = null,
     val instructorSkills: String? = null,
     val requiresProjectSubmission: Boolean? = null,
-    val instructorDiscountCode: String? = null
+    val instructorDiscountCode: String? = null,
+    val cohortStartDate: String? = null
 )
 
 data class AdminCreateSectionRequest(
@@ -185,7 +191,13 @@ data class AdminCreateLessonRequest(
     val durationSeconds: Int = 0,
     val sortOrder: Int = 0,
     val isFreePreview: Boolean = false,
-    val videoVariants: List<VideoVariantResponse> = emptyList()
+    val videoVariants: List<VideoVariantResponse> = emptyList(),
+    val subtitles: List<SubtitleTrackResponse> = emptyList()
+)
+
+data class AdminAddSubtitleRequest(
+    val language: String,
+    val url: String
 )
 
 data class AdminAddLessonFileRequest(
@@ -323,4 +335,78 @@ data class AdminReviewProjectRequest(
 data class MyProjectResponse(
     val found: Boolean,
     val submission: ProjectSubmissionResponse? = null
+)
+
+// ---------- زیرنویسِ درس (Phase W) ----------
+data class SubtitleTrackResponse(
+    val language: String,
+    val url: String
+)
+
+// ---------- سازمان/صندلیِ سازمانی (Phase W) ----------
+data class OrganizationResponse(
+    val id: Long,
+    val name: String,
+    val contactEmail: String?,
+    val createdAt: String?
+)
+
+data class CreateOrganizationRequest(
+    val name: String,
+    val contactEmail: String? = null
+)
+
+data class SeatResponse(
+    val id: Long,
+    val organizationId: Long,
+    val courseId: Long,
+    val assignedUserId: Long?,
+    val assignedEmail: String?,
+    val assignedAt: String?
+)
+
+data class BuySeatsRequest(
+    val courseId: Long,
+    val count: Int
+)
+
+data class AssignSeatRequest(
+    val courseId: Long,
+    val email: String
+)
+
+// ---------- گارانتیِ بازگشتِ وجهِ دوره (Phase W) ----------
+data class CourseRefundRequestRequest(
+    val reason: String? = null
+)
+
+data class CourseRefundRequestResponse(
+    val id: Long,
+    val courseId: Long,
+    val courseTitle: String,
+    val amount: BigDecimal,
+    val reason: String?,
+    val status: String,
+    val adminNote: String?,
+    val createdAt: String?,
+    val resolvedAt: String?
+)
+
+data class AdminCourseRefundRequestResponse(
+    val id: Long,
+    val courseId: Long,
+    val courseTitle: String,
+    val userId: Long,
+    val userName: String?,
+    val amount: BigDecimal,
+    val reason: String?,
+    val status: String,
+    val adminNote: String?,
+    val createdAt: String?,
+    val resolvedAt: String?
+)
+
+data class AdminReviewRefundRequest(
+    val approve: Boolean,
+    val adminNote: String? = null
 )
