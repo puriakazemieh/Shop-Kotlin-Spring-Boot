@@ -10,6 +10,7 @@ import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentStatus
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
 import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
+import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.ConflictException
 import com.kazemieh.shop.shared.error.ErrorCodes
 import com.kazemieh.shop.shared.error.ForbiddenException
@@ -25,7 +26,8 @@ class ClinicService(
     private val slotRepository: AvailabilitySlotRepository,
     private val appointmentRepository: AppointmentRepository,
     private val creditRepository: SessionCreditRepository,
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val userRepository: UserRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -121,6 +123,25 @@ class ClinicService(
             credit.remaining += 1
             creditRepository.save(credit)
         }
+    }
+
+    /** رسیدِ جلسه، آماده برایِ ارائه به بیمه (مشخصاتِ درمانگر + تاریخ + مبلغ). */
+    @Transactional(readOnly = true)
+    fun getReceipt(userId: Long, appointmentId: Long): SessionReceiptResponse {
+        val appointment = appointmentRepository.findByIdAndUserId(appointmentId, userId)
+            ?: throw NotFoundException("Appointment not found", ErrorCodes.APPOINTMENT_NOT_FOUND)
+        val user = userRepository.findById(userId).orElse(null)
+        val patientName = listOfNotNull(user?.firstName, user?.lastName).joinToString(" ").ifBlank { "-" }
+        return SessionReceiptResponse(
+            appointmentId = appointment.id,
+            patientName = patientName,
+            therapistName = appointment.therapist.name,
+            therapistSpecialty = appointment.therapist.specialty,
+            sessionMode = appointment.therapist.mode.name,
+            sessionDate = "${appointment.slot.startTime.format(DAY_FMT)} ${appointment.slot.startTime.format(TIME_FMT)}",
+            sessionDurationMinutes = appointment.therapist.sessionDurationMinutes,
+            amountPaid = appointment.therapist.sessionPrice
+        )
     }
 
     // ---------- mappers / helpers ----------

@@ -194,3 +194,66 @@ data class PatientFileResponse(
     val appointments: List<PatientFileAppointmentResponse> = emptyList(),
     val testResults: List<PatientFileTestResultResponse> = emptyList()
 )
+
+// ---------- ثبتِ روزانه‌ی خلق‌وخو (Phase X) ----------
+data class MoodCheckInRequest(
+    val moodScore: Int,
+    val note: String? = null
+)
+
+data class MoodCheckInResponse(
+    val id: Long,
+    val moodScore: Int,
+    val note: String?,
+    val createdAt: String?
+)
+
+// ---------- درخواستِ تعویضِ درمانگر (Phase X) ----------
+data class SwitchRequestRequest(
+    val fromTherapistId: Long,
+    val toTherapistId: Long? = null,
+    val reason: String? = null
+)
+
+data class SwitchRequestResponse(
+    val id: Long,
+    val fromTherapistId: Long,
+    val fromTherapistName: String,
+    val toTherapistId: Long?,
+    val toTherapistName: String?,
+    val reason: String?,
+    val status: String,
+    val adminNote: String?,
+    val createdAt: String?
+)
+
+data class AdminSwitchRequestResponse(
+    val id: Long,
+    val userId: Long,
+    val userName: String?,
+    val fromTherapistId: Long,
+    val fromTherapistName: String,
+    val toTherapistId: Long?,
+    val toTherapistName: String?,
+    val reason: String?,
+    val status: String,
+    val adminNote: String?,
+    val createdAt: String?
+)
+
+data class AdminReviewSwitchRequest(
+    val approve: Boolean,
+    val adminNote: String? = null
+)
+
+// ---------- رسیدِ جلسه، آماده برایِ ارائه به بیمه (Phase X) ----------
+data class SessionReceiptResponse(
+    val appointmentId: Long,
+    val patientName: String,
+    val therapistName: String,
+    val therapistSpecialty: String?,
+    val sessionMode: String,
+    val sessionDate: String,
+    val sessionDurationMinutes: Int,
+    val amountPaid: java.math.BigDecimal
+)

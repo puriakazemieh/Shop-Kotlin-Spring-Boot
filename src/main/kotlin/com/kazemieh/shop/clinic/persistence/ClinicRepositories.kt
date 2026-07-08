@@ -2,9 +2,12 @@ package com.kazemieh.shop.clinic.persistence
 
 import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
 import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.MoodCheckInEntity
 import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
 import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
+import com.kazemieh.shop.clinic.persistence.entity.SwitchRequestStatus
 import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
+import com.kazemieh.shop.clinic.persistence.entity.TherapistSwitchRequestEntity
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -69,4 +72,16 @@ interface SessionCreditRepository : JpaRepository<SessionCreditEntity, Long> {
         @Param("userId") userId: Long,
         @Param("therapistId") therapistId: Long
     ): SessionCreditEntity?
+}
+
+@Repository
+interface MoodCheckInRepository : JpaRepository<MoodCheckInEntity, Long> {
+    fun findTop30ByUserIdOrderByCreatedAtDesc(userId: Long): List<MoodCheckInEntity>
+}
+
+@Repository
+interface TherapistSwitchRequestRepository : JpaRepository<TherapistSwitchRequestEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<TherapistSwitchRequestEntity>
+    fun findAllByOrderByCreatedAtDesc(): List<TherapistSwitchRequestEntity>
+    fun existsByUserIdAndFromTherapistIdAndStatus(userId: Long, fromTherapistId: Long, status: SwitchRequestStatus): Boolean
 }
