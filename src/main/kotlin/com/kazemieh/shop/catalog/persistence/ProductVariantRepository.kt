@@ -49,6 +49,22 @@ interface ProductVariantRepository : JpaRepository<ProductVariantEntity, Long> {
     )
     fun stockByProductIds(@Param("productIds") productIds: List<Long>): List<ProductStockRow>
 
+    /** تعدادِ محصولاتی که مجموعِ موجودیِ در دسترسشان (روی واریانت‌های فعال) زیر/برابرِ آستانه است. */
+    @Query(
+        value = """
+        select count(*) from (
+          select pv.product_id
+          from product_variants pv
+          left join inventory i on i.variant_id = pv.id
+          where pv.is_active = true
+          group by pv.product_id
+          having coalesce(sum(coalesce(i.on_hand,0) - coalesce(i.reserved,0)), 0) <= :threshold
+        ) t
+        """,
+        nativeQuery = true
+    )
+    fun countLowStockProducts(@Param("threshold") threshold: Long): Long
+
     @Query(
         value = """
         select 
