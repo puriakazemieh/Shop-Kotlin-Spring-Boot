@@ -1,6 +1,7 @@
 package com.kazemieh.shop.story.persistence.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.ColumnDefault
 import org.hibernate.annotations.CreationTimestamp
 import java.time.OffsetDateTime
 
@@ -25,10 +26,10 @@ class StoryEntity(
     @Column(name = "product_id")
     var productId: Long? = null,
 
-    // columnDefinition carries a DEFAULT so that when Hibernate (ddl-auto=update) adds this
-    // NOT NULL column to a stories table that already has rows, existing rows are backfilled
-    // with 'NONE' instead of failing with "contains null values".
-    @Column(name = "link_type", nullable = false, columnDefinition = "varchar(20) default 'NONE'")
+    // columnDefinition was removed because it caused DDL syntax errors on PostgreSQL during ALTER TABLE.
+    // @ColumnDefault is used instead to handle the default value in a dialect-aware way.
+    @Column(name = "link_type", nullable = false, length = 20)
+    @ColumnDefault("'NONE'")
     var linkType: String = "NONE",
 
     @Column(name = "category_id")

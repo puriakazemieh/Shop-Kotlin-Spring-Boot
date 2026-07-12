@@ -3,6 +3,7 @@ package com.kazemieh.shop.order.persistence.entity
 import com.fasterxml.jackson.databind.JsonNode
 import com.kazemieh.shop.identity.persistence.entity.UserEntity
 import jakarta.persistence.*
+import org.hibernate.annotations.ColumnDefault
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UpdateTimestamp
@@ -43,10 +44,12 @@ class OrderEntity(
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     var totalPrice: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "wallet_paid_amount", nullable = false, precision = 12, scale = 2, columnDefinition = "numeric(12,2) default 0")
+    @Column(name = "wallet_paid_amount", nullable = false, precision = 12, scale = 2)
+    @ColumnDefault("0")
     var walletPaidAmount: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "gateway_paid_amount", nullable = false, precision = 12, scale = 2, columnDefinition = "numeric(12,2) default 0")
+    @Column(name = "gateway_paid_amount", nullable = false, precision = 12, scale = 2)
+    @ColumnDefault("0")
     var gatewayPaidAmount: BigDecimal = BigDecimal.ZERO,
 
     @JdbcTypeCode(SqlTypes.JSON)
