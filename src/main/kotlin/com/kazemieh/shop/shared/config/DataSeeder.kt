@@ -66,6 +66,7 @@ import java.time.OffsetDateTime
  *   مشتری  → ایمیل user@carmilla.test  | موبایل 09121111111 | رمز user1234
  */
 @Component
+@org.springframework.core.annotation.Order(1)
 @ConditionalOnProperty(name = ["app.seed.enabled"], havingValue = "true")
 class DataSeeder(
     private val userRepository: UserRepository,
