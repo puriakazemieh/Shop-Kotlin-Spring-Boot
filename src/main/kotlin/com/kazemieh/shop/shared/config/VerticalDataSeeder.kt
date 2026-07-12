@@ -51,13 +51,21 @@ class VerticalDataSeeder(
     override fun run(vararg args: String) {
         val customerId = userRepository.findByEmail("user@carmilla.test")?.id
 
-        if (courseRepository.count() == 0L) seedAcademy(customerId)
-        if (therapistRepository.count() == 0L) seedClinic(customerId)
-        if (psychTestRepository.count() == 0L) seedPsychTests(customerId)
+        // به‌صورتِ per-slug اضافه می‌شود تا حتی اگر کاربر دوره/تستِ دستیِ دیگری ساخته باشد،
+        // داده‌ی نمونه همچنان (idempotent) ایجاد شود.
+        seedAcademy(customerId)
+        seedClinic(customerId)
+        seedPsychTests(customerId)
     }
 
     // ------------------------------------------------------------------ آکادمی
     private fun seedAcademy(customerId: Long?) {
+        if (!courseRepository.existsBySlug("anxiety-management")) seedCourse1(customerId)
+        if (!courseRepository.existsBySlug("communication-skills-workshop")) seedCourse2()
+        if (!courseRepository.existsBySlug("mindfulness-intro-free")) seedCourse3()
+    }
+
+    private fun seedCourse1(customerId: Long?) {
         log.info("Seeding academy sample data…")
 
         // ---- دوره‌ی ۱: آنلاینِ ضبط‌شده با ویدیو/فایل/آزمونِ درس/آزمونِ پایانی ----
@@ -160,6 +168,13 @@ class VerticalDataSeeder(
             )
         )
 
+        // مشتریِ نمونه در دوره‌ی ۱ ثبت‌نام می‌شود تا مسیرِ «دوره‌های من» قابلِ آزمایش باشد
+        if (customerId != null && !enrollmentRepository.existsByUserIdAndCourseId(customerId, savedCourse1.id)) {
+            enrollmentRepository.save(EnrollmentEntity(userId = customerId, course = savedCourse1))
+        }
+    }
+
+    private fun seedCourse2() {
         // ---- دوره‌ی ۲: کارگاهِ حضوری (مثلِ کالای رزروی، بدونِ پخشِ آنلاین) ----
         val course2 = CourseEntity(
             title = "کارگاه گروهی مهارت‌های ارتباطی",
@@ -176,7 +191,9 @@ class VerticalDataSeeder(
             seatsTaken = 6,
         )
         courseRepository.save(course2)
+    }
 
+    private fun seedCourse3() {
         // ---- دوره‌ی ۳: رایگانِ آنلاین با پیش‌نمایشِ رایگان ----
         val course3 = CourseEntity(
             title = "آشنایی با ذهن‌آگاهی (رایگان)",
@@ -199,15 +216,11 @@ class VerticalDataSeeder(
         )
         course3.sections.add(s31)
         courseRepository.save(course3)
-
-        // مشتریِ نمونه در دوره‌ی ۱ ثبت‌نام می‌شود تا مسیرِ «دوره‌های من» قابلِ آزمایش باشد
-        if (customerId != null) {
-            enrollmentRepository.save(EnrollmentEntity(userId = customerId, course = savedCourse1))
-        }
     }
 
     // ------------------------------------------------------------------ کلینیک
     private fun seedClinic(customerId: Long?) {
+        if (therapistRepository.existsBySlug("amir-rostami")) return
         log.info("Seeding clinic sample data…")
         val now = OffsetDateTime.now()
 
@@ -296,6 +309,7 @@ class VerticalDataSeeder(
 
     // ------------------------------------------------------------------ تست‌ها
     private fun seedPsychTests(customerId: Long?) {
+        if (psychTestRepository.existsBySlug("mbti")) return
         log.info("Seeding psych-test sample data…")
 
         val mbti = psychTestRepository.save(
