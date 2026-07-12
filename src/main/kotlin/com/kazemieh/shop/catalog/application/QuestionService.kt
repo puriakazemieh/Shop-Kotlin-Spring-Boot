@@ -4,6 +4,7 @@ import com.kazemieh.shop.catalog.api.dto.*
 import com.kazemieh.shop.catalog.persistence.ProductQuestionRepository
 import com.kazemieh.shop.catalog.persistence.ProductRepository
 import com.kazemieh.shop.catalog.persistence.entity.ProductQuestionEntity
+import com.kazemieh.shop.identity.domain.UserRole
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.ApiException
 import com.kazemieh.shop.shared.error.ErrorCodes
@@ -96,13 +97,17 @@ class QuestionService(
     }
 
     private fun ProductQuestionEntity.toResponse(): QuestionResponse {
+        val isSupport = this.user.role == UserRole.ADMIN
+        val displayName = if (isSupport) "پشتیبانی کارمیلا"
+            else "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim()
         return QuestionResponse(
             id = this.id,
             userId = this.user.id,
-            userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
+            userName = displayName,
             content = this.content,
             replies = this.replies.map { it.toResponse() },
-            createdAt = this.createdAt ?: OffsetDateTime.now()
+            createdAt = this.createdAt ?: OffsetDateTime.now(),
+            isSupport = isSupport
         )
     }
 

@@ -6,14 +6,12 @@ data class CreateReviewRequest(
     val productId: Long,
     val rating: Int?,
     val comment: String,
-    val parentId: Long? = null,
-    val images: List<String> = emptyList()
+    val parentId: Long? = null
 )
 
 data class UpdateReviewRequest(
     val rating: Int?,
-    val comment: String,
-    val images: List<String> = emptyList()
+    val comment: String
 )
 
 data class ReviewResponse(
@@ -23,8 +21,7 @@ data class ReviewResponse(
     val rating: Int?,
     val comment: String,
     val replies: List<ReviewResponse>,
-    val helpfulCount: Int = 0,
-    val helpfulByMe: Boolean = false,
     val createdAt: OffsetDateTime,
-    val images: List<String> = emptyList()
+    val isSupport: Boolean = false,
+    val verifiedPurchase: Boolean = false
 )

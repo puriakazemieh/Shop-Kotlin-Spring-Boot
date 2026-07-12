@@ -30,4 +30,15 @@ interface OrderRepository : JpaRepository<OrderEntity, Long> {
         @Param("status") status: OrderStatus,
         @Param("expirationTime") expirationTime: OffsetDateTime
     ): List<OrderEntity>
+
+    // شناسه‌ی کاربرانی که این محصول را (از طریق هر واریانتی) خریده‌اند — برای نشانِ «خرید تأییدشده»
+    @Query(
+        """
+        SELECT DISTINCT oi.order.user.id
+        FROM OrderItemEntity oi
+        JOIN ProductVariantEntity pv ON pv.id = oi.variantId
+        WHERE pv.product.id = :productId
+        """
+    )
+    fun findPurchaserIdsByProduct(@Param("productId") productId: Long): List<Long>
 }
