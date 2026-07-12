@@ -23,6 +23,49 @@ class CatalogService(
     private val productReviewRepository: ProductReviewRepository,
 ) {
 
+    /** محصولاتی که در سفارش‌هایِ گذشته اغلب با این محصول با هم خریده شده‌اند (الگوریتمیِ هم‌رخدادی). */
+    @Transactional(readOnly = true)
+    fun getFrequentlyBoughtTogether(productId: Long, currentUserId: Long? = null, limit: Int = 6): List<ProductSummaryResponse> {
+        val ids = productRepository.findFrequentlyBoughtTogetherIds(productId, limit)
+        return summarizeProducts(ids, currentUserId)
+    }
+
+    /** خلاصه‌ی چند محصولِ دلخواه با شناسه (بدونِ صفحه‌بندی) — برای باندل/مقایسه و مشابه. */
+    @Transactional(readOnly = true)
+    fun summarizeProducts(productIds: List<Long>, currentUserId: Long? = null): List<ProductSummaryResponse> {
+        if (productIds.isEmpty()) return emptyList()
+        val products = productRepository.findAllById(productIds)
+        val images = productImageRepository.findAllByProductIdInOrderBySortOrderAsc(productIds)
+        val thumbnailByProductId = images
+            .groupBy { it.product?.id ?: 0L }
+            .mapValues { (_, list) -> list.firstOrNull()?.url }
+        val aggByProductId = variantRepository.aggregateByProductIds(productIds).associateBy { it.getProductId() }
+        val favoriteProductIds = if (currentUserId != null) {
+            favoriteRepository.findAllByUserIdAndProductIdIn(currentUserId, productIds).map { it.product.id }.toSet()
+        } else emptySet()
+        val ratingByProductId = productReviewRepository.aggregateRatingsByProductIds(productIds).associateBy { it.getProductId() }
+        return products.map { p ->
+            val agg = aggByProductId[p.id]
+            val rating = ratingByProductId[p.id]
+            ProductSummaryResponse(
+                id = p.id,
+                title = p.title,
+                slug = p.slug,
+                thumbnailUrl = thumbnailByProductId[p.id],
+                minPrice = agg?.getMinPrice(),
+                maxPrice = agg?.getMaxPrice(),
+                minDiscountedPrice = agg?.getMinDiscountedPrice(),
+                maxDiscountedPrice = agg?.getMaxDiscountedPrice(),
+                inStock = agg?.getInStock() ?: false,
+                categoryId = p.category?.id,
+                categoryName = p.category?.name,
+                isFavorite = favoriteProductIds.contains(p.id),
+                averageRating = rating?.getAvgRating(),
+                reviewCount = rating?.getReviewCount() ?: 0,
+            )
+        }
+    }
+
     // ---------- Categories (Tree) ----------
     @Transactional(readOnly = true)
     fun categoriesTree(): List<CategoryResponse> {

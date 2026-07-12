@@ -29,7 +29,9 @@ class AdminCatalogService(
     private val favoriteRepository: FavoriteRepository,
     private val recentlyViewedRepository: RecentlyViewedRepository,
     private val cartItemRepository: CartItemRepository,
-    private val orderItemRepository: OrderItemRepository
+    private val orderItemRepository: OrderItemRepository,
+    private val stockNotificationService: StockNotificationService,
+    private val priceAlertService: PriceAlertService
 ) {
 
     // ---------- Categories ----------
@@ -477,6 +479,8 @@ class AdminCatalogService(
             newOptionValues.forEach { v.addOptionValue(it) }
         }
 
+        val previousEffectivePrice = v.discountedPrice ?: v.price
+
         req.sku?.let {
             val newSku = it.trim()
             if (newSku != v.sku && variantRepository.existsBySku(newSku)) throw SkuExistsException(newSku)
@@ -486,6 +490,11 @@ class AdminCatalogService(
         req.discountedPrice?.let { v.discountedPrice = it }
         req.compareAtPrice?.let { v.compareAtPrice = it }
         req.isActive?.let { v.isActive = it }
+
+        val newEffectivePrice = v.discountedPrice ?: v.price
+        if (newEffectivePrice < previousEffectivePrice) {
+            priceAlertService.onVariantPriceChanged(variantId, newEffectivePrice)
+        }
 
         val inv = inventoryRepository.findById(variantId).orElse(null)
 
@@ -522,8 +531,12 @@ class AdminCatalogService(
             if (inv.version != expected) throw InventoryConflictException()
         }
 
+        val wasUnavailable = (inv.onHand - inv.reserved) <= 0
         inv.onHand = req.onHand
         val saved = inventoryRepository.save(inv)
+        if (wasUnavailable && (saved.onHand - saved.reserved) > 0) {
+            stockNotificationService.onVariantRestocked(variantId)
+        }
         return AdminCatalogMapper.inventory(saved)
     }
 
@@ -545,8 +558,12 @@ class AdminCatalogService(
         )
         if (newOnHand < 0) throw BadRequestException("onHand cannot be negative", "INVENTORY_INVALID")
 
+        val wasUnavailable = (inv.onHand - inv.reserved) <= 0
         inv.onHand = newOnHand
         val saved = inventoryRepository.save(inv)
+        if (wasUnavailable && (saved.onHand - saved.reserved) > 0) {
+            stockNotificationService.onVariantRestocked(variantId)
+        }
         return AdminCatalogMapper.inventory(saved)
     }
 }

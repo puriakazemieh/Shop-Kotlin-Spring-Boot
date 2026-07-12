@@ -15,8 +15,19 @@ class ReviewController(
 ) {
 
     @GetMapping("/product/{productId}")
-    fun getReviews(@PathVariable productId: Long): List<ReviewResponse> {
-        return reviewService.getReviewsByProduct(productId)
+    fun getReviews(
+        @AuthenticationPrincipal principal: UserPrincipal?,
+        @PathVariable productId: Long
+    ): List<ReviewResponse> {
+        return reviewService.getReviewsByProduct(productId, principal?.id)
+    }
+
+    @PostMapping("/{reviewId}/helpful")
+    fun toggleHelpful(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable reviewId: Long
+    ): ReviewResponse {
+        return reviewService.toggleHelpful(principal.id, reviewId)
     }
 
     @PostMapping

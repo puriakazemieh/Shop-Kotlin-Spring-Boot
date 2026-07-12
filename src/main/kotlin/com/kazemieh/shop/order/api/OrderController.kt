@@ -51,4 +51,10 @@ class OrderController(
 
     @GetMapping("/{id}/track")
     fun track(@PathVariable id: Long) = orderService.trackOrder(id)
+
+    @PostMapping("/{id}/reorder")
+    fun reorder(
+        @AuthenticationPrincipal principal: UserPrincipal,
+        @PathVariable id: Long
+    ) = orderService.reorder(principal.id, id)
 }

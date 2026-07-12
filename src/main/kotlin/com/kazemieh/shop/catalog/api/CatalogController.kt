@@ -54,4 +54,11 @@ class CatalogController(
         @AuthenticationPrincipal principal: UserPrincipal?,
     ): ProductDetailResponse =
         catalogService.productDetail(slug, principal?.id)
+
+    @GetMapping("/products/{id}/frequently-bought-together")
+    fun frequentlyBoughtTogether(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserPrincipal?,
+    ): List<ProductSummaryResponse> =
+        catalogService.getFrequentlyBoughtTogether(id, principal?.id)
 }

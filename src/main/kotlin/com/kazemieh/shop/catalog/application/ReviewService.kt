@@ -2,8 +2,10 @@ package com.kazemieh.shop.catalog.application
 
 import com.kazemieh.shop.catalog.api.dto.*
 import com.kazemieh.shop.catalog.persistence.ProductRepository
+import com.kazemieh.shop.catalog.persistence.ProductReviewHelpfulRepository
 import com.kazemieh.shop.catalog.persistence.ProductReviewRepository
 import com.kazemieh.shop.catalog.persistence.entity.ProductReviewEntity
+import com.kazemieh.shop.catalog.persistence.entity.ProductReviewHelpfulEntity
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.shared.error.ApiException
 import com.kazemieh.shop.shared.error.ErrorCodes
@@ -18,7 +20,8 @@ import java.time.OffsetDateTime
 class ReviewService(
     private val reviewRepository: ProductReviewRepository,
     private val productRepository: ProductRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val helpfulRepository: ProductReviewHelpfulRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -41,9 +44,36 @@ class ReviewService(
     }
 
     @Transactional(readOnly = true)
-    fun getReviewsByProduct(productId: Long): List<ReviewResponse> {
+    fun getReviewsByProduct(productId: Long, currentUserId: Long?): List<ReviewResponse> {
         val reviews = reviewRepository.findAllByProductIdAndParentIsNullOrderByCreatedAtDesc(productId)
-        return reviews.map { it.toResponse() }
+        val helpfulIds: Set<Long> = currentUserId
+            ?.let { helpfulRepository.findReviewIdsByUserAndProduct(it, productId).toSet() }
+            ?: emptySet()
+        return reviews.map { it.toResponse(helpfulIds) }
+    }
+
+    /**
+     * toggle رأیِ «مفید بود» برای کاربرِ جاری روی یک نظر.
+     * اگر قبلاً رأی داده باشد، رأی برداشته و شمارنده کم می‌شود؛ در غیر این صورت افزوده می‌شود.
+     */
+    @Transactional
+    fun toggleHelpful(userId: Long, reviewId: Long): ReviewResponse {
+        val review = reviewRepository.findById(reviewId)
+            .orElseThrow { ApiException(ErrorCodes.REVIEW_NOT_FOUND, "Review not found", HttpStatus.NOT_FOUND) }
+
+        val existing = helpfulRepository.findByReviewIdAndUserId(reviewId, userId)
+        val helpfulByMe: Boolean
+        if (existing != null) {
+            helpfulRepository.delete(existing)
+            review.helpfulCount = (review.helpfulCount - 1).coerceAtLeast(0)
+            helpfulByMe = false
+        } else {
+            helpfulRepository.save(ProductReviewHelpfulEntity(review = review, userId = userId))
+            review.helpfulCount += 1
+            helpfulByMe = true
+        }
+        val saved = reviewRepository.save(review)
+        return saved.toResponse(if (helpfulByMe) setOf(saved.id) else emptySet())
     }
 
     @Transactional
@@ -65,7 +95,8 @@ class ReviewService(
             rating = if (parent == null) request.rating else null, // Rating only for top-level reviews
             comment = request.comment,
             parent = parent,
-            isNew = true
+            isNew = true,
+            images = request.images.toMutableList()
         )
 
         return reviewRepository.save(review).toResponse()
@@ -82,6 +113,7 @@ class ReviewService(
 
         review.rating = if (review.parent == null) request.rating else null
         review.comment = request.comment
+        review.images = request.images.toMutableList()
 
         return reviewRepository.save(review).toResponse()
     }
@@ -98,15 +130,18 @@ class ReviewService(
         reviewRepository.delete(review)
     }
 
-    private fun ProductReviewEntity.toResponse(): ReviewResponse {
+    private fun ProductReviewEntity.toResponse(helpfulIds: Set<Long> = emptySet()): ReviewResponse {
         return ReviewResponse(
             id = this.id,
             userId = this.user.id,
             userName = "${this.user.firstName ?: ""} ${this.user.lastName ?: ""}".trim(),
             rating = this.rating,
             comment = this.comment,
-            replies = this.replies.map { it.toResponse() },
-            createdAt = this.createdAt ?: OffsetDateTime.now()
+            replies = this.replies.map { it.toResponse(helpfulIds) },
+            helpfulCount = this.helpfulCount,
+            helpfulByMe = helpfulIds.contains(this.id),
+            createdAt = this.createdAt ?: OffsetDateTime.now(),
+            images = this.images
         )
     }
 

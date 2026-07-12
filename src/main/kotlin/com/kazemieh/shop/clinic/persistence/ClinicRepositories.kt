@@ -1,0 +1,129 @@
+package com.kazemieh.shop.clinic.persistence
+
+import com.kazemieh.shop.clinic.persistence.entity.AppointmentEntity
+import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicHomeworkEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicMessageEntity
+import com.kazemieh.shop.clinic.persistence.entity.ClinicOrganizationSeatEntity
+import com.kazemieh.shop.clinic.persistence.entity.JournalEntryEntity
+import com.kazemieh.shop.clinic.persistence.entity.MessagingPlanEntity
+import com.kazemieh.shop.clinic.persistence.entity.MoodCheckInEntity
+import com.kazemieh.shop.clinic.persistence.entity.PatientNoteEntity
+import com.kazemieh.shop.clinic.persistence.entity.SessionCreditEntity
+import com.kazemieh.shop.clinic.persistence.entity.SwitchRequestStatus
+import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
+import com.kazemieh.shop.clinic.persistence.entity.TherapistMatchQuestionEntity
+import com.kazemieh.shop.clinic.persistence.entity.TherapistSwitchRequestEntity
+import jakarta.persistence.LockModeType
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import java.time.OffsetDateTime
+
+@Repository
+interface TherapistRepository : JpaRepository<TherapistEntity, Long> {
+    fun findAllByIsActiveTrueOrderByCreatedAtDesc(): List<TherapistEntity>
+    fun findBySlug(slug: String): TherapistEntity?
+    fun existsBySlug(slug: String): Boolean
+    fun findAllByProductIdIn(productIds: Collection<Long>): List<TherapistEntity>
+}
+
+@Repository
+interface AvailabilitySlotRepository : JpaRepository<AvailabilitySlotEntity, Long> {
+    /** بازه‌های آزادِ آینده‌ی یک درمانگر (رزرونشده). */
+    fun findAllByTherapistIdAndIsBookedFalseAndStartTimeAfterOrderByStartTimeAsc(
+        therapistId: Long,
+        after: OffsetDateTime
+    ): List<AvailabilitySlotEntity>
+
+    /** قفلِ ردیف برای رزروِ اتمیک (جلوگیری از رزروِ همزمانِ یک بازه). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from AvailabilitySlotEntity s where s.id = :id")
+    fun findByIdForUpdate(@Param("id") id: Long): AvailabilitySlotEntity?
+
+    /** همه‌ی بازه‌های یک درمانگر (برای مدیریتِ ادمین). */
+    fun findAllByTherapistIdOrderByStartTimeAsc(therapistId: Long): List<AvailabilitySlotEntity>
+}
+
+@Repository
+interface AppointmentRepository : JpaRepository<AppointmentEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<AppointmentEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): AppointmentEntity?
+
+    /** همه‌ی نوبت‌ها (برای مدیریتِ ادمین). */
+    fun findAllByOrderByCreatedAtDesc(): List<AppointmentEntity>
+
+    /** همه‌ی نوبت‌های یک درمانگر (برای CRM/پرونده‌ی مراجع). */
+    fun findAllByTherapistId(therapistId: Long): List<AppointmentEntity>
+
+    /** نوبت‌های یک مراجعِ خاص نزدِ یک درمانگرِ خاص (پرونده‌ی مراجع). */
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<AppointmentEntity>
+}
+
+@Repository
+interface PatientNoteRepository : JpaRepository<PatientNoteEntity, Long> {
+    fun findAllByAppointmentIdOrderByCreatedAtDesc(appointmentId: Long): List<PatientNoteEntity>
+}
+
+@Repository
+interface SessionCreditRepository : JpaRepository<SessionCreditEntity, Long> {
+    fun findByUserIdAndTherapistId(userId: Long, therapistId: Long): SessionCreditEntity?
+
+    /** قفلِ ردیف برای مصرفِ اتمیکِ اعتبار هنگامِ رزرو. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from SessionCreditEntity c where c.userId = :userId and c.therapistId = :therapistId")
+    fun findByUserIdAndTherapistIdForUpdate(
+        @Param("userId") userId: Long,
+        @Param("therapistId") therapistId: Long
+    ): SessionCreditEntity?
+}
+
+@Repository
+interface MoodCheckInRepository : JpaRepository<MoodCheckInEntity, Long> {
+    fun findTop30ByUserIdOrderByCreatedAtDesc(userId: Long): List<MoodCheckInEntity>
+}
+
+@Repository
+interface TherapistSwitchRequestRepository : JpaRepository<TherapistSwitchRequestEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<TherapistSwitchRequestEntity>
+    fun findAllByOrderByCreatedAtDesc(): List<TherapistSwitchRequestEntity>
+    fun existsByUserIdAndFromTherapistIdAndStatus(userId: Long, fromTherapistId: Long, status: SwitchRequestStatus): Boolean
+}
+
+@Repository
+interface ClinicMessageRepository : JpaRepository<ClinicMessageEntity, Long> {
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtAsc(therapistId: Long, userId: Long): List<ClinicMessageEntity>
+    fun countByTherapistIdAndUserIdAndSenderType(therapistId: Long, userId: Long, senderType: com.kazemieh.shop.clinic.persistence.entity.MessageSenderType): Long
+}
+
+@Repository
+interface ClinicHomeworkRepository : JpaRepository<ClinicHomeworkEntity, Long> {
+    fun findAllByTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<ClinicHomeworkEntity>
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<ClinicHomeworkEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): ClinicHomeworkEntity?
+}
+
+@Repository
+interface JournalEntryRepository : JpaRepository<JournalEntryEntity, Long> {
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<JournalEntryEntity>
+    fun findByIdAndUserId(id: Long, userId: Long): JournalEntryEntity?
+    fun findAllBySharedWithTherapistIdAndUserIdOrderByCreatedAtDesc(therapistId: Long, userId: Long): List<JournalEntryEntity>
+}
+
+@Repository
+interface TherapistMatchQuestionRepository : JpaRepository<TherapistMatchQuestionEntity, Long> {
+    fun findAllByOrderByDisplayOrderAsc(): List<TherapistMatchQuestionEntity>
+}
+
+@Repository
+interface MessagingPlanRepository : JpaRepository<MessagingPlanEntity, Long> {
+    fun findByUserIdAndTherapistId(userId: Long, therapistId: Long): MessagingPlanEntity?
+}
+
+@Repository
+interface ClinicOrganizationSeatRepository : JpaRepository<ClinicOrganizationSeatEntity, Long> {
+    fun findAllByOrganizationIdOrderByIdAsc(organizationId: Long): List<ClinicOrganizationSeatEntity>
+    fun findAllByOrganizationIdAndTherapistIdAndAssignedUserIdIsNull(organizationId: Long, therapistId: Long): List<ClinicOrganizationSeatEntity>
+}

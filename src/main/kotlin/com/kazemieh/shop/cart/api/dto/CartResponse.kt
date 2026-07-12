@@ -1,6 +1,7 @@
 package com.kazemieh.shop.cart.api.dto
 
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 
 data class CartResponse(
     val items: List<CartItemResponse>,
@@ -9,5 +10,7 @@ data class CartResponse(
     val discountAmount: BigDecimal,
     val total: BigDecimal,
     val totalQty: Int,
-    val appliedDiscountCode: String? = null
+    val appliedDiscountCode: String? = null,
+    /** آخرین تغییرِ سبد — کلاینت برایِ نمایشِ بنرِ «یادآوریِ سبدِ رها‌شده» از این استفاده می‌کند. */
+    val updatedAt: OffsetDateTime? = null
 )

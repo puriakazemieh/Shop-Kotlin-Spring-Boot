@@ -14,4 +14,6 @@ data class OrderDetailResponse(
     val createdAt: OffsetDateTime?,
     val address: AddressSnapshotResponse,
     val items: List<OrderItemResponse>,
+    val isGift: Boolean = false,
+    val giftMessage: String? = null,
 )

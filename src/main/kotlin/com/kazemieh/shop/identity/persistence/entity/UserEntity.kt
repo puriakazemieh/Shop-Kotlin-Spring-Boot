@@ -63,4 +63,10 @@ class UserEntity(
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime? = null,
 
+    @Column(name = "referral_code", length = 16)
+    var referralCode: String? = null,
+
+    @Column(name = "referred_by_user_id")
+    var referredByUserId: Long? = null,
+
 )

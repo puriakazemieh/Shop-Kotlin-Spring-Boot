@@ -1,10 +1,13 @@
 package com.kazemieh.shop.admin
 
+import com.kazemieh.shop.academy.persistence.CourseRepository
 import com.kazemieh.shop.catalog.persistence.ProductRepository
+import com.kazemieh.shop.clinic.persistence.TherapistRepository
 import com.kazemieh.shop.identity.domain.UserRole
 import com.kazemieh.shop.identity.persistence.UserRepository
 import com.kazemieh.shop.order.persistence.OrderRepository
 import com.kazemieh.shop.order.persistence.entity.OrderStatus
+import com.kazemieh.shop.psychtest.persistence.PsychTestRepository
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,22 +22,33 @@ data class DailySalesResponse(
     val total: BigDecimal
 )
 
+/** تعدادِ آیتم‌های هر عمودی (برای نمایشِ ردِپای هر بخش در داشبورد). */
+data class VerticalCountsResponse(
+    val courses: Long,
+    val therapists: Long,
+    val psychTests: Long
+)
+
 data class AdminStatsResponse(
     val totalRevenue: BigDecimal,
     val totalOrders: Long,
     val totalProducts: Long,
     val totalCustomers: Long,
-    val weeklySales: List<DailySalesResponse>
+    val weeklySales: List<DailySalesResponse>,
+    val verticalCounts: VerticalCountsResponse
 )
 
-/** آمار داشبورد پنل مدیریت — درآمد، تعداد سفارش/محصول/مشتری و نمودار فروش ۷ روز اخیر. */
+/** آمار داشبورد پنل مدیریت — درآمد، تعداد سفارش/محصول/مشتری، نمودار فروش ۷ روز اخیر و تعدادِ آیتمِ هر عمودی. */
 @RestController
 @RequestMapping("/api/admin/stats")
 @PreAuthorize("hasRole('ADMIN')")
 class AdminStatsController(
     private val orderRepository: OrderRepository,
     private val productRepository: ProductRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val courseRepository: CourseRepository,
+    private val therapistRepository: TherapistRepository,
+    private val psychTestRepository: PsychTestRepository
 ) {
     @GetMapping
     fun stats(): AdminStatsResponse {
@@ -55,7 +69,12 @@ class AdminStatsController(
             totalOrders = orderRepository.count(),
             totalProducts = productRepository.count(),
             totalCustomers = userRepository.countByRole(UserRole.CUSTOMER),
-            weeklySales = weekly
+            weeklySales = weekly,
+            verticalCounts = VerticalCountsResponse(
+                courses = courseRepository.count(),
+                therapists = therapistRepository.count(),
+                psychTests = psychTestRepository.count()
+            )
         )
     }
 }

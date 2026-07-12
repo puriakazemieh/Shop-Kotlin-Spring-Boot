@@ -265,7 +265,7 @@ class CartService(
     }
 
     private fun buildCartResponse(cart: CartEntity): CartResponse {
-        if (cart.items.isEmpty()) return CartResponse(emptyList(), emptyList(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0, null)
+        if (cart.items.isEmpty()) return CartResponse(emptyList(), emptyList(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0, null, cart.updatedAt)
 
         val variantIds = cart.items.map { it.variantId }.distinct()
         val variants = variantRepository.findWithAllOptionsByIds(variantIds).associateBy { it.id }
@@ -339,7 +339,8 @@ class CartService(
             discountAmount = discountAmount,
             total = total,
             totalQty = totalQty,
-            appliedDiscountCode = appliedDiscountCode
+            appliedDiscountCode = appliedDiscountCode,
+            updatedAt = cart.updatedAt
         )
     }
 }

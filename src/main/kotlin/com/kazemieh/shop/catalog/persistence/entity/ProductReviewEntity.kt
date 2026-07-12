@@ -3,7 +3,9 @@ package com.kazemieh.shop.catalog.persistence.entity
 import com.kazemieh.shop.identity.persistence.entity.UserEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
@@ -36,6 +38,14 @@ class ProductReviewEntity(
 
     @Column(nullable = false)
     var isNew: Boolean = true,
+
+    @Column(name = "helpful_count", nullable = false)
+    var helpfulCount: Int = 0,
+
+    /** آدرسِ عکس‌هایی که کاربر همراهِ نظر پیوست کرده (الگویِ «افزودن با لینک»). */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    var images: MutableList<String> = mutableListOf(),
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
