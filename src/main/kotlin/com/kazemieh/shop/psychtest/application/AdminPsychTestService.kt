@@ -45,6 +45,21 @@ class AdminPsychTestService(
         return testRepository.save(test).id
     }
 
+    /** جزئیاتِ کاملِ یک تست (با امتیازِ گزینه‌ها و بازه‌ها) برای پیش‌پُر کردنِ فرمِ ویرایش. */
+    @Transactional(readOnly = true)
+    fun detail(id: Long): AdminPsychTestDetailResponse {
+        val test = findTest(id)
+        return AdminPsychTestDetailResponse(
+            id = test.id, title = test.title, slug = test.slug, description = test.description,
+            price = test.price, discountedPrice = test.discountedPrice, productId = test.productId,
+            resultMode = test.resultMode.name, isPublished = test.isPublished,
+            questions = test.questions.mapIndexed { i, q ->
+                TestQuestionResponse(i, q.text, q.options.map { TestOptionResponse(it.text, score = it.score) })
+            },
+            ranges = test.ranges.map { ScoreRangeResponse(it.minScore, it.maxScore, it.interpretation) }
+        )
+    }
+
     @Transactional
     fun update(id: Long, req: AdminUpdatePsychTestRequest) {
         val test = findTest(id)

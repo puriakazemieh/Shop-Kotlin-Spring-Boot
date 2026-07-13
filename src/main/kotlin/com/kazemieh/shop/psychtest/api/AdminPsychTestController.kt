@@ -22,6 +22,9 @@ class AdminPsychTestController(
     fun create(@RequestBody req: AdminCreatePsychTestRequest): Map<String, Long> =
         mapOf("id" to adminPsychTestService.create(req))
 
+    @GetMapping("/{id}")
+    fun detail(@PathVariable id: Long): AdminPsychTestDetailResponse = adminPsychTestService.detail(id)
+
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun update(@PathVariable id: Long, @RequestBody req: AdminUpdatePsychTestRequest) =

@@ -79,6 +79,21 @@ data class AdminCreatePsychTestRequest(
     val ranges: List<ScoreRangeResponse> = emptyList()
 )
 
+/** جزئیاتِ کاملِ تست برای ادمین (شاملِ امتیازِ گزینه‌ها و بازه‌ها) جهتِ پیش‌پُر کردنِ فرمِ ویرایش. */
+data class AdminPsychTestDetailResponse(
+    val id: Long,
+    val title: String,
+    val slug: String,
+    val description: String?,
+    val price: BigDecimal,
+    val discountedPrice: BigDecimal?,
+    val productId: Long?,
+    val resultMode: String,
+    val isPublished: Boolean,
+    val questions: List<TestQuestionResponse>,
+    val ranges: List<ScoreRangeResponse>
+)
+
 data class AdminUpdatePsychTestRequest(
     val title: String? = null,
     val description: String? = null,
