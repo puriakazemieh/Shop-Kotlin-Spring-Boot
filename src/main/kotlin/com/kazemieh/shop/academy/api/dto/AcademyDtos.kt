@@ -226,7 +226,9 @@ data class QuizResponse(
     val title: String,
     val passScore: Int,
     val questions: List<QuizQuestionResponse>,
-    val alreadyPassed: Boolean = false
+    val alreadyPassed: Boolean = false,
+    /** اگر برای این دوره آزمونی تعریف نشده باشد false است (به‌جایِ خطای ۴۰۴). */
+    val hasQuiz: Boolean = true
 )
 
 /** پاسخ‌های کاربر: برای هر سؤال، ایندکسِ گزینه‌ی انتخابی. */

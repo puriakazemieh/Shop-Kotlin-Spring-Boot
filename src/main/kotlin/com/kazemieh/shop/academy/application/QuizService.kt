@@ -35,7 +35,14 @@ class QuizService(
     @Transactional(readOnly = true)
     fun getQuiz(courseId: Long, userId: Long?): QuizResponse {
         val quiz = quizRepository.findByCourseId(courseId)
-            ?: throw NotFoundException("Quiz not found", ErrorCodes.QUIZ_NOT_FOUND)
+            ?: return QuizResponse(
+                courseId = courseId,
+                title = "آزمونِ پایانِ دوره",
+                passScore = 0,
+                questions = emptyList(),
+                alreadyPassed = false,
+                hasQuiz = false
+            )
         val alreadyPassed = userId != null && quizAttemptRepository.existsByUserIdAndCourseIdAndPassedTrue(userId, courseId)
         return QuizResponse(
             courseId = courseId,

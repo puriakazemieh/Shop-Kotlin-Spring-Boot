@@ -92,7 +92,19 @@ class AdminClinicService(
 
     @Transactional
     fun deleteTherapist(id: Long) {
-        therapistRepository.delete(findTherapist(id))
+        val therapist = findTherapist(id)
+        // نوبت‌های ثبت‌شده به درمانگر ارجاعِ کلید خارجی دارند؛ حذفِ سخت باعثِ خطای یکپارچگیِ
+        // داده می‌شود. به‌جای ۵۰۰، خطای روشن بده تا ادمین درمانگر را «غیرفعال» کند.
+        if (appointmentRepository.findAllByTherapistId(id).isNotEmpty()) {
+            throw ConflictException(
+                "این درمانگر نوبتِ ثبت‌شده دارد و حذف نمی‌شود؛ به‌جای حذف، آن را «غیرفعال» کنید.",
+                ErrorCodes.THERAPIST_HAS_APPOINTMENTS
+            )
+        }
+        // بازه‌های زمانی هم به درمانگر ارجاع دارند؛ ابتدا پاک شوند تا حذف موفق شود.
+        val slots = slotRepository.findAllByTherapistIdOrderByStartTimeAsc(id)
+        if (slots.isNotEmpty()) slotRepository.deleteAll(slots)
+        therapistRepository.delete(therapist)
     }
 
     @Transactional
