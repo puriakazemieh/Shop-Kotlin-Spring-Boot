@@ -12,6 +12,8 @@ data class CourseSummaryResponse(
     val price: BigDecimal,
     val discountedPrice: BigDecimal?,
     val lessonCount: Int,
+    val completedLessons: Int = 0,
+    val progressPercent: Int = 0,
     val enrolled: Boolean = false,
     val courseType: String = "COURSE",
     val format: String = "ONLINE_RECORDED",

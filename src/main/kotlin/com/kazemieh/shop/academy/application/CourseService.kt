@@ -174,6 +174,9 @@ class CourseService(
     private fun CourseEntity.toSummary(userId: Long?): CourseSummaryResponse {
         val lessonCount = sections.sumOf { it.lessons.size }
         val enrolled = userId != null && enrollmentRepository.existsByUserIdAndCourseId(userId, id)
+        val completedLessons = if (enrolled && userId != null)
+            progressRepository.findAllByUserIdAndCourseId(userId, id).count { it.completed }
+        else 0
         return CourseSummaryResponse(
             id = id,
             title = title,
@@ -183,6 +186,8 @@ class CourseService(
             price = price,
             discountedPrice = discountedPrice,
             lessonCount = lessonCount,
+            completedLessons = completedLessons,
+            progressPercent = percent(completedLessons, lessonCount),
             enrolled = enrolled,
             courseType = courseType.name,
             format = format.name,
