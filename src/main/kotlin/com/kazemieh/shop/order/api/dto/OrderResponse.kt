@@ -9,5 +9,6 @@ data class OrderResponse(
     val subtotalPrice: BigDecimal,
     val shippingPrice: BigDecimal,
     val totalPrice: BigDecimal,
+    val itemCount: Int = 0,
     val createdAt: OffsetDateTime?,
 )

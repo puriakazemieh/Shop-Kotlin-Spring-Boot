@@ -14,6 +14,7 @@ object OrderMapper {
         subtotalPrice = o.subtotalPrice,
         shippingPrice = o.shippingPrice,
         totalPrice = o.totalPrice,
+        itemCount = o.items.size,
         createdAt = o.createdAt
     )
 
