@@ -46,6 +46,22 @@ import com.kazemieh.shop.wallet.persistence.WalletTransactionRepository
 import com.kazemieh.shop.wallet.persistence.entity.TransactionType
 import com.kazemieh.shop.wallet.persistence.entity.WalletEntity
 import com.kazemieh.shop.wallet.persistence.entity.WalletTransactionEntity
+import com.kazemieh.shop.academy.persistence.CourseRepository
+import com.kazemieh.shop.academy.persistence.entity.CourseEntity
+import com.kazemieh.shop.academy.persistence.entity.CourseFormat
+import com.kazemieh.shop.academy.persistence.entity.CourseLevel
+import com.kazemieh.shop.academy.persistence.entity.CourseType
+import com.kazemieh.shop.psychtest.persistence.PsychTestRepository
+import com.kazemieh.shop.psychtest.persistence.entity.PsychTestEntity
+import com.kazemieh.shop.psychtest.persistence.entity.ScoreRange
+import com.kazemieh.shop.psychtest.persistence.entity.TestOption
+import com.kazemieh.shop.psychtest.persistence.entity.TestQuestion
+import com.kazemieh.shop.psychtest.persistence.entity.TestResultMode
+import com.kazemieh.shop.clinic.persistence.AvailabilitySlotRepository
+import com.kazemieh.shop.clinic.persistence.TherapistRepository
+import com.kazemieh.shop.clinic.persistence.entity.AvailabilitySlotEntity
+import com.kazemieh.shop.clinic.persistence.entity.SessionMode
+import com.kazemieh.shop.clinic.persistence.entity.TherapistEntity
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -87,6 +103,10 @@ class DataSeeder(
     private val walletRepository: WalletRepository,
     private val walletTransactionRepository: WalletTransactionRepository,
     private val orderRepository: OrderRepository,
+    private val courseRepository: CourseRepository,
+    private val psychTestRepository: PsychTestRepository,
+    private val therapistRepository: TherapistRepository,
+    private val slotRepository: AvailabilitySlotRepository,
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
 ) : CommandLineRunner {
@@ -95,26 +115,222 @@ class DataSeeder(
 
     @Transactional
     override fun run(vararg args: String) {
-        if (productRepository.count() > 0L) {
-            log.info("[DataSeeder] محصولات از قبل وجود دارند؛ از تولید داده‌ی نمونه صرف‌نظر شد.")
-            return
+        if (productRepository.count() == 0L) {
+            log.info("[DataSeeder] شروع تولید داده‌ی نمونه‌ی کارمیلا…")
+
+            val (admin, customer) = seedUsers()
+            val categories = seedCategories()
+            val (colors, sizes) = seedOptions()
+            val products = seedProducts(categories, colors, sizes)
+            seedCampaign(products)
+            seedBanners(categories)
+            seedDiscounts()
+            seedBlog(admin)
+            seedStories(products)
+            val address = seedAddress(customer)
+            seedWallet(customer)
+            seedOrders(customer, products, address)
+
+            log.info("[DataSeeder] پایان. ${products.size} محصول و داده‌ی کامل ساخته شد.")
+        } else {
+            log.info("[DataSeeder] محصولات از قبل وجود دارند؛ فقط عمودی‌های خالی seed می‌شوند.")
         }
-        log.info("[DataSeeder] شروع تولید داده‌ی نمونه‌ی کارمیلا…")
 
-        val (admin, customer) = seedUsers()
-        val categories = seedCategories()
-        val (colors, sizes) = seedOptions()
-        val products = seedProducts(categories, colors, sizes)
-        seedCampaign(products)
-        seedBanners(categories)
-        seedDiscounts()
-        seedBlog(admin)
-        seedStories(products)
-        val address = seedAddress(customer)
-        seedWallet(customer)
-        seedOrders(customer, products, address)
+        // عمودی‌های آموزشگاه/مشاوره/تست به‌صورتِ مستقل و idempotent seed می‌شوند
+        // تا حتی روی دیتابیسِ موجود هم (که محصول دارد) داده‌ی نمونه داشته باشند و
+        // روی صفحه‌ی اصلی نمایش داده شوند.
+        seedCoursesIfEmpty()
+        seedPsychTestsIfEmpty()
+        seedTherapistsIfEmpty()
+    }
 
-        log.info("[DataSeeder] پایان. ${products.size} محصول و داده‌ی کامل ساخته شد.")
+    // ---------------------------------------------------------------------------
+    //  عمودی‌ها: دوره / تستِ روان‌شناسی / درمانگر (+ بازه‌های نوبت)
+    // ---------------------------------------------------------------------------
+
+    private fun seedCoursesIfEmpty() {
+        if (courseRepository.count() > 0L) return
+        val courses = listOf(
+            CourseEntity(
+                title = "دوره‌ی جامعِ کاتلین از صفر",
+                slug = "kotlin-from-zero",
+                description = "برنامه‌نویسیِ کاتلین را از پایه تا پروژه‌ی واقعی یاد بگیرید.",
+                thumbnailUrl = "https://picsum.photos/seed/course-kotlin/700/440",
+                instructor = "مهندس کاظمیه",
+                price = BigDecimal("1280000"),
+                discountedPrice = BigDecimal("890000"),
+                isPublished = true,
+                courseType = CourseType.COURSE,
+                format = CourseFormat.ONLINE_RECORDED,
+                level = CourseLevel.BEGINNER,
+                jobMarketBadge = true,
+                freeUpdateBadge = true
+            ),
+            CourseEntity(
+                title = "برنامه‌نویسیِ اندروید با Jetpack Compose",
+                slug = "android-compose",
+                description = "ساختِ رابطِ کاربریِ مدرنِ اندروید با Compose.",
+                thumbnailUrl = "https://picsum.photos/seed/course-compose/700/440",
+                instructor = "مهندس کاظمیه",
+                price = BigDecimal("1650000"),
+                isPublished = true,
+                courseType = CourseType.COURSE,
+                format = CourseFormat.ONLINE_RECORDED,
+                level = CourseLevel.INTERMEDIATE
+            ),
+            CourseEntity(
+                title = "کارگاهِ حضوریِ معماریِ نرم‌افزار",
+                slug = "software-architecture-workshop",
+                description = "کارگاهِ فشرده‌ی دو روزه با تمرینِ عملی.",
+                thumbnailUrl = "https://picsum.photos/seed/course-arch/700/440",
+                instructor = "مهندس کاظمیه",
+                price = BigDecimal("2400000"),
+                isPublished = true,
+                courseType = CourseType.WORKSHOP,
+                format = CourseFormat.IN_PERSON,
+                level = CourseLevel.ADVANCED,
+                location = "تهران، سالنِ همایش‌های آموزشگاه",
+                capacity = 30
+            )
+        )
+        courseRepository.saveAll(courses)
+        log.info("[DataSeeder] ${courses.size} دوره‌ی نمونه ساخته شد.")
+    }
+
+    private fun psychQuestion(text: String) = TestQuestion(
+        text = text,
+        options = mutableListOf(
+            TestOption("هرگز", 0),
+            TestOption("گاهی", 1),
+            TestOption("اغلب", 2),
+            TestOption("همیشه", 3)
+        )
+    )
+
+    private fun seedPsychTestsIfEmpty() {
+        if (psychTestRepository.count() > 0L) return
+        val tests = listOf(
+            PsychTestEntity(
+                title = "تستِ سنجشِ افسردگی",
+                slug = "depression-screening",
+                description = "غربالگریِ سریعِ نشانه‌های افسردگی در دو هفته‌ی اخیر.",
+                price = BigDecimal("49000"),
+                resultMode = TestResultMode.AUTO,
+                questions = mutableListOf(
+                    psychQuestion("در دو هفته‌ی گذشته چقدر احساسِ ناامیدی داشته‌اید؟"),
+                    psychQuestion("چقدر علاقه‌تان به کارهای روزمره کم شده است؟"),
+                    psychQuestion("چقدر در خواب یا اشتها مشکل داشته‌اید؟"),
+                    psychQuestion("چقدر احساسِ خستگی و بی‌انرژی بودن داشته‌اید؟"),
+                    psychQuestion("چقدر در تمرکز کردن دشواری داشته‌اید؟")
+                ),
+                ranges = mutableListOf(
+                    ScoreRange(0, 4, "خلقِ طبیعی — نشانه‌ی مهمی دیده نشد."),
+                    ScoreRange(5, 9, "افسردگیِ خفیف — مراقبتِ شخصی توصیه می‌شود."),
+                    ScoreRange(10, 15, "افسردگیِ متوسط تا شدید — مشاوره توصیه می‌شود.")
+                ),
+                isPublished = true
+            ),
+            PsychTestEntity(
+                title = "تستِ سنجشِ اضطراب",
+                slug = "anxiety-screening",
+                description = "ارزیابیِ میزانِ اضطرابِ عمومی در روزهای اخیر.",
+                price = BigDecimal("39000"),
+                resultMode = TestResultMode.AUTO,
+                questions = mutableListOf(
+                    psychQuestion("چقدر احساسِ نگرانی یا دلشوره داشته‌اید؟"),
+                    psychQuestion("چقدر آرام‌نشستن برایتان دشوار بوده است؟"),
+                    psychQuestion("چقدر زودرنج یا تحریک‌پذیر بوده‌اید؟"),
+                    psychQuestion("چقدر ترسیده‌اید که اتفاقِ بدی بیفتد؟")
+                ),
+                ranges = mutableListOf(
+                    ScoreRange(0, 3, "اضطرابِ حداقلی."),
+                    ScoreRange(4, 7, "اضطرابِ خفیف."),
+                    ScoreRange(8, 12, "اضطرابِ متوسط تا شدید — مشاوره توصیه می‌شود.")
+                ),
+                isPublished = true
+            ),
+            PsychTestEntity(
+                title = "تستِ کیفیتِ خواب",
+                slug = "sleep-quality",
+                description = "بررسیِ الگو و کیفیتِ خوابِ شبانه.",
+                price = BigDecimal.ZERO,
+                resultMode = TestResultMode.AUTO,
+                questions = mutableListOf(
+                    psychQuestion("چقدر برای به خواب رفتن زمان لازم دارید؟"),
+                    psychQuestion("چقدر شب‌ها از خواب بیدار می‌شوید؟"),
+                    psychQuestion("چقدر صبح‌ها احساسِ خستگی دارید؟")
+                ),
+                ranges = mutableListOf(
+                    ScoreRange(0, 3, "کیفیتِ خوابِ خوب."),
+                    ScoreRange(4, 6, "اختلالِ خفیفِ خواب."),
+                    ScoreRange(7, 9, "کیفیتِ خوابِ ضعیف — بهبودِ بهداشتِ خواب توصیه می‌شود.")
+                ),
+                isPublished = true
+            )
+        )
+        psychTestRepository.saveAll(tests)
+        log.info("[DataSeeder] ${tests.size} تستِ روان‌شناسیِ نمونه ساخته شد.")
+    }
+
+    private fun seedTherapistsIfEmpty() {
+        if (therapistRepository.count() > 0L) return
+        val therapists = listOf(
+            TherapistEntity(
+                name = "دکتر مریم رضایی",
+                slug = "maryam-rezaei",
+                specialty = "روان‌شناسِ بالینی",
+                bio = "متخصصِ درمانِ اضطراب و افسردگی با ۱۰ سال تجربه.",
+                photoUrl = "https://picsum.photos/seed/therapist-maryam/240/240",
+                sessionPrice = BigDecimal("280000"),
+                sessionDurationMinutes = 45,
+                mode = SessionMode.ONLINE,
+                isActive = true
+            ),
+            TherapistEntity(
+                name = "دکتر علی محمدی",
+                slug = "ali-mohammadi",
+                specialty = "مشاورِ خانواده و زوج‌درمانگر",
+                bio = "متخصصِ رابطه و مشاوره‌ی پیش از ازدواج.",
+                photoUrl = "https://picsum.photos/seed/therapist-ali/240/240",
+                sessionPrice = BigDecimal("320000"),
+                sessionDurationMinutes = 60,
+                mode = SessionMode.ONLINE,
+                isActive = true
+            ),
+            TherapistEntity(
+                name = "دکتر سارا کریمی",
+                slug = "sara-karimi",
+                specialty = "روان‌شناسِ کودک و نوجوان",
+                bio = "کار با کودکان و نوجوانان در زمینه‌ی رفتار و تحصیل.",
+                photoUrl = "https://picsum.photos/seed/therapist-sara/240/240",
+                sessionPrice = BigDecimal("250000"),
+                sessionDurationMinutes = 45,
+                mode = SessionMode.IN_PERSON,
+                location = "تهران، مرکزِ مشاوره‌ی آموزشگاه",
+                isActive = true
+            )
+        )
+        val saved = therapistRepository.saveAll(therapists)
+
+        // برای هر درمانگر، چند بازه‌ی زمانیِ آزاد در روزهای آینده تا نوبت‌دهی قابلِ‌تست باشد.
+        val base = OffsetDateTime.now().withMinute(0).withSecond(0).withNano(0)
+        val slots = mutableListOf<AvailabilitySlotEntity>()
+        saved.forEach { t ->
+            for (day in 1..5) {
+                for (hour in listOf(10, 14, 17)) {
+                    val start = base.plusDays(day.toLong()).withHour(hour)
+                    slots += AvailabilitySlotEntity(
+                        therapist = t,
+                        startTime = start,
+                        endTime = start.plusMinutes(t.sessionDurationMinutes.toLong()),
+                        isBooked = false,
+                        capacity = 1
+                    )
+                }
+            }
+        }
+        slotRepository.saveAll(slots)
+        log.info("[DataSeeder] ${saved.size} درمانگر و ${slots.size} بازه‌ی نوبت ساخته شد.")
     }
 
     private fun seedUsers(): Pair<UserEntity, UserEntity> {
