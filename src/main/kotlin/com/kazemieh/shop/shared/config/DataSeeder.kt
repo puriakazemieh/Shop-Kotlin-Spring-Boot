@@ -47,6 +47,8 @@ import com.kazemieh.shop.wallet.persistence.entity.TransactionType
 import com.kazemieh.shop.wallet.persistence.entity.WalletEntity
 import com.kazemieh.shop.wallet.persistence.entity.WalletTransactionEntity
 import com.kazemieh.shop.academy.persistence.CourseRepository
+import com.kazemieh.shop.academy.courserequest.CourseRequestEntity
+import com.kazemieh.shop.academy.courserequest.CourseRequestRepository
 import com.kazemieh.shop.academy.persistence.entity.CourseEntity
 import com.kazemieh.shop.academy.persistence.entity.CourseFormat
 import com.kazemieh.shop.academy.persistence.entity.CourseLevel
@@ -104,6 +106,7 @@ class DataSeeder(
     private val walletTransactionRepository: WalletTransactionRepository,
     private val orderRepository: OrderRepository,
     private val courseRepository: CourseRepository,
+    private val courseRequestRepository: CourseRequestRepository,
     private val psychTestRepository: PsychTestRepository,
     private val therapistRepository: TherapistRepository,
     private val slotRepository: AvailabilitySlotRepository,
@@ -142,6 +145,18 @@ class DataSeeder(
         seedCoursesIfEmpty()
         seedPsychTestsIfEmpty()
         seedTherapistsIfEmpty()
+        seedCourseRequestsIfEmpty()
+    }
+
+    private fun seedCourseRequestsIfEmpty() {
+        if (courseRequestRepository.count() > 0L) return
+        val requests = listOf(
+            CourseRequestEntity(title = "دوره‌ی Flutter پیشرفته", requesterName = "کاربر مهمان", likeCount = 14),
+            CourseRequestEntity(title = "آموزشِ داکر و Kubernetes", requesterName = "کاربر مهمان", likeCount = 9),
+            CourseRequestEntity(title = "دوره‌ی هوشِ مصنوعی برای برنامه‌نویسان", requesterName = "کاربر مهمان", likeCount = 6)
+        )
+        courseRequestRepository.saveAll(requests)
+        log.info("[DataSeeder] ${requests.size} درخواستِ دوره‌ی نمونه ساخته شد.")
     }
 
     // ---------------------------------------------------------------------------
