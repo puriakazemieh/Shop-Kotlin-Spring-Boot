@@ -99,6 +99,7 @@ data class AdminUpdatePsychTestRequest(
     val description: String? = null,
     val price: BigDecimal? = null,
     val discountedPrice: BigDecimal? = null,
+    val productId: Long? = null,
     val resultMode: String? = null,
     val isPublished: Boolean? = null,
     val questions: List<TestQuestionResponse>? = null,

@@ -67,6 +67,7 @@ class AdminPsychTestService(
         req.description?.let { test.description = it }
         req.price?.let { test.price = it }
         req.discountedPrice?.let { test.discountedPrice = it }
+        req.productId?.let { test.productId = it }
         req.resultMode?.let { test.resultMode = parseMode(it) }
         req.isPublished?.let { test.isPublished = it }
         req.questions?.let { qs -> test.questions = qs.map { it.toEntity() }.toMutableList() }
