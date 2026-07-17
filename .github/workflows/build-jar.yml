@@ -1,0 +1,36 @@
+name: Build Server JAR
+
+# Manual build of the runnable Spring Boot fat-jar. Download it from the run's
+# artifacts and run anywhere with:  java -jar shop-*.jar
+# (set DATASOURCE_URL / DATASOURCE_USERNAME / DATASOURCE_PASSWORD for your DB).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  jar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build bootJar
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace bootJar
+      - name: Collect jar
+        run: |
+          mkdir -p out
+          find build/libs -name '*.jar' ! -name '*-plain.jar' -exec cp {} out/ \; 2>/dev/null || true
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-jar
+          path: out/*.jar
+          if-no-files-found: warn

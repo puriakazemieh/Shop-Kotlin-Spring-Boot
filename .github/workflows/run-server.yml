@@ -1,0 +1,82 @@
+name: Run Server (temporary public URL)
+
+# Boots the Spring Boot server + PostgreSQL on a GitHub runner and exposes it
+# through a free Cloudflare quick-tunnel, so you can point the Compose-Web app or
+# the Android app at a live API for testing. The public https URL is printed in
+# the run summary and the "Announce URL" step logs.
+#
+# NOTE: this is a *temporary* server — it lives only while the job runs (up to the
+# minutes you choose, max 350) and the URL changes every run. GitHub Actions is
+# not a hosting service; for a permanent server use a host like Liara/Render/
+# Railway (this repo already ships a Dockerfile + liara.json).
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'How long to keep the server up (minutes, max 350)'
+        type: string
+        default: '90'
+
+permissions:
+  contents: read
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shopdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d shopdb" --health-interval=10s
+          --health-timeout=5s --health-retries=10
+    env:
+      DATASOURCE_URL: jdbc:postgresql://localhost:5432/shopdb
+      DATASOURCE_USERNAME: postgres
+      DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: '8080'
+      SEED_ENABLED: 'true'
+      SWAGGER_ENABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build bootJar
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace bootJar
+          cp "$(find build/libs -name '*.jar' ! -name '*-plain.jar' | head -1)" app.jar
+      - name: Start Cloudflare quick-tunnel
+        run: |
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          ./cloudflared tunnel --no-autoupdate --url http://localhost:8080 > tunnel.log 2>&1 &
+          echo "waiting for tunnel URL…"
+          for i in $(seq 1 30); do
+            URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' tunnel.log | head -1 || true)
+            if [ -n "$URL" ]; then break; fi
+            sleep 2
+          done
+          echo "TUNNEL_URL=$URL" >> "$GITHUB_ENV"
+          echo "## 🚀 Live API (temporary)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Base URL: **$URL**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Swagger: $URL/api/swagger-ui.html" >> "$GITHUB_STEP_SUMMARY"
+          echo "- App/web base: point apiBaseUrl at \`$URL/\` (or open the web app with ?api=$URL/)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Announce URL
+        run: echo "PUBLIC API URL => $TUNNEL_URL"
+      - name: Run server (blocks for the chosen duration)
+        run: |
+          MIN="${{ inputs.minutes }}"; MIN=${MIN:-90}
+          if [ "$MIN" -gt 350 ]; then MIN=350; fi
+          echo "server will stay up for ${MIN} minutes at $TUNNEL_URL"
+          FRONTEND_URL="$TUNNEL_URL" NGROK_URL="$TUNNEL_URL" \
+            timeout "${MIN}m" java -jar app.jar || echo "server exited"
