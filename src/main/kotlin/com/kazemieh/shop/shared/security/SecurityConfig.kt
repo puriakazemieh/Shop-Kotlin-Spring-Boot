@@ -1,6 +1,7 @@
 package com.kazemieh.shop.shared.security
 
 import com.kazemieh.shop.shared.security.jwt.JwtAuthFilter
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -24,6 +25,12 @@ class SecurityConfig(
     private val deniedHandler: RestAccessDeniedHandler
 ) {
 
+    // آدرس‌های مجازِ CORS به‌صورتِ پراپرتی (کامادار). خالی = فهرستِ ثابتِ زیر.
+    // ست‌کردنِ `app.cors-origins=*` (یا الگوها) با allowCredentials هم کار می‌کند
+    // چون از allowedOriginPatterns استفاده می‌شود — برای تست با URLهای موقتِ تونل.
+    @Value("\${app.cors-origins:}")
+    private lateinit var corsOrigins: String
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -38,14 +45,20 @@ class SecurityConfig(
 
         config.allowCredentials = true
 
-        // دامنه‌های مجاز شما
-        config.allowedOrigins = listOf(
-            "http://miaad.puriademo.ir",
-            "https://miaad.puriademo.ir",
-            "http://milad.puriademo.ir",
-            "https://milad.puriademo.ir",
-            "http://localhost:8081"
-        )
+        val configured = corsOrigins.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        if (configured.isNotEmpty()) {
+            // الگوهای پویا (سازگار با allowCredentials) — برای دامنه‌های موقتِ تست.
+            config.allowedOriginPatterns = configured
+        } else {
+            // دامنه‌های مجاز پیش‌فرض شما
+            config.allowedOrigins = listOf(
+                "http://miaad.puriademo.ir",
+                "https://miaad.puriademo.ir",
+                "http://milad.puriademo.ir",
+                "https://milad.puriademo.ir",
+                "http://localhost:8081"
+            )
+        }
 
         config.allowedHeaders = listOf("*")
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
