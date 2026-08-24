@@ -7,13 +7,15 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.util.UriComponentsBuilder
+import java.net.URI
 
 @Service
 class ZarinPalService(
     @Value("\${zarinpal.merchant-id}") private val merchantId: String,
     @Value("\${zarinpal.sandbox:false}") private val isSandbox: Boolean,
     @Value("\${zarinpal.access-token:}") private val accessToken: String,
-    @Value("\${app.ngrok-url:}") private val ngrokUrl: String,
+    @Value("\${app.payment.callback-base-url:}") private val paymentCallbackBaseUrl: String,
     private val restTemplate: RestTemplate
 ) {
     private val logger = LoggerFactory.getLogger(ZarinPalService::class.java)
@@ -37,9 +39,7 @@ class ZarinPalService(
 
     fun createPaymentRequest(amountInToman: Long, orderId: String): String? {
         val url = "$baseUrl/request.json"
-
-        val baseUrlForCallback = if (ngrokUrl.isNotBlank()) ngrokUrl else "http://localhost:8080"
-        val callbackUrl = "$baseUrlForCallback/api/payment/callback?order_id=$orderId"
+        val callbackUrl = buildCallbackUrl(orderId) ?: return null
 
         val requestBody = mapOf(
             "merchant_id" to merchantId,
@@ -68,6 +68,33 @@ class ZarinPalService(
             )
             null
         }
+    }
+
+    private fun buildCallbackUrl(orderId: String): String? {
+        val callbackBaseUri = try {
+            URI(paymentCallbackBaseUrl.trim())
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+
+        if (
+            callbackBaseUri == null ||
+            callbackBaseUri.scheme !in setOf("http", "https") ||
+            callbackBaseUri.host.isNullOrBlank() ||
+            callbackBaseUri.userInfo != null ||
+            callbackBaseUri.query != null ||
+            callbackBaseUri.fragment != null ||
+            (!isSandbox && callbackBaseUri.scheme != "https")
+        ) {
+            logger.error("Payment callback base URL is missing or invalid.")
+            return null
+        }
+
+        return UriComponentsBuilder.fromUri(callbackBaseUri)
+            .path("/api/payment/callback")
+            .queryParam("order_id", orderId)
+            .build()
+            .toUriString()
     }
 
     fun verifyPayment(authority: String, amountInToman: Long): ZarinPalVerificationResponse {
