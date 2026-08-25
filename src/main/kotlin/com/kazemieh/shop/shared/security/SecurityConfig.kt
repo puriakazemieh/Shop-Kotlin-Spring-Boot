@@ -26,8 +26,7 @@ class SecurityConfig(
 ) {
 
     // آدرس‌های مجازِ CORS به‌صورتِ پراپرتی (کامادار). خالی = فهرستِ ثابتِ زیر.
-    // ست‌کردنِ `app.cors-origins=*` (یا الگوها) با allowCredentials هم کار می‌کند
-    // چون از allowedOriginPatterns استفاده می‌شود — برای تست با URLهای موقتِ تونل.
+    // با credential، wildcard یا origin pattern مجاز نیست.
     @Value("\${app.cors-origins:}")
     private lateinit var corsOrigins: String
 
@@ -47,8 +46,10 @@ class SecurityConfig(
 
         val configured = corsOrigins.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         if (configured.isNotEmpty()) {
-            // الگوهای پویا (سازگار با allowCredentials) — برای دامنه‌های موقتِ تست.
-            config.allowedOriginPatterns = configured
+            require(configured.none { it == "*" || it.contains('*') }) {
+                "app.cors-origins must contain exact origins when credentials are enabled"
+            }
+            config.allowedOrigins = configured
         } else {
             // دامنه‌های مجاز پیش‌فرض شما
             config.allowedOrigins = listOf(
@@ -98,6 +99,7 @@ class SecurityConfig(
                     "/api/auth/logout",
                     "/api/auth/forgot-password",
                     "/api/auth/reset-password",
+                    "/api/auth/web/**",
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
                     "/api/v3/api-docs/**",
