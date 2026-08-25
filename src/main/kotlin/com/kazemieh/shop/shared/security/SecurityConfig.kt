@@ -103,9 +103,11 @@ class SecurityConfig(
                     "/api/swagger-ui.html",
                     "/api/swagger-ui/**",
                     "/api/v3/api-docs/**",
-                    "/api/auth/*",
-                    "/uploads/**"
+                    "/api/auth/*"
                 ).permitAll()
+
+                // uploads require authentication — no anonymous file access
+                it.requestMatchers("/uploads/**").authenticated()
 
                 it.anyRequest().authenticated()
             }

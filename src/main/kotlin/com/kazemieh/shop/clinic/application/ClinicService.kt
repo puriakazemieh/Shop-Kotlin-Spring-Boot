@@ -108,8 +108,11 @@ class ClinicService(
     /** لغوِ نوبت؛ بازه دوباره آزاد و در صورتِ نیاز، اعتبارِ مصرف‌شده بازگردانده می‌شود. */
     @Transactional
     fun cancel(userId: Long, appointmentId: Long) {
-        val appointment = appointmentRepository.findByIdAndUserId(appointmentId, userId)
+        val appointment = appointmentRepository.findByIdAndUserIdForUpdate(appointmentId, userId)
             ?: throw NotFoundException("Appointment not found", ErrorCodes.APPOINTMENT_NOT_FOUND)
+        if (appointment.status == AppointmentStatus.CANCELLED) {
+            return
+        }
         if (appointment.status == AppointmentStatus.COMPLETED) {
             throw ForbiddenException("Completed appointment cannot be cancelled", ErrorCodes.APPOINTMENT_ACCESS_DENIED)
         }

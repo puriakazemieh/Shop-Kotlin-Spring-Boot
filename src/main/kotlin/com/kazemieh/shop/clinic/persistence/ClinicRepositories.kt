@@ -52,6 +52,10 @@ interface AppointmentRepository : JpaRepository<AppointmentEntity, Long> {
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<AppointmentEntity>
     fun findByIdAndUserId(id: Long, userId: Long): AppointmentEntity?
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from AppointmentEntity a where a.id = :id and a.userId = :userId")
+    fun findByIdAndUserIdForUpdate(@Param("id") id: Long, @Param("userId") userId: Long): AppointmentEntity?
+
     /** همه‌ی نوبت‌ها (برای مدیریتِ ادمین). */
     fun findAllByOrderByCreatedAtDesc(): List<AppointmentEntity>
 
