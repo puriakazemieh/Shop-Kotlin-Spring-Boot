@@ -140,3 +140,4 @@ tasks.withType<JacocoReport> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+tasks.withType<Test> { testLogging { showStandardStreams = true } }
