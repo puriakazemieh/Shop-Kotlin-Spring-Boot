@@ -20,4 +20,15 @@ interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, Long> {
         """
     )
     fun revokeAllActiveForUser(@Param("userId") userId: Long, @Param("now") now: OffsetDateTime): Int
+
+    @Modifying
+    @Query(
+        """
+        update RefreshTokenEntity t
+           set t.revokedAt = :now
+         where t.familyId = :familyId
+           and t.revokedAt is null
+        """
+    )
+    fun revokeAllActiveForFamily(@Param("familyId") familyId: String, @Param("now") now: OffsetDateTime): Int
 }

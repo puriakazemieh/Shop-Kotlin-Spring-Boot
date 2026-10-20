@@ -18,6 +18,7 @@ class RefreshTokenService(
     private val repo: RefreshTokenRepository,
     private val props: JwtProperties,
 ) {
+	data class RotatedSession(val user: UserEntity, val familyId: String)
     private val random = SecureRandom()
 
     private fun newRawToken(): String {
@@ -33,7 +34,7 @@ class RefreshTokenService(
     }
 
     @Transactional
-    fun issueFor(user: UserEntity): String {
+    fun issueFor(user: UserEntity, familyId: String = UUID.randomUUID().toString()): String {
         val raw = newRawToken()
         val now = OffsetDateTime.now()
         val exp = now.plusDays(props.refreshTtlDays)
@@ -42,6 +43,7 @@ class RefreshTokenService(
             RefreshTokenEntity(
                 user = user,
                 tokenHash = sha256Hex(raw),
+                familyId = familyId,
                 expiresAt = exp,
                 revokedAt = null
             )
@@ -50,7 +52,10 @@ class RefreshTokenService(
     }
 
     @Transactional
-    fun rotate(raw: String): UserEntity {
+    fun rotate(raw: String): UserEntity = rotateSession(raw).user
+
+    @Transactional
+    fun rotateSession(raw: String): RotatedSession {
         val now = OffsetDateTime.now()
         val token = repo.findByTokenHash(sha256Hex(raw))
             ?: throw InvalidCredentialsException("Invalid refresh token")
@@ -66,17 +71,14 @@ class RefreshTokenService(
         // issue new (rotation)
         val user = token.user ?: throw InvalidCredentialsException("Invalid refresh token")
 
-        return user
+        return RotatedSession(user, token.familyId)
     }
 
     @Transactional
     fun revoke(raw: String) {
         val now = OffsetDateTime.now()
         val token = repo.findByTokenHash(sha256Hex(raw)) ?: return
-        if (token.revokedAt == null) {
-            token.revokedAt = now
-            repo.save(token)
-        }
+        repo.revokeAllActiveForFamily(token.familyId, now)
     }
 
     @Transactional

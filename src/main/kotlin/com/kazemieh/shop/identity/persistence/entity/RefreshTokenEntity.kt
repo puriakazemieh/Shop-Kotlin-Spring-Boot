@@ -25,6 +25,9 @@ class RefreshTokenEntity(
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     var tokenHash: String = "",
 
+    @Column(name = "family_id", nullable = false, length = 64)
+    var familyId: String = "",
+
     @Column(name = "expires_at", nullable = false)
     var expiresAt: OffsetDateTime = OffsetDateTime.now(),
 

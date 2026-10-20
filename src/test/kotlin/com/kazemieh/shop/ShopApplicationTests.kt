@@ -38,15 +38,14 @@ class ShopApplicationTests {
     }
 
     @Test
-    fun `stale logout does not revoke rotated session in transactional database`() {
+    fun `stale logout revokes rotated session family in transactional database`() {
         val user = users.save(UserEntity(email = "session-characterization@example.invalid", passwordHash = "synthetic"))
         val old = refreshTokens.issueFor(user)
         val replacement = auth.refresh(RefreshRequest(old)).refreshToken
         auth.logout(LogoutRequest(old))
 
         assertThatThrownBy { auth.refresh(RefreshRequest(old)) }.isInstanceOf(InvalidCredentialsException::class.java)
-        // Characterization of the current defect, not the intended logout contract.
-        assertThat(auth.refresh(RefreshRequest(replacement)).refreshToken).isNotBlank()
+        assertThatThrownBy { auth.refresh(RefreshRequest(replacement)) }.isInstanceOf(InvalidCredentialsException::class.java)
     }
 
 }

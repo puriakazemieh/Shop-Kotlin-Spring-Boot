@@ -114,14 +114,15 @@ class AuthService(
     @Transactional
     fun refresh(req: RefreshRequest): AuthResponse {
         // validate old refresh (and revoke it)
-        val oldUser = refreshTokenService.rotate(req.refreshToken)
+        val rotated = refreshTokenService.rotateSession(req.refreshToken)
+        val oldUser = rotated.user
 
         val u = userRepository.findById(oldUser.id).orElseThrow { InvalidCredentialsException("Invalid refresh token") }
         if (!u.isActive) throw UserInactiveException()
 
         val username = u.email ?: u.phone!!
         val access = jwtService.generateAccessToken(u.id, username, u.role.name)
-        val newRefresh = refreshTokenService.issueFor(u)
+        val newRefresh = refreshTokenService.issueFor(u, rotated.familyId)
         return AuthResponse(access, newRefresh, UserMapper.toResponse(u))
     }
 
