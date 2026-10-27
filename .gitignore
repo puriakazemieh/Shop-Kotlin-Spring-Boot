@@ -41,3 +41,6 @@ out/
 
 ### Database ###
 /db/db-data
+
+### GitNexus local graph ###
+/.gitnexus/
